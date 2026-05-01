@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "openclaw-stock-mcp": {
+      "command": "/tmp/openclaw-stock-mcp-venv/bin/python",
+      "args": [
+        "-m",
+        "openclaw_stock_mcp.main",
+        "--stdio"
+      ],
+      "cwd": "/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp",
+      "env": {
+        "PYTHONPATH": "src",
+        "HTTP_PROXY": "",
+        "HTTPS_PROXY": "",
+        "ALL_PROXY": "",
+        "http_proxy": "",
+        "https_proxy": "",
+        "all_proxy": ""
+      }
+    }
+  }
+}
