@@ -62,6 +62,16 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --list-tools
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
 ```
 
+### stock_quote(stock-main) 双源路由样例
+
+```bash
+# 默认路由（stock-main）：zhitu 主，akshare 备
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["600519.SH"],"sec_type":"stock"}'
+
+# 显式指定 provider_preference（先 akshare，再 zhitu）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["600519.SH"],"sec_type":"stock","provider_preference":["akshare","zhitu"]}'
+```
+
 ### stock_history(index) 多周期调用样例（5/15/30/60/d/w/m/y）
 
 ```bash

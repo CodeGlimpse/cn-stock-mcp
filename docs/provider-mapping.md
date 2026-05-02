@@ -92,7 +92,7 @@
 | Tool | 主 provider | 备 provider | 当前建议 |
 |---|---|---|---|
 | stock_search | AKShare | 智兔 | 先用 AKShare 打基础列表能力 |
-| stock_quote(stock-main) | 待实测 | 待实测 | 需真实对比 AKShare / 智兔 |
+| stock_quote(stock-main) | 智兔 | AKShare | 已定稿：主走智兔，失败回退 AKShare |
 | stock_quote(index) | 智兔 | AKShare | 智兔指数接口明确 |
 | stock_quote(fund) | 智兔 | AKShare | 智兔基金实时明确 |
 | stock_quote(stock-bj) | 智兔 | - | 智兔文档明确 |

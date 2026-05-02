@@ -60,6 +60,17 @@
   - `y -> 1y`
 - 与既有格式 `5m/15m/30m/60m/1d/1w/1M/1y` 兼容
 
+### stock_quote(stock-main) 双源路由定稿
+- 路由策略：`zhitu` 主，`akshare` 备
+- 适用范围：`stock` 且非 `BJ`、非 `688`（即 A 股主板/常规沪深股票）
+- 维持既有策略：
+  - `index/fund`：`zhitu` 主，`akshare` 备
+  - `stock-bj`：`zhitu` 主（无备）
+  - `stock-star(688)`：`zhitu` 主（无备）
+- `provider_preference` 已生效：
+  - 支持按请求显式指定优先顺序（如 `['akshare','zhitu']`）
+  - 顺序即执行顺序，自动 fallback
+
 ## 已验证通过（智兔主链路）
 - 指数实时行情
 - 基金实时行情
