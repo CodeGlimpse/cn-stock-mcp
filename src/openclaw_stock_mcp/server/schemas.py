@@ -75,6 +75,15 @@ class MarketOverviewRequest(BaseModel):
     provider: ProviderName | None = "mixed"
 
 
+class MarketBriefRequest(BaseModel):
+    brief_type: Literal["pre_open", "intraday", "close"] = "close"
+    market: Literal["CN"] = "CN"
+    trade_date: str | None = None
+    include_pools: bool = True
+    top_n: int = Field(default=5, ge=1, le=50)
+    provider: ProviderName | None = "mixed"
+
+
 class TechnicalIndicatorRequest(BaseModel):
     symbol: str
     interval: str

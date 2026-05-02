@@ -120,6 +120,19 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"qsgc","trade_date":"2026-05-01","limit":50}'
 ```
 
+### market_brief 一键市场简报样例
+
+```bash
+# 收盘简报（默认）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{}'
+
+# 盘中简报 + 指定日期 + 只取股池前3
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{"brief_type":"intraday","trade_date":"2026-05-01","top_n":3}'
+
+# 不含股池，仅指数概览简报
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{"include_pools":false}'
+```
+
 ### sector_lookup 本地调用样例（板块列表 / 层级）
 
 ```bash

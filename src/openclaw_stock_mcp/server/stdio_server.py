@@ -4,6 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 from openclaw_stock_mcp.server.mcp_server import create_server
 from openclaw_stock_mcp.server.schemas import (
+    MarketBriefRequest,
     MarketOverviewRequest,
     MarketPoolRequest,
     SectorLookupRequest,
@@ -90,6 +91,25 @@ def build_fastmcp_server() -> FastMCP:
             provider=provider,
         )
         return registry.call_tool("market_overview", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="market_brief", description="Generate a compact market brief by combining overview and pool data.")
+    async def market_brief(
+        brief_type: str = "close",
+        market: str = "CN",
+        trade_date: str | None = None,
+        include_pools: bool = True,
+        top_n: int = 5,
+        provider: str | None = "mixed",
+    ):
+        req = MarketBriefRequest(
+            brief_type=brief_type,
+            market=market,
+            trade_date=trade_date,
+            include_pools=include_pools,
+            top_n=top_n,
+            provider=provider,
+        )
+        return registry.call_tool("market_brief", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="technical_indicator", description="Get technical indicator series such as MACD, MA, BOLL, KDJ.")
     async def technical_indicator(

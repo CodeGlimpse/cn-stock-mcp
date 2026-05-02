@@ -79,6 +79,18 @@
   - `qsgc / 强势` -> `strong`
 - 兼容现有 provider 路径映射，不影响旧调用
 
+### market_brief（一键市场简报）
+- 新增聚合接口：组合 `market_overview + market_pool`
+- 支持参数：
+  - `brief_type`: `pre_open / intraday / close`
+  - `trade_date`: 可选，默认当天
+  - `include_pools`: 是否包含股池摘要
+  - `top_n`: 股池展示条数
+- 输出包含：
+  - 指数概览数据
+  - 股池统计（涨停/跌停/强势）
+  - 可直接给 newsbot 使用的 `summary` 文本
+
 ## 已验证通过（智兔主链路）
 - 指数实时行情
 - 基金实时行情
