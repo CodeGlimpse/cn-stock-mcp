@@ -104,6 +104,22 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --pa
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"000001.SH","sec_type":"index","indicator":"kdj","interval":"m","limit":24}'
 ```
 
+### market_pool 类型扩充调用样例
+
+```bash
+# 标准类型
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"limit_up","trade_date":"2026-05-01","limit":50}'
+
+# 类型别名：ztgc -> limit_up
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"ztgc","trade_date":"2026-05-01","limit":50}'
+
+# 类型别名：dtgc -> limit_down
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"dtgc","trade_date":"2026-05-01","limit":50}'
+
+# 类型别名：qsgc -> strong
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"qsgc","trade_date":"2026-05-01","limit":50}'
+```
+
 ### sector_lookup 本地调用样例（板块列表 / 层级）
 
 ```bash

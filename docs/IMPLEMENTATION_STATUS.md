@@ -71,6 +71,14 @@
   - 支持按请求显式指定优先顺序（如 `['akshare','zhitu']`）
   - 顺序即执行顺序，自动 fallback
 
+### market_pool 类型扩充
+- 标准类型仍为：`limit_up / limit_down / strong`
+- 新增可用别名：
+  - `ztgc / up / 涨停` -> `limit_up`
+  - `dtgc / down / 跌停` -> `limit_down`
+  - `qsgc / 强势` -> `strong`
+- 兼容现有 provider 路径映射，不影响旧调用
+
 ## 已验证通过（智兔主链路）
 - 指数实时行情
 - 基金实时行情

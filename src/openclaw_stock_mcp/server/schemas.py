@@ -127,10 +127,35 @@ class TechnicalIndicatorRequest(BaseModel):
 
 
 class MarketPoolRequest(BaseModel):
-    pool_type: PoolType
+    pool_type: str
     trade_date: str | None = None
     limit: int = Field(default=100, ge=1, le=500)
     provider: Literal["zhitu"] | None = "zhitu"
+
+    @model_validator(mode="after")
+    def normalize_pool_type(self):
+        raw = (self.pool_type or "").strip().lower()
+        alias = {
+            "limit_up": "limit_up",
+            "ztgc": "limit_up",
+            "up": "limit_up",
+            "涨停": "limit_up",
+            "limit_down": "limit_down",
+            "dtgc": "limit_down",
+            "down": "limit_down",
+            "跌停": "limit_down",
+            "strong": "strong",
+            "qsgc": "strong",
+            "强势": "strong",
+        }
+        normalized = alias.get(raw)
+        if not normalized:
+            raise ValueError(
+                "pool_type must be one of: limit_up/limit_down/strong "
+                "(aliases: ztgc/dtgc/qsgc, up/down, 涨停/跌停/强势)"
+            )
+        self.pool_type = normalized
+        return self
 
 
 class StockOrderbookRequest(BaseModel):
