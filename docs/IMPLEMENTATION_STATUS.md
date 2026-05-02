@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-01
+更新时间：2026-05-02
 
 ## 已完成
 
@@ -20,7 +20,18 @@
 - `technical_indicator`
 - `market_pool`
 - `stock_orderbook`
+- `sector_lookup`
 - `provider_health`
+
+### sector_lookup（板块列表/层级）当前实现
+- 输入模式：`list | children | members(兼容别名)`
+- `list + concept`：调用 `/hs/list/sectors`（概念板块列表）
+- `list + primary`：调用 `/hs/list/primary`（一级板块列表）
+- `children` / `members`：调用 `/hs/sectors/{sector_name}`（层级查询：一级板块下属板块）
+- `SectorLookupRequest` 增加参数校验：
+  - `mode=list` 默认 `sector_type=concept`
+  - `mode=children` 默认 `sector_type=primary`
+  - `mode in {members, children}` 时强制要求 `sector_name`
 
 ## 已验证通过（智兔主链路）
 - 指数实时行情
@@ -53,6 +64,7 @@
 - 市场概览
 - 股池
 - 盘口
+- 板块列表/层级
 
 ### 当前补充路径
 以 **AKShare** 作为补充 provider：
@@ -62,8 +74,10 @@
 ## 已知限制
 1. AKShare 股票历史字段仍依赖上游可用性与口径
 2. `stock_history(stock)` 中首条 `prev_close` 可能为空（无前序数据）
+3. `sector_lookup` 的 `children/members` 语义依据智兔文档推断为“一级板块下属板块”，建议后续做一次在线样本验收固化
 
 ## 仍待处理
 1. 增强 token alias / 多 token 选择策略
 2. 增加自动化测试
 3. 如有需要，继续增强 AKShare 股票历史字段完整度
+4. 为 `sector_lookup` 增补自动化测试与线上回归样例

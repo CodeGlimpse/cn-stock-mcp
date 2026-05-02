@@ -74,25 +74,34 @@ class ZhituProvider:
 
         return items[:limit]
 
+    def _normalize_sector_mode(self, mode: str) -> str:
+        # 兼容旧接口名：members
+        if mode == "members":
+            return "children"
+        return mode
+
+    def _slice_items(self, items: list, limit: int) -> list:
+        return items[:limit] if limit and limit > 0 else items
+
     def get_sector_lookup(self, mode: str, sector_type: str | None = None, sector_name: str | None = None, limit: int = 100):
-        if mode == "list":
+        normalized_mode = self._normalize_sector_mode(mode)
+
+        if normalized_mode == "list":
             if sector_type == "primary":
                 raw = self._get_json("/hs/list/primary")
-                items = [adapt_zhitu_primary_sector_item(item) for item in raw]
-                return items[:limit]
+                items = [adapt_zhitu_primary_sector_item(item) for item in raw if isinstance(item, dict)]
+                return self._slice_items(items, limit)
 
             raw = self._get_json("/hs/list/sectors")
-            items = [adapt_zhitu_sector_list_item(item) for item in raw]
-            if sector_type == "concept":
-                items = [item for item in items if item.exchange == "BK"]
-            return items[:limit]
+            items = [adapt_zhitu_sector_list_item(item) for item in raw if isinstance(item, dict)]
+            return self._slice_items(items, limit)
 
-        if mode == "members":
+        if normalized_mode == "children":
             if not sector_name:
-                raise ProviderError("INVALID_ARGUMENT", "sector_name is required when mode=members", retryable=False)
+                raise ProviderError("INVALID_ARGUMENT", "sector_name is required when mode=children", retryable=False)
             raw = self._get_json(f"/hs/sectors/{sector_name}")
-            items = [adapt_zhitu_sector_list_item(item) for item in raw]
-            return items[:limit]
+            items = [adapt_zhitu_sector_list_item(item) for item in raw if isinstance(item, dict)]
+            return self._slice_items(items, limit)
 
         raise ProviderError("INVALID_ARGUMENT", f"Unsupported mode: {mode}", retryable=False)
 

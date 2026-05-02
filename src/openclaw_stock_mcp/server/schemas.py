@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 SecType = Literal["stock", "index", "fund", "sector"]
 ProviderName = Literal["akshare", "zhitu", "mixed"]
@@ -10,6 +10,8 @@ Interval = Literal["1m", "5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
 AdjustType = Literal["none", "qfq", "hfq"]
 IndicatorType = Literal["macd", "ma", "boll", "kdj"]
 PoolType = Literal["limit_up", "limit_down", "strong"]
+SectorLookupMode = Literal["list", "members", "children"]
+SectorType = Literal["concept", "primary"]
 
 
 class StockSearchRequest(BaseModel):
@@ -71,8 +73,21 @@ class StockOrderbookRequest(BaseModel):
 
 
 class SectorLookupRequest(BaseModel):
-    mode: Literal["list", "members"]
-    sector_type: Literal["concept", "primary"] | None = None
+    mode: SectorLookupMode
+    sector_type: SectorType | None = None
     sector_name: str | None = None
     limit: int = Field(default=100, ge=1, le=500)
     provider: Literal["zhitu"] | None = "zhitu"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.mode == "list" and self.sector_type is None:
+            self.sector_type = "concept"
+
+        if self.mode == "children" and self.sector_type is None:
+            self.sector_type = "primary"
+
+        if self.mode in {"members", "children"} and not self.sector_name:
+            raise ValueError("sector_name is required when mode=members/children")
+
+        return self

@@ -62,6 +62,22 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --list-tools
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
 ```
 
+### sector_lookup 本地调用样例（板块列表 / 层级）
+
+```bash
+# 概念板块列表（默认）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"list","sector_type":"concept","limit":10}'
+
+# 一级板块列表
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"list","sector_type":"primary","limit":10}'
+
+# 层级查询：某一级板块下的子板块（children）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"children","sector_name":"概念指数","limit":20}'
+
+# 兼容旧模式名 members（语义等同 children）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"members","sector_name":"概念指数","limit":20}'
+```
+
 ### 运行 smoke test
 
 ```bash
@@ -104,6 +120,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 1. `provider_health {}`
 2. `stock_quote {"symbols":["000001.SH"],"sec_type":"index"}`
 3. `stock_history {"symbol":"600519","sec_type":"stock","interval":"1d","limit":5}`
+4. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
 
 ## 说明
 
@@ -117,6 +134,11 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
   - `volume`：优先由 `stock_zh_a_daily` 按日期回填
   - `turnover`：统一为成交额口径（`stock_zh_a_daily.amount` 优先）
   - `prev_close`：按前一条 bar 的 `close` 推导（首条通常为空）
+
+### sector_lookup 当前语义
+- `mode=list, sector_type=concept`：概念板块列表
+- `mode=list, sector_type=primary`：一级板块列表
+- `mode=children`（或兼容 `members`）：一级板块下属板块列表（层级查询）
 
 ### Transport 状态
 当前已切换为 **MCP Python SDK（FastMCP）stdio transport**。
