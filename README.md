@@ -78,6 +78,22 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload 
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"000001.SH","sec_type":"index","interval":"m","limit":24}'
 ```
 
+### technical_indicator 多指标 / 多周期调用样例
+
+```bash
+# MACD + 日线（d）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"000001.SH","sec_type":"index","indicator":"macd","interval":"d","limit":30}'
+
+# MA + 15分钟（15）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"000001.SH","sec_type":"index","indicator":"ma","interval":"15","limit":50}'
+
+# BOLL + 周线（w）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"000001.SH","sec_type":"index","indicator":"boll","interval":"w","limit":40}'
+
+# KDJ + 月线（m）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"000001.SH","sec_type":"index","indicator":"kdj","interval":"m","limit":24}'
+```
+
 ### sector_lookup 本地调用样例（板块列表 / 层级）
 
 ```bash

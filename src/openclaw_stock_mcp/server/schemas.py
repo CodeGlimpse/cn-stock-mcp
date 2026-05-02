@@ -77,13 +77,53 @@ class MarketOverviewRequest(BaseModel):
 
 class TechnicalIndicatorRequest(BaseModel):
     symbol: str
-    interval: Literal["5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
-    indicator: IndicatorType
+    interval: str
+    indicator: str
     sec_type: Literal["stock", "index", "fund"] = "index"
     start_date: str | None = None
     end_date: str | None = None
     limit: int = Field(default=200, ge=1, le=2000)
     provider: Literal["zhitu", "akshare"] | None = None
+
+    @model_validator(mode="after")
+    def normalize_request(self):
+        interval_raw = (self.interval or "").strip()
+        interval_alias = {
+            "5": "5m",
+            "15": "15m",
+            "30": "30m",
+            "60": "60m",
+            "d": "1d",
+            "w": "1w",
+            "m": "1M",
+            "y": "1y",
+            "5m": "5m",
+            "15m": "15m",
+            "30m": "30m",
+            "60m": "60m",
+            "1d": "1d",
+            "1w": "1w",
+            "1m": "1M",
+            "1y": "1y",
+        }
+        interval_normalized = interval_alias.get(interval_raw.lower())
+        if not interval_normalized:
+            raise ValueError("interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y")
+
+        indicator_raw = (self.indicator or "").strip().lower()
+        indicator_alias = {
+            "macd": "macd",
+            "ma": "ma",
+            "boll": "boll",
+            "kdj": "kdj",
+        }
+        indicator_normalized = indicator_alias.get(indicator_raw)
+        if not indicator_normalized:
+            raise ValueError("indicator must be one of: macd/ma/boll/kdj")
+
+        self.interval = interval_normalized
+        self.indicator = indicator_normalized
+        return self
 
 
 class MarketPoolRequest(BaseModel):
