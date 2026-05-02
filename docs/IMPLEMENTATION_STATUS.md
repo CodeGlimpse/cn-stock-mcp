@@ -33,6 +33,19 @@
   - `mode=children` 默认 `sector_type=primary`
   - `mode in {members, children}` 时强制要求 `sector_name`
 
+### stock_history(index) 多周期输入别名支持
+- 已支持输入：`5/15/30/60/d/w/m/y`
+- 内部标准化映射：
+  - `5 -> 5m`
+  - `15 -> 15m`
+  - `30 -> 30m`
+  - `60 -> 60m`
+  - `d -> 1d`
+  - `w -> 1w`
+  - `m -> 1M`
+  - `y -> 1y`
+- 与既有格式 `5m/15m/30m/60m/1d/1w/1M/1y` 兼容
+
 ## 已验证通过（智兔主链路）
 - 指数实时行情
 - 基金实时行情

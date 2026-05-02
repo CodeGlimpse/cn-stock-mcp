@@ -32,7 +32,7 @@ class StockQuoteRequest(BaseModel):
 
 class StockHistoryRequest(BaseModel):
     symbol: str
-    interval: Interval
+    interval: str
     sec_type: Literal["stock", "index", "fund"] | None = None
     start_date: str | None = None
     end_date: str | None = None
@@ -40,6 +40,33 @@ class StockHistoryRequest(BaseModel):
     adjust: AdjustType = "none"
     provider: Literal["akshare", "zhitu"] | None = None
     provider_preference: list[Literal["akshare", "zhitu"]] | None = None
+
+    @model_validator(mode="after")
+    def normalize_interval(self):
+        raw = (self.interval or "").strip()
+        alias = {
+            "5": "5m",
+            "15": "15m",
+            "30": "30m",
+            "60": "60m",
+            "d": "1d",
+            "w": "1w",
+            "m": "1M",
+            "y": "1y",
+            "5m": "5m",
+            "15m": "15m",
+            "30m": "30m",
+            "60m": "60m",
+            "1d": "1d",
+            "1w": "1w",
+            "1m": "1M",
+            "1y": "1y",
+        }
+        normalized = alias.get(raw.lower())
+        if not normalized:
+            raise ValueError("interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y")
+        self.interval = normalized
+        return self
 
 
 class MarketOverviewRequest(BaseModel):

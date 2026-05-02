@@ -62,6 +62,22 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --list-tools
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
 ```
 
+### stock_history(index) 多周期调用样例（5/15/30/60/d/w/m/y）
+
+```bash
+# 5分钟
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"000001.SH","sec_type":"index","interval":"5","limit":20}'
+
+# 日线
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"000001.SH","sec_type":"index","interval":"d","limit":30}'
+
+# 周线
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"000001.SH","sec_type":"index","interval":"w","limit":30}'
+
+# 月线
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"000001.SH","sec_type":"index","interval":"m","limit":24}'
+```
+
 ### sector_lookup 本地调用样例（板块列表 / 层级）
 
 ```bash
@@ -121,6 +137,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 2. `stock_quote {"symbols":["000001.SH"],"sec_type":"index"}`
 3. `stock_history {"symbol":"600519","sec_type":"stock","interval":"1d","limit":5}`
 4. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
+5. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
 
 ## 说明
 
