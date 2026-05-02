@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.services.fallback import run_with_fallback
+from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
 
@@ -16,7 +16,7 @@ class StockHistoryUseCase:
             sec_type=resolved.sec_type,
             preferred=getattr(request, "provider", None),
         )
-        items = run_with_fallback(
+        items, fallback_meta = run_with_fallback_meta(
             self.router,
             selection,
             lambda provider: provider.get_history(
@@ -38,5 +38,12 @@ class StockHistoryUseCase:
             "adjust": request.adjust,
             "items": items,
             "count": len(items),
-            "source": selection.primary,
+            "source": fallback_meta.final_provider or selection.primary,
+            "meta": {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider,
+                "used_fallback": fallback_meta.used_fallback,
+            },
         }
