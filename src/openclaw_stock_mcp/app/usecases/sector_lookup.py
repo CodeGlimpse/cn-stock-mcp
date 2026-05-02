@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.services.fallback import run_with_fallback
+from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 
 
@@ -12,7 +12,7 @@ class SectorLookupUseCase:
             sec_type="sector",
             preferred=getattr(request, "provider", None),
         )
-        items = run_with_fallback(
+        items, fallback_meta = run_with_fallback_meta(
             self.router,
             selection,
             lambda provider: provider.get_sector_lookup(
@@ -28,5 +28,12 @@ class SectorLookupUseCase:
             "sector_name": request.sector_name,
             "items": items,
             "total": len(items),
-            "source": selection.primary,
+            "source": fallback_meta.final_provider or selection.primary,
+            "meta": {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider,
+                "used_fallback": fallback_meta.used_fallback,
+            },
         }

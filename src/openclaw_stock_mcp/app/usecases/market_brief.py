@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from openclaw_stock_mcp.app.services.fallback import run_with_fallback
+from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 
 
@@ -18,13 +18,14 @@ class MarketBriefUseCase:
             sec_type="index",
             preferred=(None if request.provider == "mixed" else request.provider),
         )
-        overview = run_with_fallback(
+        overview, overview_meta = run_with_fallback_meta(
             self.router,
             overview_selection,
             lambda provider: provider.get_market_overview(request.market),
         )
 
         pools: dict[str, dict] = {}
+        pools_meta: dict[str, dict] = {}
         if request.include_pools:
             for pool_type in ("limit_up", "limit_down", "strong"):
                 pool_selection = self.router.choose_provider(
@@ -32,7 +33,7 @@ class MarketBriefUseCase:
                     sec_type="stock",
                     preferred=(getattr(request, "provider", None) or "zhitu"),
                 )
-                items = run_with_fallback(
+                items, pool_meta = run_with_fallback_meta(
                     self.router,
                     pool_selection,
                     lambda provider, _pool_type=pool_type: provider.get_market_pool(
@@ -44,7 +45,14 @@ class MarketBriefUseCase:
                 pools[pool_type] = {
                     "count": len(items),
                     "top_items": top_items,
-                    "source": pool_selection.primary,
+                    "source": pool_meta.final_provider or pool_selection.primary,
+                }
+                pools_meta[pool_type] = {
+                    "selected_primary": pool_meta.selected_primary,
+                    "selected_fallback": pool_meta.selected_fallback,
+                    "attempted": pool_meta.attempted,
+                    "final_provider": pool_meta.final_provider,
+                    "used_fallback": pool_meta.used_fallback,
                 }
 
         indices = overview.get("indices", []) if isinstance(overview, dict) else []
@@ -57,6 +65,16 @@ class MarketBriefUseCase:
             "overview": overview,
             "pools": pools,
             "summary": summary,
+            "meta": {
+                "overview": {
+                    "selected_primary": overview_meta.selected_primary,
+                    "selected_fallback": overview_meta.selected_fallback,
+                    "attempted": overview_meta.attempted,
+                    "final_provider": overview_meta.final_provider,
+                    "used_fallback": overview_meta.used_fallback,
+                },
+                "pools": pools_meta,
+            },
         }
 
     def _build_summary(self, indices, pools, trade_date: str, brief_type: str) -> str:

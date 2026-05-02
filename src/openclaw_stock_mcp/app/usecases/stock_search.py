@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.services.fallback import run_with_fallback
+from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 
 
@@ -12,7 +12,7 @@ class StockSearchUseCase:
             sec_type=None,
             preferred=getattr(request, "provider", None),
         )
-        result = run_with_fallback(
+        result, fallback_meta = run_with_fallback_meta(
             self.router,
             selection,
             lambda provider: provider.search_instruments(
@@ -22,9 +22,15 @@ class StockSearchUseCase:
                 limit=request.limit,
             ),
         )
-        source = selection.primary
         return {
             "items": result,
             "total": len(result),
-            "source": source,
+            "source": fallback_meta.final_provider or selection.primary,
+            "meta": {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider,
+                "used_fallback": fallback_meta.used_fallback,
+            },
         }
