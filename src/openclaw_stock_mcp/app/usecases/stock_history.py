@@ -29,6 +29,24 @@ class StockHistoryUseCase:
                 adjust=request.adjust,
             ),
         )
+        meta = {
+            "selected_primary": fallback_meta.selected_primary,
+            "selected_fallback": fallback_meta.selected_fallback,
+            "attempted": fallback_meta.attempted,
+            "final_provider": fallback_meta.final_provider,
+            "used_fallback": fallback_meta.used_fallback,
+        }
+
+        if resolved.sec_type == "stock" and request.interval in {"1w", "1M"}:
+            meta.update(
+                {
+                    "derived_from": "1d",
+                    "aggregation": "calendar_week" if request.interval == "1w" else "calendar_month",
+                    "limit_applied_after_aggregation": True,
+                    "partial_period_at_range_edges": bool(request.start_date or request.end_date),
+                }
+            )
+
         return {
             "symbol": resolved.symbol,
             "sec_type": resolved.sec_type,
@@ -39,11 +57,5 @@ class StockHistoryUseCase:
             "items": items,
             "count": len(items),
             "source": fallback_meta.final_provider or selection.primary,
-            "meta": {
-                "selected_primary": fallback_meta.selected_primary,
-                "selected_fallback": fallback_meta.selected_fallback,
-                "attempted": fallback_meta.attempted,
-                "final_provider": fallback_meta.final_provider,
-                "used_fallback": fallback_meta.used_fallback,
-            },
+            "meta": meta,
         }

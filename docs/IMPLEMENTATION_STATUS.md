@@ -45,6 +45,25 @@
   - 区间模式强制要求 `start_date` + `end_date` 成对提供
   - `start_date <= end_date`
 
+### stock_history(stock) 复盘增强
+- 当前 provider：`akshare`
+- 已支持周期：`1d / 1w / 1M`（输入别名仍可用：`d / w / m`）
+- `1w / 1M` 通过日线结果聚合得到：
+  - 周线：按自然周聚合
+  - 月线：按自然月聚合
+- 字段口径：
+  - `open`：周期首日开盘
+  - `high`：周期内最高
+  - `low`：周期内最低
+  - `close`：周期末日收盘
+  - `volume`：周期内成交量求和
+  - `turnover`：周期内成交额求和
+  - `prev_close`：聚合后按前一根 K 线 close 回填
+- 区间语义：
+  - `limit` 在聚合后应用
+  - `start_date/end_date` 指定区间时，边界周/月可能是不完整周期
+  - usecase 会在 `meta` 输出：`derived_from / aggregation / limit_applied_after_aggregation / partial_period_at_range_edges`
+
 ### stock_history(index) 多周期输入别名支持
 - 已支持输入：`5/15/30/60/d/w/m/y`
 - 内部标准化映射：

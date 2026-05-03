@@ -261,11 +261,15 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 
 ### 股票历史的当前实现
 - `stock_history(stock)` 当前通过 **AKShare 腾讯历史接口** 实现
+- 复盘增强：股票已支持 `1d / 1w / 1M`
+  - `1w / 1M` 由日线聚合得到
+  - `limit` 在聚合后应用
+  - 当传入 `start_date/end_date` 时，区间边界可能出现不完整周/月，这一点会在 `data.meta.partial_period_at_range_edges` 标明
 - 字段来源与口径：
-  - `open/high/low/close`：腾讯历史接口
-  - `volume`：优先由 `stock_zh_a_daily` 按日期回填
-  - `turnover`：统一为成交额口径（`stock_zh_a_daily.amount` 优先）
-  - `prev_close`：按前一条 bar 的 `close` 推导（首条通常为空）
+  - `open/high/low/close`：腾讯历史接口（日线基础）
+  - `volume`：优先由 `stock_zh_a_daily` 按日期回填；周/月按日线求和
+  - `turnover`：统一为成交额口径（`stock_zh_a_daily.amount` 优先）；周/月按日线求和
+  - `prev_close`：日线按前一条 bar 的 `close` 推导；周/月使用聚合后前一根 K 线 `close` 回填
 
 ### sector_lookup 当前语义
 - `mode=list, sector_type=concept`：概念板块列表

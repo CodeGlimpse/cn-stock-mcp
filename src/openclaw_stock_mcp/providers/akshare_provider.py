@@ -10,6 +10,7 @@ try:
 except Exception:  # pragma: no cover
     ak = None
 
+from openclaw_stock_mcp.app.models.bar import Bar
 from openclaw_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_fund_list_row,
     adapt_akshare_index_list_row,
@@ -57,6 +58,67 @@ class AKShareProvider:
         if " " in text:
             text = text.split(" ", 1)[0]
         return text
+
+    def _sum_or_none(self, values: list[float | None]) -> float | None:
+        valid = [v for v in values if v is not None]
+        return float(sum(valid)) if valid else None
+
+    def _max_or_none(self, values: list[float | None]) -> float | None:
+        valid = [v for v in values if v is not None]
+        return max(valid) if valid else None
+
+    def _min_or_none(self, values: list[float | None]) -> float | None:
+        valid = [v for v in values if v is not None]
+        return min(valid) if valid else None
+
+    def _aggregate_bars(self, bars: list[Bar], interval: str) -> list[Bar]:
+        if interval not in {"1w", "1M"}:
+            raise ProviderError("UNSUPPORTED_INTERVAL", f"Unsupported stock interval: {interval}", retryable=False)
+        if not bars:
+            return []
+
+        groups: list[list[Bar]] = []
+        current_group: list[Bar] = []
+        current_key = None
+
+        for bar in bars:
+            d = date.fromisoformat(str(bar.time)[:10])
+            key = (d.isocalendar().year, d.isocalendar().week) if interval == "1w" else (d.year, d.month)
+            if current_key is None or key == current_key:
+                current_group.append(bar)
+                current_key = key
+                continue
+            groups.append(current_group)
+            current_group = [bar]
+            current_key = key
+
+        if current_group:
+            groups.append(current_group)
+
+        aggregated: list[Bar] = []
+        for group in groups:
+            first = group[0]
+            last = group[-1]
+            aggregated.append(
+                Bar(
+                    time=last.time,
+                    open=first.open,
+                    high=self._max_or_none([b.high for b in group]),
+                    low=self._min_or_none([b.low for b in group]),
+                    close=last.close,
+                    volume=self._sum_or_none([b.volume for b in group]),
+                    turnover=self._sum_or_none([b.turnover for b in group]),
+                    prev_close=first.prev_close,
+                )
+            )
+
+        prev_close = None
+        for bar in aggregated:
+            if prev_close is not None:
+                bar.prev_close = prev_close
+            prev_close = bar.close if bar.close is not None else prev_close
+
+        return aggregated
 
     def search_instruments(self, query: str, sec_types=None, market: str | None = None, limit: int = 10):
         lib = self._require_ak()
@@ -106,8 +168,8 @@ class AKShareProvider:
         lib = self._require_ak()
         if sec_type != "stock":
             raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare history minimal version supports stock only", retryable=False)
-        if interval != "1d":
-            raise ProviderError("UNSUPPORTED_INTERVAL", "AKShare minimal version supports 1d only", retryable=False)
+        if interval not in {"1d", "1w", "1M"}:
+            raise ProviderError("UNSUPPORTED_INTERVAL", "AKShare review mode currently supports 1d/1w/1M only", retryable=False)
 
         normalized = normalize_symbol(symbol)
         tx_symbol = self._to_tx_symbol(normalized)
@@ -123,8 +185,6 @@ class AKShareProvider:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare TX history failed: {exc}", retryable=True) from exc
 
         tx_rows = tx_df.to_dict(orient="records")
-        if limit:
-            tx_rows = tx_rows[-limit:]
         bars = [adapt_akshare_tx_bar_row(row) for row in tx_rows]
 
         # best-effort: fill/normalize volume+turnover from stock_zh_a_daily
@@ -168,7 +228,14 @@ class AKShareProvider:
                 bar.prev_close = prev_close
             prev_close = bar.close if bar.close is not None else prev_close
 
-        return bars
+        if interval == "1d":
+            result = bars
+        else:
+            result = self._aggregate_bars(bars, interval)
+
+        if limit:
+            result = result[-limit:]
+        return result
 
     def get_orderbook(self, symbol: str, sec_type: str):
         raise ProviderError("UNSUPPORTED_MARKET", "AKShare orderbook not implemented", retryable=False)
