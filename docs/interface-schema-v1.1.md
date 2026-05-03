@@ -827,7 +827,7 @@ OrderBook
 {
   "type": "object",
   "properties": {
-    "mode": {"type": "string", "enum": ["list", "members"]},
+    "mode": {"type": "string", "enum": ["list", "members", "children"]},
     "sector_type": {"type": "string", "enum": ["concept", "primary"]},
     "sector_name": {"type": "string"},
     "limit": {"type": "integer", "minimum": 1, "maximum": 500},
@@ -850,16 +850,20 @@ OrderBook
 }
 ```
 
-#### members 模式
+#### members / children 模式
 ```json
 {
-  "mode": "members",
-  "sector_name": "概念指数",
+  "mode": "children",
+  "sector_name": "TFG板块趋势",
   "items": [Instrument],
   "count": 50,
   "source": "zhitu"
 }
 ```
+
+说明：
+- `members` 是兼容旧模式名，语义等同 `children`
+- 当前返回的是**股票成员列表**，不是子板块列表
 
 ---
 
@@ -951,7 +955,7 @@ OrderBook
 | Tool | 主 provider | 备 provider | 说明 |
 |---|---|---|---|
 | stock_search | akshare | zhitu | 搜索/基础解析优先本地能力 |
-| stock_quote(stock) | 待实测 | 待实测 | 上线前比较实时性与稳定性 |
+| stock_quote(stock) | zhitu | akshare | 已实测：普通沪深股票实时主走智兔，akshare 作为备源 |
 | stock_quote(index) | zhitu | akshare | 指数智兔文档更明确 |
 | stock_quote(fund) | zhitu | akshare | 基金实时智兔文档明确 |
 | stock_history(stock) | akshare | zhitu | 历史数据优先 AKShare |

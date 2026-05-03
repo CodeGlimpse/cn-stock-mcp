@@ -695,11 +695,13 @@ adapter 层需要统一转为：
 1. 如果返回的是“板块列表项”，则 `sec_type=sector`
 2. 如果返回的是“板块成分股”，则 `sec_type=stock`
 
-从文档描述“获取对应的板块列表”看，**我暂时无法确认**到底是板块明细还是成分股明细。实现时应先实测。
+当前已通过在线样本确认：`/hs/sectors/{name}` 返回的是**股票成员列表**，因此：
+- `sector_lookup.list` 返回板块项（`sec_type=sector`）
+- `sector_lookup.children/members` 返回股票成员（`sec_type=stock`）
 
-**建议**：
-- v1 `sector_lookup` 先只做 list 模式
-- members 模式等实测确认再开放
+**当前实现**：
+- `list` 模式：已开放
+- `children/members` 模式：已开放，要求 `sector_name` 传真实可用的一级板块名称，例如 `TFG板块趋势`
 
 ---
 
@@ -814,7 +816,7 @@ AKShare 各接口参数不完全统一，代码中建议单独封装：
 - route → 智兔 `/tech/real/ssjy/688001`
 
 #### case 3：`stock_quote(symbol=000001.SZ, sec_type=stock)`
-- route → 待实测：AKShare 或 智兔主线路
+- route → 智兔 `/hs/real/ssjy/000001`
 
 #### case 4：`stock_quote(symbol=000001.SH, sec_type=index)`
 - route → 智兔 `/hz/real/ssjy/000001.SH`
@@ -897,7 +899,7 @@ AKShare 各接口参数不完全统一，代码中建议单独封装：
 2. **智兔负责指数、实时、指标、股池、盘口、板块类能力**
 3. **所有 provider 原始字段统一在 adapter 层转换**
 4. **symbol / interval / date 必须先经过规范化，再进入 provider**
-5. **普通沪深股票实时的主 provider 最终要靠实测选型，不先拍死**
+5. **普通沪深股票实时当前已实测可走智兔主线路，AKShare 作为备源保留**
 6. **有歧义的智兔接口先收敛能力边界，不要抢实现**
 
 ---

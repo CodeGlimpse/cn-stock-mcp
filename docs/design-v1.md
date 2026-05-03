@@ -700,8 +700,8 @@ class MarketDataProvider(Protocol):
 - 回退：智兔列表接口
 
 #### A股实时行情
-- 优先：AKShare 或 智兔（二选一，建议上线前实测）
-- 回退：另一方
+- 优先：智兔（已实测普通沪深股票实时接口 `/hs/real/ssjy/{code}`）
+- 回退：AKShare
 
 #### 北交所实时
 - 优先：智兔

@@ -202,27 +202,29 @@
 
 ### 当前主交付路径
 以 **智兔** 作为主 provider：
-- 实时行情
-- 指数历史
-- 技术指标
+- 普通沪深股票实时
+- 指数实时 / 历史 / 技术指标
+- 基金实时
+- 北交所 / 科创板实时
 - 市场概览
 - 股池
 - 盘口
-- 板块列表/层级
+- 板块列表 / 成员股
 
 ### 当前补充路径
 以 **AKShare** 作为补充 provider：
 - 搜索
 - 股票历史（腾讯历史接口 + 字段增强）
+- 指数历史 fallback
 - 交易日历 / 复盘日期辅助
 
 ## 已知限制
 1. AKShare 股票历史字段仍依赖上游可用性与口径
 2. `stock_history(stock)` 中首条 `prev_close` 可能为空（无前序数据）
-3. `sector_lookup` 的 `children/members` 语义依据智兔文档推断为“一级板块下属板块”，建议后续做一次在线样本验收固化
+3. `sector_lookup(children/members)` 依赖智兔一级板块名称；无效板块名会返回空列表
+4. `market_pool` 少量记录可能含上游异常值，当前已通过 `extra.data_quality / anomaly_flags` 标记可疑数据
 
 ## 仍待处理
 1. 增强 token alias / 多 token 选择策略
-2. 增加自动化测试
+2. 继续补自动化测试与发布前验收样例
 3. 如有需要，继续增强 AKShare 股票历史字段完整度
-4. 为 `sector_lookup` 增补自动化测试与线上回归样例
