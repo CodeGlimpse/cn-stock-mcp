@@ -141,6 +141,14 @@ class ZhituProvider:
                 raw = raw[0]
             return adapt_zhitu_quote(raw, normalized, sec_type, exchange="SH", board="star")
 
+        if sec_type == "stock" and exchange in {"SH", "SZ"}:
+            raw = self._get_json(f"/hs/real/ssjy/{code}")
+            if isinstance(raw, list):
+                raw = raw[0]
+            if isinstance(raw, dict) and raw.get("error"):
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu quote unavailable for {symbol}: {raw.get('error')}", retryable=True)
+            return adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
+
         raise ProviderError("UNSUPPORTED_MARKET", f"Zhitu quote route not implemented for {symbol}/{sec_type}", retryable=False)
 
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
