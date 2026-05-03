@@ -68,3 +68,12 @@ class MarketDataProvider(Protocol):
         pool_type: str,
         trade_date: str | None = None,
     ) -> list[MarketPoolItem]: ...
+
+    def get_trading_calendar(
+        self,
+        market: str = "CN",
+        date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        recent_limit: int = 5,
+    ) -> dict: ...

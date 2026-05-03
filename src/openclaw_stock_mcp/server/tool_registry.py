@@ -8,12 +8,14 @@ from .schemas import (
     StockQuoteRequest,
     StockSearchRequest,
     TechnicalIndicatorRequest,
+    TradingCalendarRequest,
 )
 
 __all__ = [
     "StockSearchRequest",
     "StockQuoteRequest",
     "StockHistoryRequest",
+    "TradingCalendarRequest",
     "MarketOverviewRequest",
     "MarketBriefRequest",
     "TechnicalIndicatorRequest",

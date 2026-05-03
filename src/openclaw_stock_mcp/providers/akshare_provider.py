@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from bisect import bisect_left, bisect_right
 from datetime import date, datetime
 
 from openclaw_stock_mcp.providers.errors import ProviderError
@@ -21,10 +22,24 @@ from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 class AKShareProvider:
     name = "akshare"
 
+    def __init__(self) -> None:
+        self._trade_dates_cache: list[str] | None = None
+
     def _require_ak(self):
         if ak is None:
             raise ProviderError("PROVIDER_UNAVAILABLE", "akshare is not installed", retryable=False)
         return ak
+
+    def _load_trade_dates(self) -> list[str]:
+        if self._trade_dates_cache is not None:
+            return self._trade_dates_cache
+        lib = self._require_ak()
+        try:
+            df = lib.tool_trade_date_hist_sina()
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare trading calendar failed: {exc}", retryable=True) from exc
+        self._trade_dates_cache = [str(v) for v in df["trade_date"].tolist()]
+        return self._trade_dates_cache
 
     def _to_tx_symbol(self, normalized: str) -> str:
         code, exchange = normalized.split(".", 1)
@@ -166,3 +181,44 @@ class AKShareProvider:
 
     def get_market_pool(self, pool_type: str, trade_date: str | None = None):
         raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare market pool not implemented", retryable=False)
+
+    def get_trading_calendar(self, market: str = "CN", date: str | None = None, start_date: str | None = None, end_date: str | None = None, recent_limit: int = 5):
+        if market != "CN":
+            raise ProviderError("UNSUPPORTED_MARKET", f"Unsupported market: {market}", retryable=False)
+
+        trade_dates = self._load_trade_dates()
+
+        if start_date and end_date:
+            left = bisect_left(trade_dates, start_date)
+            right = bisect_right(trade_dates, end_date)
+            items = trade_dates[left:right]
+            return {
+                "market": market,
+                "start_date": start_date,
+                "end_date": end_date,
+                "items": items,
+                "count": len(items),
+                "source": self.name,
+            }
+
+        target = date or datetime.now().date().isoformat()
+        idx_left = bisect_left(trade_dates, target)
+        is_trading_day = idx_left < len(trade_dates) and trade_dates[idx_left] == target
+        previous_trading_day = trade_dates[idx_left - 1] if idx_left > 0 else None
+        if is_trading_day:
+            next_idx = idx_left + 1
+        else:
+            next_idx = idx_left
+        next_trading_day = trade_dates[next_idx] if next_idx < len(trade_dates) else None
+
+        recent_trading_days = trade_dates[max(0, idx_left - recent_limit):idx_left] if not is_trading_day else trade_dates[max(0, idx_left - recent_limit + 1):idx_left + 1]
+
+        return {
+            "market": market,
+            "date": target,
+            "is_trading_day": is_trading_day,
+            "previous_trading_day": previous_trading_day,
+            "next_trading_day": next_trading_day,
+            "recent_trading_days": recent_trading_days,
+            "source": self.name,
+        }

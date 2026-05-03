@@ -16,6 +16,7 @@
 - `stock_search`
 - `stock_quote`
 - `stock_history`
+- `trading_calendar`
 - `market_overview`
 - `technical_indicator`
 - `market_pool`
@@ -32,6 +33,17 @@
   - `mode=list` 默认 `sector_type=concept`
   - `mode=children` 默认 `sector_type=primary`
   - `mode in {members, children}` 时强制要求 `sector_name`
+
+### trading_calendar（交易日历 / 复盘日期辅助）
+- 新增 `trading_calendar` tool
+- 当前 provider：`akshare`
+- 支持两类查询：
+  - 单日查询：是否交易日、上一个交易日、下一个交易日、最近 N 个交易日
+  - 区间查询：返回区间内交易日列表
+- `TradingCalendarRequest` 增加参数校验：
+  - `date` 不能与 `start_date/end_date` 混用
+  - 区间模式强制要求 `start_date` + `end_date` 成对提供
+  - `start_date <= end_date`
 
 ### stock_history(index) 多周期输入别名支持
 - 已支持输入：`5/15/30/60/d/w/m/y`
@@ -128,6 +140,7 @@
 以 **AKShare** 作为补充 provider：
 - 搜索
 - 股票历史（腾讯历史接口 + 字段增强）
+- 交易日历 / 复盘日期辅助
 
 ## 已知限制
 1. AKShare 股票历史字段仍依赖上游可用性与口径

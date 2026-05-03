@@ -30,6 +30,7 @@
 ### AKShare
 - `stock_search()` 基本可用
 - `stock_history(stock)` 已改走 **腾讯历史接口**，当前可用
+- `trading_calendar()` 交易日历 / 复盘日期辅助可用
 
 ## 快速开始
 
@@ -117,6 +118,17 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{
 
 # 显式指定 provider_preference（先 akshare，再 zhitu）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["600519.SH"],"sec_type":"stock","provider_preference":["akshare","zhitu"]}'
+```
+
+
+### trading_calendar 复盘日期辅助样例
+
+```bash
+# 单日判断：是否交易日、前后交易日、最近交易日
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool trading_calendar --payload '{"date":"2026-05-01"}'
+
+# 区间交易日列表
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool trading_calendar --payload '{"start_date":"2026-04-27","end_date":"2026-05-08"}'
 ```
 
 ### stock_history(index) 多周期调用样例（5/15/30/60/d/w/m/y）
@@ -236,10 +248,11 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 挂载后建议验收顺序：
 
 1. `provider_health {}`
-2. `stock_quote {"symbols":["000001.SH"],"sec_type":"index"}`
-3. `stock_history {"symbol":"600519","sec_type":"stock","interval":"1d","limit":5}`
-4. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
-5. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
+2. `trading_calendar {"date":"2026-05-01"}`
+3. `stock_quote {"symbols":["000001.SH"],"sec_type":"index"}`
+4. `stock_history {"symbol":"600519","sec_type":"stock","interval":"1d","limit":5}`
+5. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
+6. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
 
 ## 说明
 

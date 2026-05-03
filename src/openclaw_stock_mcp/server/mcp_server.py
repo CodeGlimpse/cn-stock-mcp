@@ -16,6 +16,7 @@ from openclaw_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
 from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
 from openclaw_stock_mcp.app.usecases.stock_search import StockSearchUseCase
 from openclaw_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
+from openclaw_stock_mcp.app.usecases.trading_calendar import TradingCalendarUseCase
 from openclaw_stock_mcp.infra.logging import log_event
 from openclaw_stock_mcp.server.response_envelope import error_response, new_request_id, ok_response
 from openclaw_stock_mcp.server.schemas import (
@@ -28,6 +29,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockQuoteRequest,
     StockSearchRequest,
     TechnicalIndicatorRequest,
+    TradingCalendarRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,6 +107,7 @@ def create_server() -> MCPServerStub:
     stock_search = StockSearchUseCase()
     stock_quote = StockQuoteUseCase()
     stock_history = StockHistoryUseCase()
+    trading_calendar = TradingCalendarUseCase()
     market_overview = MarketOverviewUseCase()
     market_brief = MarketBriefUseCase()
     technical_indicator = TechnicalIndicatorUseCase()
@@ -116,6 +119,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
     server.register_tool(MCPTool(name="stock_history", description="Get historical price bars for an instrument.", input_model=StockHistoryRequest, handler=stock_history.execute))
+    server.register_tool(MCPTool(name="trading_calendar", description="Query China trading-day calendar for review and backtesting workflows.", input_model=TradingCalendarRequest, handler=trading_calendar.execute))
     server.register_tool(MCPTool(name="market_overview", description="Get high-level overview of China market major indices.", input_model=MarketOverviewRequest, handler=market_overview.execute))
     server.register_tool(MCPTool(name="market_brief", description="Generate a compact market brief by combining overview and pool data.", input_model=MarketBriefRequest, handler=market_brief.execute))
     server.register_tool(MCPTool(name="technical_indicator", description="Get technical indicator series such as MACD, MA, BOLL, KDJ.", input_model=TechnicalIndicatorRequest, handler=technical_indicator.execute))

@@ -13,6 +13,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockQuoteRequest,
     StockSearchRequest,
     TechnicalIndicatorRequest,
+    TradingCalendarRequest,
 )
 
 
@@ -78,6 +79,25 @@ def build_fastmcp_server() -> FastMCP:
             provider_preference=provider_preference,
         )
         return registry.call_tool("stock_history", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="trading_calendar", description="Query China trading-day calendar for review and backtesting workflows.")
+    async def trading_calendar(
+        market: str = "CN",
+        date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        recent_limit: int = 5,
+        provider: str | None = "akshare",
+    ):
+        req = TradingCalendarRequest(
+            market=market,
+            date=date,
+            start_date=start_date,
+            end_date=end_date,
+            recent_limit=recent_limit,
+            provider=provider,
+        )
+        return registry.call_tool("trading_calendar", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="market_overview", description="Get high-level overview of China market major indices.")
     async def market_overview(

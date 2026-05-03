@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date as dt_date
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -66,6 +67,36 @@ class StockHistoryRequest(BaseModel):
         if not normalized:
             raise ValueError("interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y")
         self.interval = normalized
+        return self
+
+
+class TradingCalendarRequest(BaseModel):
+    market: Literal["CN"] = "CN"
+    date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    recent_limit: int = Field(default=5, ge=1, le=60)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.date and (self.start_date or self.end_date):
+            raise ValueError("date cannot be combined with start_date/end_date")
+
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+            return self
+
+        if self.date:
+            dt_date.fromisoformat(self.date)
+            return self
+
+        self.date = dt_date.today().isoformat()
         return self
 
 
