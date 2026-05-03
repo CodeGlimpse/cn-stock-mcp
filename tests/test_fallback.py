@@ -4,15 +4,17 @@ from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class _Provider:
-    def __init__(self, name, ok=False, retryable=True):
+    def __init__(self, name, ok=False, retryable=True, code="PROVIDER_UNAVAILABLE", result=None):
         self.name = name
         self.ok = ok
         self.retryable = retryable
+        self.code = code
+        self.result = result
 
     def op(self):
         if self.ok:
-            return {"source": self.name}
-        raise ProviderError("PROVIDER_UNAVAILABLE", f"{self.name} failed", retryable=self.retryable)
+            return self.result if self.result is not None else {"source": self.name}
+        raise ProviderError(self.code, f"{self.name} failed", retryable=self.retryable)
 
 
 class _Router:
@@ -33,6 +35,38 @@ def test_run_with_fallback_meta_uses_fallback():
     result, meta = run_with_fallback_meta(router, selection, lambda p: p.op())
 
     assert result["source"] == "akshare"
+    assert meta.used_fallback is True
+    assert meta.final_provider == "akshare"
+    assert meta.attempted == ["zhitu", "akshare"]
+
+
+def test_run_with_fallback_meta_uses_fallback_on_unsupported_error():
+    router = _Router()
+    router._map["zhitu"] = _Provider("zhitu", ok=False, retryable=False, code="UNSUPPORTED_MARKET")
+    selection = ProviderSelection(primary="zhitu", fallback=["akshare"])
+
+    result, meta = run_with_fallback_meta(router, selection, lambda p: p.op())
+
+    assert result["source"] == "akshare"
+    assert meta.used_fallback is True
+    assert meta.final_provider == "akshare"
+    assert meta.attempted == ["zhitu", "akshare"]
+
+
+def test_run_with_fallback_meta_uses_fallback_on_empty_result_when_requested():
+    router = _Router()
+    router._map["zhitu"] = _Provider("zhitu", ok=True, result=[])
+    router._map["akshare"] = _Provider("akshare", ok=True, result=[{"source": "akshare"}])
+    selection = ProviderSelection(primary="zhitu", fallback=["akshare"])
+
+    result, meta = run_with_fallback_meta(
+        router,
+        selection,
+        lambda p: p.op(),
+        should_fallback_result=lambda items: len(items) == 0,
+    )
+
+    assert result == [{"source": "akshare"}]
     assert meta.used_fallback is True
     assert meta.final_provider == "akshare"
     assert meta.attempted == ["zhitu", "akshare"]

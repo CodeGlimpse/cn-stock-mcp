@@ -21,6 +21,7 @@ class StockSearchUseCase:
                 market=request.market,
                 limit=request.limit,
             ),
+            should_fallback_result=lambda items: len(items) == 0,
         )
         return {
             "items": result,
