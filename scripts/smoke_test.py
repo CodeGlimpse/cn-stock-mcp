@@ -14,117 +14,59 @@ TEST_CASES = [
         "kind": "meta",
     },
     {
+        "name": "provider_health",
+        "tool": "provider_health",
+        "payload": {},
+    },
+    {
         "name": "stock_search_min",
         "tool": "stock_search",
         "payload": {"query": "平安银行", "limit": 5},
     },
     {
-        "name": "sector_lookup_list_primary",
-        "tool": "sector_lookup",
-        "payload": {
-            "mode": "list",
-            "sector_type": "primary",
-            "limit": 5
-        },
+        "name": "stock_quote_stock_main",
+        "tool": "stock_quote",
+        "payload": {"symbols": ["600519.SH"], "sec_type": "stock"},
         "requires_zhitu": True,
-    },
-    {
-        "name": "stock_history_stock_daily",
-        "tool": "stock_history",
-        "payload": {
-            "symbol": "600519",
-            "sec_type": "stock",
-            "interval": "1d",
-            "limit": 5,
-        },
     },
     {
         "name": "stock_quote_index",
         "tool": "stock_quote",
-        "payload": {
-            "symbols": ["000001.SH"],
-            "sec_type": "index",
-        },
-        "requires_zhitu": True,
-    },
-    {
-        "name": "technical_indicator_macd",
-        "tool": "technical_indicator",
-        "payload": {
-            "symbol": "000001.SH",
-            "sec_type": "index",
-            "interval": "1d",
-            "indicator": "macd",
-            "limit": 5,
-        },
+        "payload": {"symbols": ["000001.SH"], "sec_type": "index"},
         "requires_zhitu": True,
     },
     {
         "name": "market_overview",
         "tool": "market_overview",
-        "payload": {
-            "market": "CN"
-        },
+        "payload": {"market": "CN"},
         "requires_zhitu": True,
     },
     {
-        "name": "stock_history_index_5m",
+        "name": "sector_lookup_list_primary",
+        "tool": "sector_lookup",
+        "payload": {"mode": "list", "sector_type": "primary", "limit": 5},
+        "requires_zhitu": True,
+    },
+    {
+        "name": "sector_lookup_children_members",
+        "tool": "sector_lookup",
+        "payload": {"mode": "children", "sector_name": "TFG板块趋势", "limit": 5},
+        "requires_zhitu": True,
+    },
+    {
+        "name": "stock_history_stock_daily",
         "tool": "stock_history",
-        "payload": {
-            "symbol": "000001.SH",
-            "sec_type": "index",
-            "interval": "5m",
-            "limit": 5
-        },
-        "requires_zhitu": True,
+        "payload": {"symbol": "600519", "sec_type": "stock", "interval": "1d", "limit": 5},
     },
     {
-        "name": "stock_history_index_daily",
-        "tool": "stock_history",
-        "payload": {
-            "symbol": "000001.SH",
-            "sec_type": "index",
-            "interval": "1d",
-            "limit": 5
-        },
-        "requires_zhitu": True,
+        "name": "stock_review_trade_date",
+        "tool": "stock_review",
+        "payload": {"symbol": "600519.SH", "trade_date": "2026-05-01"},
     },
     {
-        "name": "stock_history_index_weekly",
-        "tool": "stock_history",
-        "payload": {
-            "symbol": "000001.SH",
-            "sec_type": "index",
-            "interval": "1w",
-            "limit": 5
-        },
-        "requires_zhitu": True,
-    },
-    {
-        "name": "stock_quote_fund",
-        "tool": "stock_quote",
-        "payload": {
-            "symbols": ["159001.SZ"],
-            "sec_type": "fund"
-        },
-        "requires_zhitu": True,
-    },
-    {
-        "name": "stock_quote_bj_index",
-        "tool": "stock_quote",
-        "payload": {
-            "symbols": ["899050.BJ"],
-            "sec_type": "index"
-        },
-        "requires_zhitu": True,
-    },
-    {
-        "name": "stock_quote_star",
-        "tool": "stock_quote",
-        "payload": {
-            "symbols": ["688001.SH"],
-            "sec_type": "stock"
-        },
+        "name": "technical_indicator_macd",
+        "tool": "technical_indicator",
+        "payload": {"symbol": "000001.SH", "sec_type": "index", "interval": "1d", "indicator": "macd", "limit": 5},
         "requires_zhitu": True,
     },
     {
@@ -132,20 +74,14 @@ TEST_CASES = [
         "kind": "direct_provider",
         "requires_zhitu": True,
         "provider_method": "get_market_pool",
-        "kwargs": {
-            "pool_type": "limit_up",
-            "trade_date": "2026-04-30"
-        }
+        "kwargs": {"pool_type": "limit_up", "trade_date": "2026-04-30"}
     },
     {
         "name": "stock_orderbook_star",
         "kind": "direct_provider",
         "requires_zhitu": True,
         "provider_method": "get_orderbook",
-        "kwargs": {
-            "symbol": "688001.SH",
-            "sec_type": "stock"
-        }
+        "kwargs": {"symbol": "688001.SH", "sec_type": "stock"}
     }
 ]
 

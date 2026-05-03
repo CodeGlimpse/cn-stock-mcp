@@ -35,12 +35,14 @@
 ### Step 4：宿主调用验证
 建议按顺序测试：
 1. `provider_health`
-2. `stock_quote(index)`
-3. `stock_history(index)`
-4. `stock_quote(fund)`
-5. `market_pool(limit_up)`
-6. `stock_orderbook(star)`
-7. `stock_history(stock)`
+2. `stock_quote(stock-main)`
+3. `stock_quote(index)`
+4. `market_overview`
+5. `sector_lookup(children)`
+6. `stock_history(stock)`
+7. `stock_review(trade_date)`
+8. `market_pool(limit_up)`
+9. `stock_orderbook(star)`
 
 ## 预期风险点
 1. 宿主对 stdio tool schema 的兼容差异
