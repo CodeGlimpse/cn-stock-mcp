@@ -163,6 +163,8 @@ class ZhituProvider:
             params["et"] = end.replace("-", "")
 
         raw = self._get_json(f"/hz/history/fsjy/{normalized}/{mapped}", params=params)
+        if isinstance(raw, dict) and raw.get("error"):
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu history unavailable for {symbol}: {raw.get('error')}", retryable=True)
         if limit:
             raw = raw[-limit:]
         return [adapt_zhitu_bar(item) for item in raw]

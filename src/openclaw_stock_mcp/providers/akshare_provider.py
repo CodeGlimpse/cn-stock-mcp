@@ -16,7 +16,7 @@ from openclaw_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_index_list_row,
     adapt_akshare_stock_list_row,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_tx_bar_row
+from openclaw_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_bar_row, adapt_akshare_tx_bar_row
 from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 
 
@@ -47,6 +47,9 @@ class AKShareProvider:
         exchange_prefix = exchange.lower()
         return f"{exchange_prefix}{code}"
 
+    def _to_index_symbol(self, normalized: str) -> str:
+        return normalized.split(".", 1)[0]
+
     def _date_key(self, value) -> str | None:
         if value is None:
             return None
@@ -70,6 +73,14 @@ class AKShareProvider:
     def _min_or_none(self, values: list[float | None]) -> float | None:
         valid = [v for v in values if v is not None]
         return min(valid) if valid else None
+
+    def _fill_prev_close(self, bars: list[Bar]) -> list[Bar]:
+        prev_close = None
+        for bar in bars:
+            if bar.prev_close is None:
+                bar.prev_close = prev_close
+            prev_close = bar.close if bar.close is not None else prev_close
+        return bars
 
     def _aggregate_bars(self, bars: list[Bar], interval: str) -> list[Bar]:
         if interval not in {"1w", "1M"}:
@@ -112,13 +123,7 @@ class AKShareProvider:
                 )
             )
 
-        prev_close = None
-        for bar in aggregated:
-            if prev_close is not None:
-                bar.prev_close = prev_close
-            prev_close = bar.close if bar.close is not None else prev_close
-
-        return aggregated
+        return self._fill_prev_close(aggregated)
 
     def search_instruments(self, query: str, sec_types=None, market: str | None = None, limit: int = 10):
         lib = self._require_ak()
@@ -166,6 +171,29 @@ class AKShareProvider:
 
     def get_history(self, symbol: str, sec_type: str, interval: str, start=None, end=None, limit=None, adjust=None):
         lib = self._require_ak()
+
+        if sec_type == "index":
+            if interval not in {"1d", "1w", "1M"}:
+                raise ProviderError("UNSUPPORTED_INTERVAL", "AKShare index history currently supports 1d/1w/1M only", retryable=False)
+            normalized = normalize_symbol(symbol)
+            index_symbol = self._to_index_symbol(normalized)
+            period_map = {"1d": "daily", "1w": "weekly", "1M": "monthly"}
+            try:
+                df = lib.index_zh_a_hist(
+                    symbol=index_symbol,
+                    period=period_map[interval],
+                    start_date=(start or "19000101").replace("-", ""),
+                    end_date=(end or "20500101").replace("-", ""),
+                )
+            except Exception as exc:
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare index history failed: {exc}", retryable=True) from exc
+            rows = df.to_dict(orient="records")
+            bars = [adapt_akshare_bar_row(row) for row in rows]
+            bars = self._fill_prev_close(bars)
+            if limit:
+                bars = bars[-limit:]
+            return bars
+
         if sec_type != "stock":
             raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare history minimal version supports stock only", retryable=False)
         if interval not in {"1d", "1w", "1M"}:
@@ -221,12 +249,7 @@ class AKShareProvider:
         except Exception:
             pass
 
-        # derive prev_close from previous bar close when upstream doesn't provide it
-        prev_close = None
-        for bar in bars:
-            if bar.prev_close is None:
-                bar.prev_close = prev_close
-            prev_close = bar.close if bar.close is not None else prev_close
+        bars = self._fill_prev_close(bars)
 
         if interval == "1d":
             result = bars

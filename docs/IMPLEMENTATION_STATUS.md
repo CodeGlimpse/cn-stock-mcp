@@ -136,6 +136,7 @@
 - 科创板实时行情
 - 北交所指数实时行情
 - 指数历史日线
+- 北证50 历史回退已补齐（AKShare index history fallback）
 - MACD 技术指标
 - 市场概览
 - 涨停股池
@@ -146,6 +147,7 @@
 - Eastmoney 历史接口：失败（远端直接断开）
 - 腾讯历史接口：已验证可用，作为股票历史替代实现
 - 股票历史当前通过腾讯历史接口恢复可用
+- 指数历史 fallback 已增强：AKShare 现支持 `index_zh_a_hist` 的 `1d/1w/1M`，用于补齐北证50等指数历史覆盖
 - 已增强字段完整度：
   - `volume`：优先通过 `stock_zh_a_daily` 按日期回填
   - `prev_close`：按前一条 bar 的 `close` 推导（首条为空）

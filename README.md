@@ -30,6 +30,7 @@
 ### AKShare
 - `stock_search()` 基本可用
 - `stock_history(stock)` 已改走 **腾讯历史接口**，当前可用
+- `stock_history(index)` 在 Zhitu 不可用或北证50等边角场景下，已具备 **AKShare index history fallback**
 - `trading_calendar()` 交易日历 / 复盘日期辅助可用
 
 ## 快速开始
