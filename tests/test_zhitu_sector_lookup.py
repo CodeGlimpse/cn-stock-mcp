@@ -3,7 +3,7 @@ from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 class _Zhitu(ZhituProvider):
     def __init__(self):
-        pass
+        self._instrument_name_cache = {}
 
     def _get_json(self, path: str, params=None):
         self.last_path = path

@@ -3,10 +3,11 @@ from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 class _Zhitu(ZhituProvider):
     def __init__(self):
-        pass
+        self._instrument_name_cache = {}
+        self.paths = []
 
     def _get_json(self, path: str, params=None):
-        self.last_path = path
+        self.paths.append(path)
         if path == "/hs/real/ssjy/600519":
             return {
                 "t": "2026-04-30 15:05:05",
@@ -26,6 +27,10 @@ class _Zhitu(ZhituProvider):
                 "lt": 1734131271030.0,
                 "sjl": 6.4,
             }
+        if path == "/hs/list/all":
+            return [
+                {"dm": "600519", "mc": "贵州茅台", "jys": "sh"},
+            ]
         raise AssertionError(f"unexpected path: {path}")
 
 
@@ -34,8 +39,9 @@ def test_zhitu_stock_main_quote_route_uses_hs_real_ssjy():
 
     quote = provider.get_quote("600519.SH", "stock")
 
-    assert provider.last_path == "/hs/real/ssjy/600519"
+    assert "/hs/real/ssjy/600519" in provider.paths
     assert quote.symbol == "600519.SH"
+    assert quote.name == "贵州茅台"
     assert quote.sec_type == "stock"
     assert quote.exchange == "SH"
     assert quote.board == "main"

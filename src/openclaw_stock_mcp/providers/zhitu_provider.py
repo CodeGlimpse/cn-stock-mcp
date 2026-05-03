@@ -32,6 +32,7 @@ class ZhituProvider:
         self.base_url = self.settings.zhitu_base_url.rstrip("/")
         self.token = self.settings.resolve_zhitu_token()
         self.client = build_http_client(self.settings.zhitu_timeout_seconds)
+        self._instrument_name_cache: dict[tuple[str, str], str] = {}
 
     def _get_json(self, path: str, params: dict | None = None):
         if not self.token:
@@ -52,6 +53,46 @@ class ZhituProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu request failed: {exc}", retryable=True) from exc
 
+    def _cache_instrument_name(self, sec_type: str, symbol: str | None, name: str | None):
+        if symbol and name:
+            self._instrument_name_cache[(sec_type, symbol)] = name
+
+    def _warm_name_cache_for_symbol(self, sec_type: str, symbol: str):
+        if (sec_type, symbol) in self._instrument_name_cache:
+            return
+
+        if sec_type == "index":
+            for raw in self._get_json("/hz/list/hszs"):
+                item = adapt_zhitu_index_list_item(raw)
+                self._cache_instrument_name("index", item.symbol, item.name)
+            return
+
+        if sec_type == "fund":
+            for raw in self._get_json("/fund/list/all"):
+                item = adapt_zhitu_fund_list_item(raw)
+                self._cache_instrument_name("fund", item.symbol, item.name)
+            return
+
+        if sec_type == "stock":
+            for raw in self._get_json("/hs/list/all"):
+                item = adapt_zhitu_stock_list_item(raw)
+                self._cache_instrument_name("stock", item.symbol, item.name)
+            return
+
+    def _fill_quote_name(self, quote, sec_type: str, symbol: str):
+        if getattr(quote, "name", None):
+            return quote
+        name = self._instrument_name_cache.get((sec_type, symbol))
+        if not name:
+            try:
+                self._warm_name_cache_for_symbol(sec_type, symbol)
+            except Exception:
+                pass
+            name = self._instrument_name_cache.get((sec_type, symbol))
+        if name:
+            quote.name = name
+        return quote
+
     def search_instruments(self, query: str, sec_types=None, market: str | None = None, limit: int = 10):
         sec_types = sec_types or ["stock", "index", "fund"]
         items = []
@@ -59,15 +100,21 @@ class ZhituProvider:
         if "stock" in sec_types:
             for raw in self._get_json("/hs/list/all"):
                 if query in str(raw.get("dm", "")) or query in str(raw.get("mc", "")):
-                    items.append(adapt_zhitu_stock_list_item(raw))
+                    item = adapt_zhitu_stock_list_item(raw)
+                    self._cache_instrument_name("stock", item.symbol, item.name)
+                    items.append(item)
         if "index" in sec_types:
             for raw in self._get_json("/hz/list/hszs"):
                 if query in str(raw.get("dm", "")) or query in str(raw.get("mc", "")):
-                    items.append(adapt_zhitu_index_list_item(raw))
+                    item = adapt_zhitu_index_list_item(raw)
+                    self._cache_instrument_name("index", item.symbol, item.name)
+                    items.append(item)
         if "fund" in sec_types:
             for raw in self._get_json("/fund/list/all"):
                 if query in str(raw.get("dm", "")) or query in str(raw.get("mc", "")):
-                    items.append(adapt_zhitu_fund_list_item(raw))
+                    item = adapt_zhitu_fund_list_item(raw)
+                    self._cache_instrument_name("fund", item.symbol, item.name)
+                    items.append(item)
         if "sector" in sec_types:
             for raw in self._get_json("/hs/list/sectors"):
                 if query in str(raw.get("dm", "")) or query in str(raw.get("mc", "")):
@@ -87,10 +134,16 @@ class ZhituProvider:
         if isinstance(raw, dict):
             stocks = raw.get("stocks")
             if isinstance(stocks, list):
-                return [adapt_zhitu_sector_member_item(item) for item in stocks if isinstance(item, dict)]
+                items = [adapt_zhitu_sector_member_item(item) for item in stocks if isinstance(item, dict)]
+                for item in items:
+                    self._cache_instrument_name("stock", item.symbol, item.name)
+                return items
             return []
         if isinstance(raw, list):
-            return [adapt_zhitu_sector_member_item(item) for item in raw if isinstance(item, dict)]
+            items = [adapt_zhitu_sector_member_item(item) for item in raw if isinstance(item, dict)]
+            for item in items:
+                self._cache_instrument_name("stock", item.symbol, item.name)
+            return items
         return []
 
     def get_sector_lookup(self, mode: str, sector_type: str | None = None, sector_name: str | None = None, limit: int = 100):
@@ -125,31 +178,36 @@ class ZhituProvider:
             raw = self._get_json(f"/bj/index/real/ssjy/{code}")
             if isinstance(raw, list):
                 raw = raw[0]
-            return adapt_zhitu_quote(raw, normalized, sec_type, exchange="BJ", board="index")
+            quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange="BJ", board="index")
+            return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "index":
             raw = self._get_json(f"/hz/real/ssjy/{normalized}")
             if isinstance(raw, list):
                 raw = raw[0]
-            return adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
+            quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
+            return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "fund":
             raw = self._get_json(f"/fund/real/ssjy/{code}")
             if isinstance(raw, list):
                 raw = raw[0]
-            return adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board="fund")
+            quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board="fund")
+            return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "stock" and normalized.endswith(".BJ"):
             raw = self._get_json(f"/bj/stock/real/ssjy/{code}")
             if isinstance(raw, list):
                 raw = raw[0]
-            return adapt_zhitu_quote(raw, normalized, sec_type, exchange="BJ", board="beijing")
+            quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange="BJ", board="beijing")
+            return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "stock" and code.startswith("688"):
             raw = self._get_json(f"/tech/real/ssjy/{code}")
             if isinstance(raw, list):
                 raw = raw[0]
-            return adapt_zhitu_quote(raw, normalized, sec_type, exchange="SH", board="star")
+            quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange="SH", board="star")
+            return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "stock" and exchange in {"SH", "SZ"}:
             raw = self._get_json(f"/hs/real/ssjy/{code}")
@@ -157,7 +215,8 @@ class ZhituProvider:
                 raw = raw[0]
             if isinstance(raw, dict) and raw.get("error"):
                 raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu quote unavailable for {symbol}: {raw.get('error')}", retryable=True)
-            return adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
+            quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
+            return self._fill_quote_name(quote, sec_type, normalized)
 
         raise ProviderError("UNSUPPORTED_MARKET", f"Zhitu quote route not implemented for {symbol}/{sec_type}", retryable=False)
 
@@ -228,6 +287,7 @@ class ZhituProvider:
             name = str(raw.get("mc", ""))
             symbol = str(raw.get("dm", ""))
             if name in target_names or symbol in {"000001.SH", "399001.SZ", "399006.SZ", "899050.BJ"}:
+                self._cache_instrument_name("index", symbol, name)
                 try:
                     selected.append(self.get_quote(symbol, "index"))
                 except Exception:

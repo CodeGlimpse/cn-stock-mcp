@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime
+from io import StringIO
 
 from openclaw_stock_mcp.providers.errors import ProviderError
 
@@ -32,12 +34,17 @@ class AKShareProvider:
             raise ProviderError("PROVIDER_UNAVAILABLE", "akshare is not installed", retryable=False)
         return ak
 
+    def _call_ak_quietly(self, fn, *args, **kwargs):
+        sink = StringIO()
+        with redirect_stdout(sink), redirect_stderr(sink):
+            return fn(*args, **kwargs)
+
     def _load_trade_dates(self) -> list[str]:
         if self._trade_dates_cache is not None:
             return self._trade_dates_cache
         lib = self._require_ak()
         try:
-            df = lib.tool_trade_date_hist_sina()
+            df = self._call_ak_quietly(lib.tool_trade_date_hist_sina)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare trading calendar failed: {exc}", retryable=True) from exc
         self._trade_dates_cache = [str(v) for v in df["trade_date"].tolist()]
@@ -177,7 +184,7 @@ class AKShareProvider:
 
         if "stock" in sec_types:
             try:
-                df = lib.stock_info_a_code_name()
+                df = self._call_ak_quietly(lib.stock_info_a_code_name)
                 for row in df.to_dict(orient="records"):
                     add_item(adapt_akshare_stock_list_row(row))
             except Exception:
@@ -186,7 +193,7 @@ class AKShareProvider:
         if "index" in sec_types:
             try:
                 if hasattr(lib, "index_stock_info"):
-                    df = lib.index_stock_info()
+                    df = self._call_ak_quietly(lib.index_stock_info)
                     for row in df.to_dict(orient="records"):
                         add_item(adapt_akshare_index_list_row(row))
             except Exception:
@@ -194,7 +201,7 @@ class AKShareProvider:
 
         if "fund" in sec_types:
             try:
-                df = lib.fund_name_em()
+                df = self._call_ak_quietly(lib.fund_name_em)
                 for row in df.to_dict(orient="records"):
                     add_item(adapt_akshare_fund_list_row(row))
             except Exception:
@@ -219,7 +226,8 @@ class AKShareProvider:
             index_symbol = self._to_index_symbol(normalized)
             period_map = {"1d": "daily", "1w": "weekly", "1M": "monthly"}
             try:
-                df = lib.index_zh_a_hist(
+                df = self._call_ak_quietly(
+                    lib.index_zh_a_hist,
                     symbol=index_symbol,
                     period=period_map[interval],
                     start_date=(start or "19000101").replace("-", ""),
@@ -243,7 +251,8 @@ class AKShareProvider:
         tx_symbol = self._to_tx_symbol(normalized)
         adjust_map = {"none": "", "qfq": "qfq", "hfq": "hfq"}
         try:
-            tx_df = lib.stock_zh_a_hist_tx(
+            tx_df = self._call_ak_quietly(
+                lib.stock_zh_a_hist_tx,
                 symbol=tx_symbol,
                 start_date=(start or "19000101").replace("-", ""),
                 end_date=(end or "20500101").replace("-", ""),
@@ -256,7 +265,8 @@ class AKShareProvider:
         bars = [adapt_akshare_tx_bar_row(row) for row in tx_rows]
 
         try:
-            daily_df = lib.stock_zh_a_daily(
+            daily_df = self._call_ak_quietly(
+                lib.stock_zh_a_daily,
                 symbol=tx_symbol,
                 start_date=(start or "19000101").replace("-", ""),
                 end_date=(end or "20500101").replace("-", ""),
