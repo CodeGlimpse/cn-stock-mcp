@@ -62,6 +62,47 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --list-tools
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
 ```
 
+### 返回结构（统一 envelope）
+
+`--tool` 本地调用与 MCP tool 调用的返回已统一为顶层 envelope：
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [],
+    "partial_failure": false,
+    "errors": [],
+    "meta": {
+      "per_symbol": []
+    }
+  },
+  "error": null,
+  "meta": {
+    "tool": "stock_quote"
+  }
+}
+```
+
+失败场景示例（参数校验失败）：
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "error_code": "INVALID_ARGUMENT",
+    "message": "Invalid request payload",
+    "retryable": false,
+    "provider": null,
+    "details": []
+  },
+  "meta": {
+    "tool": "stock_quote"
+  }
+}
+```
+
 ### stock_quote(stock-main) 双源路由样例
 
 ```bash

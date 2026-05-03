@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
+from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
 from openclaw_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
 from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
@@ -14,6 +15,7 @@ from openclaw_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
 from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
 from openclaw_stock_mcp.app.usecases.stock_search import StockSearchUseCase
 from openclaw_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
+from openclaw_stock_mcp.server.response_envelope import error_response, ok_response
 from openclaw_stock_mcp.server.schemas import (
     MarketBriefRequest,
     MarketOverviewRequest,
@@ -53,9 +55,35 @@ class MCPServerStub(BaseModel):
     def call_tool(self, name: str, payload: dict[str, Any]) -> Any:
         tool = self.tools.get(name)
         if not tool:
-            raise ValueError(f"Tool not found: {name}")
-        request = tool.input_model(**payload)
-        return tool.handler(request)
+            return error_response(
+                {
+                    "error_code": "TOOL_NOT_FOUND",
+                    "message": f"Tool not found: {name}",
+                    "retryable": False,
+                    "provider": None,
+                },
+                meta={"tool": name},
+            )
+
+        try:
+            request = tool.input_model(**payload)
+        except ValidationError as exc:
+            return error_response(
+                {
+                    "error_code": "INVALID_ARGUMENT",
+                    "message": "Invalid request payload",
+                    "retryable": False,
+                    "provider": None,
+                    "details": exc.errors(),
+                },
+                meta={"tool": name},
+            )
+
+        try:
+            data = tool.handler(request)
+            return ok_response(data, meta={"tool": name})
+        except Exception as exc:
+            return error_response(serialize_exception(exc), meta={"tool": name})
 
 
 def create_server() -> MCPServerStub:
