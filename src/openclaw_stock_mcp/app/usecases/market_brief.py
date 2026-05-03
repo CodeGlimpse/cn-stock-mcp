@@ -2,27 +2,59 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from openclaw_stock_mcp.app.models.quote import Quote
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
+from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class MarketBriefUseCase:
+    REVIEW_INDICES = [
+        ("000001.SH", "上证指数"),
+        ("399001.SZ", "深证成指"),
+        ("399006.SZ", "创业板指"),
+        ("899050.BJ", "北证50"),
+    ]
+
     def __init__(self) -> None:
         self.router = ProviderRouter()
 
     def execute(self, request):
-        trade_date = request.trade_date or datetime.now().strftime("%Y-%m-%d")
+        requested_trade_date = request.trade_date or datetime.now().strftime("%Y-%m-%d")
+        review_mode = request.trade_date is not None
 
-        overview_selection = self.router.choose_provider(
-            tool_name="market_overview",
-            sec_type="index",
-            preferred=(None if request.provider == "mixed" else request.provider),
-        )
-        overview, overview_meta = run_with_fallback_meta(
-            self.router,
-            overview_selection,
-            lambda provider: provider.get_market_overview(request.market),
-        )
+        calendar_meta: dict = {}
+        effective_trade_date = requested_trade_date
+
+        if review_mode:
+            effective_trade_date, calendar_meta = self._resolve_review_trade_date(
+                request.market,
+                requested_trade_date,
+            )
+            overview, overview_meta = self._build_historical_overview(
+                request.market,
+                effective_trade_date,
+                provider=request.provider,
+            )
+        else:
+            overview_selection = self.router.choose_provider(
+                tool_name="market_overview",
+                sec_type="index",
+                preferred=(None if request.provider == "mixed" else request.provider),
+            )
+            overview, overview_meta = run_with_fallback_meta(
+                self.router,
+                overview_selection,
+                lambda provider: provider.get_market_overview(request.market),
+            )
+            overview_meta = {
+                "selected_primary": overview_meta.selected_primary,
+                "selected_fallback": overview_meta.selected_fallback,
+                "attempted": overview_meta.attempted,
+                "final_provider": overview_meta.final_provider,
+                "used_fallback": overview_meta.used_fallback,
+                "mode": "realtime",
+            }
 
         pools: dict[str, dict] = {}
         pools_meta: dict[str, dict] = {}
@@ -38,7 +70,7 @@ class MarketBriefUseCase:
                     pool_selection,
                     lambda provider, _pool_type=pool_type: provider.get_market_pool(
                         pool_type=_pool_type,
-                        trade_date=trade_date,
+                        trade_date=effective_trade_date,
                     ),
                 )
                 top_items = items[: request.top_n] if request.top_n else items
@@ -56,28 +88,165 @@ class MarketBriefUseCase:
                 }
 
         indices = overview.get("indices", []) if isinstance(overview, dict) else []
-        summary = self._build_summary(indices, pools, trade_date, request.brief_type)
+        summary = self._build_summary(
+            indices,
+            pools,
+            requested_trade_date=requested_trade_date,
+            effective_trade_date=effective_trade_date,
+            brief_type=request.brief_type,
+            review_mode=review_mode,
+            adjusted_to_previous_trading_day=calendar_meta.get("adjusted_to_previous_trading_day", False),
+        )
 
         return {
             "brief_type": request.brief_type,
-            "trade_date": trade_date,
+            "trade_date": effective_trade_date,
+            "requested_trade_date": requested_trade_date,
             "market": request.market,
             "overview": overview,
             "pools": pools,
             "summary": summary,
             "meta": {
-                "overview": {
-                    "selected_primary": overview_meta.selected_primary,
-                    "selected_fallback": overview_meta.selected_fallback,
-                    "attempted": overview_meta.attempted,
-                    "final_provider": overview_meta.final_provider,
-                    "used_fallback": overview_meta.used_fallback,
-                },
+                "review_mode": review_mode,
+                "calendar": calendar_meta,
+                "overview": overview_meta,
                 "pools": pools_meta,
             },
         }
 
-    def _build_summary(self, indices, pools, trade_date: str, brief_type: str) -> str:
+    def _resolve_review_trade_date(self, market: str, requested_trade_date: str) -> tuple[str, dict]:
+        provider = self.router.get_provider("akshare")
+        calendar = provider.get_trading_calendar(
+            market=market,
+            date=requested_trade_date,
+            recent_limit=5,
+        )
+        is_trading_day = bool(calendar.get("is_trading_day"))
+        effective_trade_date = requested_trade_date if is_trading_day else calendar.get("previous_trading_day")
+        if not effective_trade_date:
+            raise ProviderError(
+                "INVALID_ARGUMENT",
+                f"No effective trading day found for requested date: {requested_trade_date}",
+                retryable=False,
+            )
+        return effective_trade_date, {
+            "requested_trade_date": requested_trade_date,
+            "effective_trade_date": effective_trade_date,
+            "requested_is_trading_day": is_trading_day,
+            "adjusted_to_previous_trading_day": effective_trade_date != requested_trade_date,
+            "previous_trading_day": calendar.get("previous_trading_day"),
+            "next_trading_day": calendar.get("next_trading_day"),
+            "recent_trading_days": calendar.get("recent_trading_days", []),
+            "source": calendar.get("source"),
+        }
+
+    def _build_historical_overview(self, market: str, trade_date: str, provider: str | None):
+        previous_trade_date = self.router.get_provider("akshare").get_trading_calendar(
+            market=market,
+            date=trade_date,
+            recent_limit=2,
+        ).get("previous_trading_day")
+
+        indices: list[Quote] = []
+        per_index_meta: list[dict] = []
+        errors: list[dict] = []
+
+        preferred = None if provider == "mixed" else provider
+
+        for symbol, name in self.REVIEW_INDICES:
+            selection = self.router.choose_provider(
+                tool_name="stock_history",
+                symbol=symbol,
+                sec_type="index",
+                preferred=preferred,
+            )
+            try:
+                bars, fallback_meta = run_with_fallback_meta(
+                    self.router,
+                    selection,
+                    lambda p, _symbol=symbol: p.get_history(
+                        symbol=_symbol,
+                        sec_type="index",
+                        interval="1d",
+                        start=previous_trade_date or trade_date,
+                        end=trade_date,
+                        limit=2,
+                        adjust="none",
+                    ),
+                )
+                if not bars:
+                    raise ProviderError("PROVIDER_UNAVAILABLE", f"No index history returned for {symbol}", retryable=True)
+                target_bar = bars[-1]
+                prev_close = target_bar.prev_close
+                if prev_close is None and len(bars) >= 2:
+                    prev_close = bars[-2].close
+                change = None
+                change_percent = None
+                if target_bar.close is not None and prev_close not in (None, 0):
+                    change = target_bar.close - prev_close
+                    change_percent = (change / prev_close) * 100
+                indices.append(
+                    Quote(
+                        symbol=symbol,
+                        name=name,
+                        sec_type="index",
+                        exchange=symbol.split(".", 1)[1],
+                        board="index",
+                        price=target_bar.close,
+                        open=target_bar.open,
+                        high=target_bar.high,
+                        low=target_bar.low,
+                        prev_close=prev_close,
+                        change=change,
+                        change_percent=change_percent,
+                        volume=target_bar.volume,
+                        turnover=target_bar.turnover,
+                        timestamp=target_bar.time,
+                        source=fallback_meta.final_provider or selection.primary,
+                    )
+                )
+                per_index_meta.append(
+                    {
+                        "symbol": symbol,
+                        "name": name,
+                        "selected_primary": fallback_meta.selected_primary,
+                        "selected_fallback": fallback_meta.selected_fallback,
+                        "attempted": fallback_meta.attempted,
+                        "final_provider": fallback_meta.final_provider,
+                        "used_fallback": fallback_meta.used_fallback,
+                    }
+                )
+            except Exception as exc:
+                errors.append({"symbol": symbol, "name": name, "error": str(exc)})
+
+        return (
+            {
+                "market": market,
+                "trade_date": trade_date,
+                "indices": indices,
+                "source": "historical-index-history",
+            },
+            {
+                "mode": "historical",
+                "history_interval": "1d",
+                "trade_date": trade_date,
+                "previous_trading_day": previous_trade_date,
+                "per_index": per_index_meta,
+                "partial_failure": len(errors) > 0,
+                "errors": errors,
+            },
+        )
+
+    def _build_summary(
+        self,
+        indices,
+        pools,
+        requested_trade_date: str,
+        effective_trade_date: str,
+        brief_type: str,
+        review_mode: bool,
+        adjusted_to_previous_trading_day: bool,
+    ) -> str:
         index_parts = []
         for q in indices[:4]:
             name = getattr(q, "name", None) or getattr(q, "symbol", "指数")
@@ -95,4 +264,12 @@ class MarketBriefUseCase:
             pool_part = f"；涨停 {up} 家，跌停 {down} 家，强势 {strong} 家"
 
         index_text = "，".join(index_parts) if index_parts else "指数概览暂不可用"
-        return f"{trade_date}（{brief_type}）市场简报：{index_text}{pool_part}。"
+
+        if review_mode and adjusted_to_previous_trading_day:
+            prefix = f"{requested_trade_date}（非交易日，按 {effective_trade_date} 复盘，{brief_type}）"
+        elif review_mode:
+            prefix = f"{effective_trade_date}（复盘，{brief_type}）"
+        else:
+            prefix = f"{effective_trade_date}（{brief_type}）"
+
+        return f"{prefix}市场简报：{index_text}{pool_part}。"

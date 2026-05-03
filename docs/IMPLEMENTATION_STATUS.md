@@ -110,8 +110,15 @@
   - `qsgc / 强势` -> `strong`
 - 兼容现有 provider 路径映射，不影响旧调用
 
-### market_brief（一键市场简报）
-- 新增聚合接口：组合 `market_overview + market_pool`
+### market_brief（一键市场简报 / 复盘增强）
+- 聚合接口：组合 `market_overview/历史指数日线 + market_pool + trading_calendar`
+- 支持两种模式：
+  - `trade_date` 为空：实时模式
+  - `trade_date` 非空：复盘模式
+- 复盘模式特性：
+  - 先通过 `trading_calendar` 解析有效交易日
+  - 若传入非交易日，自动回退到上一个交易日
+  - 指数概览改为通过指数 `stock_history(index, 1d)` 重建，不再读取当前实时行情
 - 支持参数：
   - `brief_type`: `pre_open / intraday / close`
   - `trade_date`: 可选，默认当天
@@ -121,6 +128,7 @@
   - 指数概览数据
   - 股池统计（涨停/跌停/强势）
   - 可直接给 newsbot 使用的 `summary` 文本
+  - `meta.review_mode / meta.calendar / meta.overview / meta.pools`
 
 ## 已验证通过（智兔主链路）
 - 指数实时行情

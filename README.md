@@ -182,15 +182,21 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{
 ### market_brief 一键市场简报样例
 
 ```bash
-# 收盘简报（默认）
+# 收盘简报（默认，实时模式）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{}'
 
-# 盘中简报 + 指定日期 + 只取股池前3
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{"brief_type":"intraday","trade_date":"2026-05-01","top_n":3}'
+# 复盘模式：指定 trade_date，自动按有效交易日生成历史市场简报
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{"brief_type":"close","trade_date":"2026-05-01","top_n":3}'
 
 # 不含股池，仅指数概览简报
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '{"include_pools":false}'
 ```
+
+说明：
+- `trade_date` 为空：走实时模式
+- `trade_date` 非空：走复盘模式
+- 若 `trade_date` 落在非交易日，会自动回退到上一个交易日，并在 `data.meta.calendar` 中标明
+- 复盘模式下，指数概览由历史日线重建，不再直接读取当前实时行情
 
 ### sector_lookup 本地调用样例（板块列表 / 层级）
 
