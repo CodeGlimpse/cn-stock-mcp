@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     zhitu_token_config_path: str = "config/zhitu_tokens.json"
     zhitu_timeout_seconds: int = 15
     zhitu_rate_limit_per_minute: int = 300
+    zhitu_token_cooldown_seconds: int = 60
 
     cache_ttl_list_seconds: int = 86400
     cache_ttl_quote_seconds: int = 10
@@ -37,30 +38,49 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    def resolve_zhitu_token(self) -> str:
-        if self.zhitu_token:
-            return self.zhitu_token
-
+    def _resolve_zhitu_token_config_path(self) -> Path:
         path = Path(self.zhitu_token_config_path)
         if not path.is_absolute():
             path = Path.cwd() / path
+        return path
+
+    def _load_zhitu_token_config(self) -> dict:
+        path = self._resolve_zhitu_token_config_path()
         if not path.exists():
-            return ""
+            return {}
 
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            raw_text = path.read_text(encoding="utf-8")
+            text = "\n".join(line for line in raw_text.splitlines() if not line.strip().startswith("#"))
+            return json.loads(text)
         except Exception:
-            return ""
+            return {}
 
+    def resolve_zhitu_tokens(self) -> list[str]:
+        ordered_tokens: list[str] = []
+
+        def add_token(value: str | None):
+            token = str(value or "").strip()
+            if token and token not in ordered_tokens:
+                ordered_tokens.append(token)
+
+        add_token(self.zhitu_token)
+
+        data = self._load_zhitu_token_config()
         default_name = data.get("default")
         tokens = data.get("tokens", {})
-        if default_name and default_name in tokens:
-            return str(tokens[default_name])
 
-        if tokens:
-            first_value = next(iter(tokens.values()))
-            return str(first_value)
-        return ""
+        if isinstance(tokens, dict):
+            if default_name and default_name in tokens:
+                add_token(tokens.get(default_name))
+            for _, value in tokens.items():
+                add_token(value)
+
+        return ordered_tokens
+
+    def resolve_zhitu_token(self) -> str:
+        tokens = self.resolve_zhitu_tokens()
+        return tokens[0] if tokens else ""
 
 
 def get_settings() -> Settings:

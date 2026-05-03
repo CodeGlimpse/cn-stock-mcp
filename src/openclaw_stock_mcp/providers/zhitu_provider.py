@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import httpx
 
 from openclaw_stock_mcp.infra.config import get_settings
@@ -21,7 +23,7 @@ from openclaw_stock_mcp.providers.adapters.zhitu_series_adapters import (
     adapt_zhitu_limit_up_item,
     adapt_zhitu_strong_item,
 )
-from openclaw_stock_mcp.providers.errors import ProviderAuthError, ProviderError, ProviderTimeoutError
+from openclaw_stock_mcp.providers.errors import ProviderAuthError, ProviderError, ProviderRateLimitError, ProviderTimeoutError
 
 
 class ZhituProvider:
@@ -30,28 +32,64 @@ class ZhituProvider:
     def __init__(self) -> None:
         self.settings = get_settings()
         self.base_url = self.settings.zhitu_base_url.rstrip("/")
-        self.token = self.settings.resolve_zhitu_token()
+        self.tokens = self.settings.resolve_zhitu_tokens()
+        self.token = self.tokens[0] if self.tokens else ""
         self.client = build_http_client(self.settings.zhitu_timeout_seconds)
         self._instrument_name_cache: dict[tuple[str, str], str] = {}
+        self._token_cooldowns: dict[str, float] = {}
+
+    def _available_tokens(self) -> list[str]:
+        if not self.tokens:
+            return []
+        now = time.time()
+        available = [token for token in self.tokens if self._token_cooldowns.get(token, 0) <= now]
+        return available or list(self.tokens)
+
+    def _mark_token_rate_limited(self, token: str):
+        cooldown_seconds = max(int(getattr(self.settings, "zhitu_token_cooldown_seconds", 60) or 60), 1)
+        self._token_cooldowns[token] = time.time() + cooldown_seconds
 
     def _get_json(self, path: str, params: dict | None = None):
-        if not self.token:
+        tokens = self._available_tokens()
+        if not tokens:
             raise ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu token is empty", retryable=False)
-        params = params.copy() if params else {}
-        params["token"] = self.token
+
         url = f"{self.base_url}{path}"
-        try:
-            response = self.client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()
-        except httpx.TimeoutException as exc:
-            raise ProviderTimeoutError("PROVIDER_TIMEOUT", f"Zhitu request timed out: {path}", retryable=True) from exc
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code in (401, 403):
-                raise ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu authentication failed", retryable=False) from exc
-            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu http error: {exc.response.status_code}", retryable=True) from exc
-        except Exception as exc:
-            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu request failed: {exc}", retryable=True) from exc
+        last_error: Exception | None = None
+
+        for idx, token in enumerate(tokens):
+            request_params = params.copy() if params else {}
+            request_params["token"] = token
+            self.token = token
+            try:
+                response = self.client.get(url, params=request_params)
+                response.raise_for_status()
+                return response.json()
+            except httpx.TimeoutException as exc:
+                last_error = ProviderTimeoutError("PROVIDER_TIMEOUT", f"Zhitu request timed out: {path}", retryable=True)
+                break
+            except httpx.HTTPStatusError as exc:
+                status_code = exc.response.status_code
+                if status_code in (401, 403):
+                    last_error = ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu authentication failed", retryable=False)
+                    continue
+                if status_code == 429:
+                    self._mark_token_rate_limited(token)
+                    last_error = ProviderRateLimitError("PROVIDER_RATE_LIMIT", f"Zhitu rate limited: {path}", retryable=True)
+                    if idx < len(tokens) - 1:
+                        continue
+                    raise last_error from exc
+                last_error = ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu http error: {status_code}", retryable=True)
+                raise last_error from exc
+            except ProviderError:
+                raise
+            except Exception as exc:
+                last_error = ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu request failed: {exc}", retryable=True)
+                raise last_error from exc
+
+        if last_error:
+            raise last_error
+        raise ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu token is empty", retryable=False)
 
     def _cache_instrument_name(self, sec_type: str, symbol: str | None, name: str | None):
         if symbol and name:

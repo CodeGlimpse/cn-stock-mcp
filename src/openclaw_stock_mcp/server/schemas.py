@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 
 SecType = Literal["stock", "index", "fund", "sector"]
 ProviderName = Literal["akshare", "zhitu", "mixed"]
-Interval = Literal["1m", "5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
+Interval = Literal["5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
 AdjustType = Literal["none", "qfq", "hfq"]
 IndicatorType = Literal["macd", "ma", "boll", "kdj"]
 PoolType = Literal["limit_up", "limit_down", "strong"]
@@ -60,12 +60,14 @@ class StockHistoryRequest(BaseModel):
             "60m": "60m",
             "1d": "1d",
             "1w": "1w",
-            "1m": "1M",
+            "1m": None,
             "1y": "1y",
         }
         normalized = alias.get(raw.lower())
-        if not normalized:
-            raise ValueError("interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y")
+        if normalized is None:
+            raise ValueError(
+                "interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y; 1m is not supported in current version"
+            )
         self.interval = normalized
         return self
 
@@ -210,12 +212,14 @@ class TechnicalIndicatorRequest(BaseModel):
             "60m": "60m",
             "1d": "1d",
             "1w": "1w",
-            "1m": "1M",
+            "1m": None,
             "1y": "1y",
         }
         interval_normalized = interval_alias.get(interval_raw.lower())
-        if not interval_normalized:
-            raise ValueError("interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y")
+        if interval_normalized is None:
+            raise ValueError(
+                "interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y; 1m is not supported in current version"
+            )
 
         indicator_raw = (self.indicator or "").strip().lower()
         indicator_alias = {

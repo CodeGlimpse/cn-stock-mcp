@@ -140,11 +140,10 @@ v1 暂不暴露多市场枚举。
 对外统一支持：
 
 ```json
-["1m", "5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
+["5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
 ```
 
 说明：
-- `1m`: 1分钟
 - `5m`: 5分钟
 - `15m`: 15分钟
 - `30m`: 30分钟
@@ -153,6 +152,7 @@ v1 暂不暴露多市场枚举。
 - `1w`: 周线
 - `1M`: 月线
 - `1y`: 年线
+- `1m`：当前版本**不支持**，避免与 `1M` 月线语义混淆
 
 ---
 
@@ -609,7 +609,7 @@ v1 暂不暴露多市场枚举。
   "properties": {
     "symbol": {"type": "string"},
     "sec_type": {"type": "string", "enum": ["stock", "index", "fund"]},
-    "interval": {"type": "string", "enum": ["1m", "5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]},
+    "interval": {"type": "string", "enum": ["5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]},
     "start_date": {"type": "string"},
     "end_date": {"type": "string"},
     "limit": {"type": "integer", "minimum": 1, "maximum": 5000},

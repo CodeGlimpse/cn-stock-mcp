@@ -29,22 +29,32 @@ class SymbolResolver:
         )
 
     def _infer_sec_type(self, symbol: str) -> str:
-        if symbol.endswith(".BK") or symbol.endswith(".BKZS"):
+        if symbol.endswith(".BK") or symbol.endswith(".BKZS") or symbol.startswith("PRIMARY:"):
             return "sector"
 
         code = symbol.split(".", 1)[0]
         exchange = symbol.split(".", 1)[1] if "." in symbol else ""
 
-        known_index_symbols = {
-            "000001.SH",
-            "399001.SZ",
-            "399006.SZ",
-            "899050.BJ",
-        }
-        if symbol in known_index_symbols:
+        if self._looks_like_index_symbol(code, exchange):
             return "index"
 
-        if exchange in {"SH", "SZ"} and code.startswith(("15", "16", "50", "51", "56", "58")):
+        if self._looks_like_fund_symbol(code, exchange):
             return "fund"
 
         return "stock"
+
+    def _looks_like_index_symbol(self, code: str, exchange: str) -> bool:
+        if exchange == "SH" and code.startswith("000"):
+            return True
+        if exchange == "SZ" and code.startswith("399"):
+            return True
+        if exchange == "BJ" and code.startswith("899"):
+            return True
+        return False
+
+    def _looks_like_fund_symbol(self, code: str, exchange: str) -> bool:
+        if exchange == "SH" and code.startswith(("50", "51", "56", "58")):
+            return True
+        if exchange == "SZ" and code.startswith(("15", "16")):
+            return True
+        return False

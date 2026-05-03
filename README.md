@@ -54,6 +54,11 @@ cp .env.example .env
 1. 直接写 `.env`
 2. 写入 `config/zhitu_tokens.json`
 
+说明：
+- `config/zhitu_tokens.json` 支持配置多个 token
+- 当前版本会按 `default` 优先顺序加载多个 token
+- 当某个智兔 token 遇到 `429` 限流时，会自动尝试切换到下一个可用 token
+
 ### 列出已注册 tools
 
 ```bash
