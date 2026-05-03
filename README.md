@@ -217,6 +217,8 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review_batch --pay
 说明：
 - `items` 中每一项都是一张个股复盘卡片
 - 可按 `relative_strength / return / max_drawdown / volume_ratio` 排序
+- 支持筛选：`min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
+- 返回附带：`tags`、`groups`、批量 `summary`
 - 适合自选池、候选池、观察池的批量筛查
 
 ### market_brief 一键市场简报样例

@@ -63,8 +63,15 @@
   - `return`
   - `max_drawdown`
   - `volume_ratio`
+- 支持筛选条件：
+  - `min_relative_strength`
+  - `min_return`
+  - `max_drawdown_limit`
+  - `min_volume_ratio`
 - 输出包含：
   - `items`（批量卡片）
+  - `tags`（如 `stronger_than_benchmark / high_volume / drawdown_risk / up_streak / down_streak`）
+  - `groups`（强势候选 / 风险候选 / 放量关注）
   - `partial_failure / errors`
   - `summary`（批量筛查摘要）
 

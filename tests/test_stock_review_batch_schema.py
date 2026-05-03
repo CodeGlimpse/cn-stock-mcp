@@ -6,6 +6,7 @@ def test_stock_review_batch_request_defaults_trade_date_when_empty():
     assert req.trade_date is not None
     assert req.sort_by == "relative_strength"
     assert req.top_n == 20
+    assert req.min_relative_strength is None
 
 
 def test_stock_review_batch_request_rejects_trade_date_with_range():

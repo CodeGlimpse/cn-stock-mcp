@@ -110,6 +110,10 @@ class StockReviewBatchRequest(BaseModel):
     sort_by: Literal["relative_strength", "return", "max_drawdown", "volume_ratio"] = "relative_strength"
     descending: bool = True
     top_n: int = Field(default=20, ge=1, le=50)
+    min_relative_strength: float | None = None
+    min_return: float | None = None
+    max_drawdown_limit: float | None = None
+    min_volume_ratio: float | None = None
 
     @model_validator(mode="after")
     def validate_request(self):
