@@ -32,6 +32,7 @@
 - `stock_history(stock)` 已改走 **腾讯历史接口**，当前可用
 - `stock_history(index)` 在 Zhitu 不可用或北证50等边角场景下，已具备 **AKShare index history fallback**
 - `trading_calendar()` 交易日历 / 复盘日期辅助可用
+- `stock_review()` 个股复盘摘要可用
 
 ## 快速开始
 
@@ -179,6 +180,21 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{
 # 类型别名：qsgc -> strong
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"qsgc","trade_date":"2026-05-01","limit":50}'
 ```
+
+### stock_review 个股复盘摘要样例
+
+```bash
+# 单日复盘：若落在非交易日，会自动回退到有效交易日
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review --payload '{"symbol":"600519.SH","trade_date":"2026-05-01"}'
+
+# 区间复盘：输出区间涨跌、高低点、日均成交额等
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review --payload '{"symbol":"600519.SH","start_date":"2026-04-01","end_date":"2026-05-01"}'
+```
+
+说明：
+- `trade_date` 模式：输出单日/近5日/近20日/4周/3月复盘摘要
+- `start_date + end_date` 模式：输出区间收益、高低点、均量/均额等
+- 返回结构含 `windows.daily / weekly / monthly`，便于后续脚本继续加工
 
 ### market_brief 一键市场简报样例
 

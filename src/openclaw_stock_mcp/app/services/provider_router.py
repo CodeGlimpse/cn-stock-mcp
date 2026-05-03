@@ -11,7 +11,7 @@ class ProviderRouter:
         self.zhitu = ZhituProvider()
 
     def choose_provider(self, tool_name: str, symbol: str | None = None, sec_type: str | None = None, preferred: str | None = None) -> ProviderSelection:
-        if tool_name == "trading_calendar":
+        if tool_name in {"trading_calendar", "stock_review"}:
             return ProviderSelection(primary="akshare", fallback=[])
 
         if preferred == "akshare":

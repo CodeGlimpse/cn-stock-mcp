@@ -70,6 +70,36 @@ class StockHistoryRequest(BaseModel):
         return self
 
 
+class StockReviewRequest(BaseModel):
+    symbol: str
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    adjust: AdjustType = "none"
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+            return self
+
+        if self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+            return self
+
+        self.trade_date = dt_date.today().isoformat()
+        return self
+
+
 class TradingCalendarRequest(BaseModel):
     market: Literal["CN"] = "CN"
     date: str | None = None

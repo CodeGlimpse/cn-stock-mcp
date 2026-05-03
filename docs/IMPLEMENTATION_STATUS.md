@@ -16,6 +16,7 @@
 - `stock_search`
 - `stock_quote`
 - `stock_history`
+- `stock_review`
 - `trading_calendar`
 - `market_overview`
 - `technical_indicator`
@@ -33,6 +34,18 @@
   - `mode=list` 默认 `sector_type=concept`
   - `mode=children` 默认 `sector_type=primary`
   - `mode in {members, children}` 时强制要求 `sector_name`
+
+### stock_review（个股复盘摘要）
+- 新增 `stock_review` tool
+- 当前 provider：`akshare`
+- 支持两种模式：
+  - `trade_date`：单日复盘（若为非交易日，自动回退到有效交易日）
+  - `start_date + end_date`：区间复盘
+- 输出包含：
+  - `latest_bar`
+  - `stats`（近5日/20日、4周、3月、区间收益、高低点、均量均额等）
+  - `windows.daily / weekly / monthly`
+  - 可直接阅读的 `summary` 文本
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool
