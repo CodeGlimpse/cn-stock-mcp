@@ -107,6 +107,8 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{
 }
 ```
 
+详细错误码、retry 语义与调用方处理建议见：`docs/ERROR_MODEL.md`
+
 ### stock_quote(stock-main) 双源路由样例
 
 ```bash
