@@ -11,6 +11,7 @@ except Exception:  # pragma: no cover
     ak = None
 
 from openclaw_stock_mcp.app.models.bar import Bar
+from openclaw_stock_mcp.app.models.instrument import Instrument
 from openclaw_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_fund_list_row,
     adapt_akshare_index_list_row,
@@ -125,18 +126,60 @@ class AKShareProvider:
 
         return self._fill_prev_close(aggregated)
 
+    def _matches_query(self, item: Instrument, query: str) -> bool:
+        query_norm = (query or "").strip().lower()
+        if not query_norm:
+            return False
+        symbol_text = (item.symbol or "").strip().lower()
+        raw_symbol_text = (item.raw_symbol or "").strip().lower()
+        name_text = (item.name or "").strip().lower()
+        return (
+            query_norm in symbol_text
+            or query_norm in raw_symbol_text
+            or query_norm in name_text
+        )
+
+    def _search_rank(self, item: Instrument, query: str) -> tuple:
+        query_norm = (query or "").strip().lower()
+        symbol_text = (item.symbol or "").strip().lower()
+        raw_symbol_text = (item.raw_symbol or "").strip().lower()
+        name_text = (item.name or "").strip().lower()
+
+        exact_symbol = query_norm == symbol_text or query_norm == raw_symbol_text
+        exact_name = query_norm == name_text
+        symbol_prefix = symbol_text.startswith(query_norm) or raw_symbol_text.startswith(query_norm)
+        name_prefix = name_text.startswith(query_norm)
+        sec_type_priority = {"stock": 0, "index": 1, "fund": 2, "sector": 3}.get(item.sec_type, 9)
+        return (
+            0 if exact_symbol else 1,
+            0 if exact_name else 1,
+            0 if symbol_prefix else 1,
+            0 if name_prefix else 1,
+            sec_type_priority,
+            len(name_text) if name_text else 9999,
+            symbol_text,
+        )
+
     def search_instruments(self, query: str, sec_types=None, market: str | None = None, limit: int = 10):
         lib = self._require_ak()
         sec_types = sec_types or ["stock", "index", "fund"]
-        items = []
+        items: list[Instrument] = []
+        seen: set[tuple[str, str]] = set()
+
+        def add_item(item: Instrument):
+            if not self._matches_query(item, query):
+                return
+            key = (item.sec_type, item.symbol)
+            if key in seen:
+                return
+            seen.add(key)
+            items.append(item)
 
         if "stock" in sec_types:
             try:
                 df = lib.stock_info_a_code_name()
                 for row in df.to_dict(orient="records"):
-                    item = adapt_akshare_stock_list_row(row)
-                    if query in item.symbol or (item.name and query in item.name):
-                        items.append(item)
+                    add_item(adapt_akshare_stock_list_row(row))
             except Exception:
                 pass
 
@@ -145,9 +188,7 @@ class AKShareProvider:
                 if hasattr(lib, "index_stock_info"):
                     df = lib.index_stock_info()
                     for row in df.to_dict(orient="records"):
-                        item = adapt_akshare_index_list_row(row)
-                        if query in item.symbol or (item.name and query in item.name):
-                            items.append(item)
+                        add_item(adapt_akshare_index_list_row(row))
             except Exception:
                 pass
 
@@ -155,12 +196,11 @@ class AKShareProvider:
             try:
                 df = lib.fund_name_em()
                 for row in df.to_dict(orient="records"):
-                    item = adapt_akshare_fund_list_row(row)
-                    if query in item.symbol or (item.name and query in item.name):
-                        items.append(item)
+                    add_item(adapt_akshare_fund_list_row(row))
             except Exception:
                 pass
 
+        items.sort(key=lambda item: self._search_rank(item, query))
         return items[:limit]
 
     def get_quote(self, symbol: str, sec_type: str):
@@ -215,8 +255,6 @@ class AKShareProvider:
         tx_rows = tx_df.to_dict(orient="records")
         bars = [adapt_akshare_tx_bar_row(row) for row in tx_rows]
 
-        # best-effort: fill/normalize volume+turnover from stock_zh_a_daily
-        # turnover here is standardized to 成交额(amount)口径
         try:
             daily_df = lib.stock_zh_a_daily(
                 symbol=tx_symbol,
@@ -239,7 +277,6 @@ class AKShareProvider:
                         bar.volume = float(v) if v is not None else None
                     except Exception:
                         pass
-                # 统一 turnover 为成交额口径（daily.amount 优先）
                 try:
                     amt = row.get("amount") or row.get("成交额")
                     if amt is not None:
