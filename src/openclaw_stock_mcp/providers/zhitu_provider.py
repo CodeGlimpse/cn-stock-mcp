@@ -334,7 +334,7 @@ class ZhituProvider:
 
     def get_market_pool(self, pool_type: str, trade_date: str | None = None):
         if not trade_date:
-            raise ProviderError("INVALID_ARGUMENT", "trade_date is required for market_pool in minimal version", retryable=False)
+            raise ProviderError("INVALID_ARGUMENT", "trade_date is required before calling zhitu market_pool provider", retryable=False)
         path_map = {
             "limit_up": f"/hs/pool/ztgc/{trade_date}",
             "limit_down": f"/hs/pool/dtgc/{trade_date}",

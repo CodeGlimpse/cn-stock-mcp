@@ -148,6 +148,14 @@
 
 ### market_pool 类型扩充
 - 标准类型仍为：`limit_up / limit_down / strong`
+- `trade_date` 为空时：
+  - 若当天是交易日，使用当天
+  - 若当天不是交易日，自动回退到上一个有效交易日
+- 返回中补充：
+  - `requested_trade_date`
+  - `meta.calendar.requested_is_trading_day`
+  - `meta.calendar.effective_trade_date`
+  - `meta.calendar.adjusted_to_previous_trading_day`
 - 新增可用别名：
   - `ztgc / up / 涨停` -> `limit_up`
   - `dtgc / down / 跌停` -> `limit_down`

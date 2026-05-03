@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
+from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class MarketPoolUseCase:
@@ -29,7 +32,36 @@ class MarketPoolUseCase:
                 extra.setdefault("data_quality", "normal")
         return items
 
+    def _resolve_effective_trade_date(self, requested_trade_date: str | None) -> tuple[str, dict]:
+        calendar_provider = self.router.get_provider("akshare")
+        resolved_requested_trade_date = requested_trade_date or datetime.now().strftime("%Y-%m-%d")
+        calendar = calendar_provider.get_trading_calendar(
+            market="CN",
+            date=resolved_requested_trade_date,
+            recent_limit=5,
+        )
+        is_trading_day = bool(calendar.get("is_trading_day"))
+        effective_trade_date = resolved_requested_trade_date if is_trading_day else calendar.get("previous_trading_day")
+        if not effective_trade_date:
+            raise ProviderError(
+                "INVALID_ARGUMENT",
+                f"No effective trading day found for requested date: {resolved_requested_trade_date}",
+                retryable=False,
+            )
+        return effective_trade_date, {
+            "requested_trade_date": resolved_requested_trade_date,
+            "effective_trade_date": effective_trade_date,
+            "requested_is_trading_day": is_trading_day,
+            "adjusted_to_previous_trading_day": effective_trade_date != resolved_requested_trade_date,
+            "previous_trading_day": calendar.get("previous_trading_day"),
+            "next_trading_day": calendar.get("next_trading_day"),
+            "recent_trading_days": calendar.get("recent_trading_days", []),
+            "source": calendar.get("source"),
+        }
+
     def execute(self, request):
+        effective_trade_date, calendar_meta = self._resolve_effective_trade_date(getattr(request, "trade_date", None))
+
         selection = self.router.choose_provider(
             tool_name="market_pool",
             sec_type="stock",
@@ -40,7 +72,7 @@ class MarketPoolUseCase:
             selection,
             lambda provider: provider.get_market_pool(
                 pool_type=request.pool_type,
-                trade_date=request.trade_date,
+                trade_date=effective_trade_date,
             ),
         )
         items = self._annotate_anomalies(items)
@@ -48,7 +80,8 @@ class MarketPoolUseCase:
             items = items[: request.limit]
         return {
             "pool_type": request.pool_type,
-            "trade_date": request.trade_date,
+            "trade_date": effective_trade_date,
+            "requested_trade_date": calendar_meta["requested_trade_date"],
             "items": items,
             "count": len(items),
             "source": fallback_meta.final_provider or selection.primary,
@@ -58,5 +91,6 @@ class MarketPoolUseCase:
                 "attempted": fallback_meta.attempted,
                 "final_provider": fallback_meta.final_provider,
                 "used_fallback": fallback_meta.used_fallback,
+                "calendar": calendar_meta,
             },
         }

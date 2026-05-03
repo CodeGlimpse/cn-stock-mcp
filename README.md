@@ -174,7 +174,10 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --pa
 ### market_pool 类型扩充调用样例
 
 ```bash
-# 标准类型
+# 标准类型：不传 trade_date 时，自动回退到最近有效交易日
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"limit_up","limit":50}'
+
+# 显式指定 trade_date
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"limit_up","trade_date":"2026-05-01","limit":50}'
 
 # 类型别名：ztgc -> limit_up

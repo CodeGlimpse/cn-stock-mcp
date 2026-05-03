@@ -12,10 +12,14 @@ class _Item:
 
 
 class _Provider:
-    def __init__(self, should_fail: bool):
+    def __init__(self, should_fail: bool, name: str):
         self.should_fail = should_fail
+        self.name = name
+        self.pool_calls = []
+        self.calendar_calls = []
 
     def get_market_pool(self, **kwargs):
+        self.pool_calls.append(kwargs)
         if self.should_fail:
             from openclaw_stock_mcp.providers.errors import ProviderError
 
@@ -25,12 +29,34 @@ class _Provider:
             _Item("600519.SH", price=1384.79, turnover=7316111748.0, market_cap=1734131271030.0, float_market_cap=1734131271030.0),
         ]
 
+    def get_trading_calendar(self, market="CN", date=None, recent_limit=5, **kwargs):
+        self.calendar_calls.append({"market": market, "date": date, "recent_limit": recent_limit})
+        if date == "2026-05-03":
+            return {
+                "market": market,
+                "date": date,
+                "is_trading_day": False,
+                "previous_trading_day": "2026-04-30",
+                "next_trading_day": "2026-05-06",
+                "recent_trading_days": ["2026-04-28", "2026-04-29", "2026-04-30"],
+                "source": self.name,
+            }
+        return {
+            "market": market,
+            "date": date,
+            "is_trading_day": True,
+            "previous_trading_day": "2026-05-01",
+            "next_trading_day": "2026-05-06",
+            "recent_trading_days": ["2026-04-29", "2026-04-30", "2026-05-02"],
+            "source": self.name,
+        }
+
 
 class _Router:
     def __init__(self):
         self.providers = {
-            "zhitu": _Provider(should_fail=True),
-            "akshare": _Provider(should_fail=False),
+            "zhitu": _Provider(should_fail=True, name="zhitu"),
+            "akshare": _Provider(should_fail=False, name="akshare"),
         }
 
     def choose_provider(self, **kwargs):
@@ -50,8 +76,10 @@ def test_market_pool_response_contains_meta():
     result = uc.execute(req)
 
     assert result["count"] == 1
+    assert result["trade_date"] == "2026-05-02"
     assert result["source"] == "akshare"
     assert result["meta"]["used_fallback"] is True
+    assert result["meta"]["calendar"]["requested_is_trading_day"] is True
 
 
 def test_market_pool_anomaly_flags_are_added_for_suspect_rows():
@@ -64,3 +92,18 @@ def test_market_pool_anomaly_flags_are_added_for_suspect_rows():
     assert result["items"][0].extra["data_quality"] == "suspect"
     assert "zero_price" in result["items"][0].extra["anomaly_flags"]
     assert result["items"][1].extra["data_quality"] == "normal"
+
+
+def test_market_pool_auto_resolves_effective_trade_date_when_not_provided():
+    uc = MarketPoolUseCase()
+    uc.router = _Router()
+    original_resolver = uc._resolve_effective_trade_date
+    uc._resolve_effective_trade_date = lambda requested_trade_date: original_resolver("2026-05-03")
+
+    req = type("Req", (), {"pool_type": "limit_up", "trade_date": None, "limit": 2, "provider": "zhitu"})()
+    result = uc.execute(req)
+
+    assert result["requested_trade_date"] == "2026-05-03"
+    assert result["trade_date"] == "2026-04-30"
+    assert result["meta"]["calendar"]["adjusted_to_previous_trading_day"] is True
+    assert uc.router.providers["zhitu"].pool_calls[0]["trade_date"] == "2026-04-30"
