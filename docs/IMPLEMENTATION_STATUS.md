@@ -126,6 +126,10 @@
   - `top_n`: 股池展示条数
 - 输出包含：
   - 指数概览数据
+  - 指数强弱排序：`index_ranking`
+  - 市场宽度摘要：`breadth`
+  - 情绪温度：`sentiment`
+  - 关键高亮：`highlights`
   - 股池统计（涨停/跌停/强势）
   - 可直接给 newsbot 使用的 `summary` 文本
   - `meta.review_mode / meta.calendar / meta.overview / meta.pools`

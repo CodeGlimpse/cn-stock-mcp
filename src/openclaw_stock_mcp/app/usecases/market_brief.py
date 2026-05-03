@@ -88,6 +88,11 @@ class MarketBriefUseCase:
                 }
 
         indices = overview.get("indices", []) if isinstance(overview, dict) else []
+        index_ranking = self._build_index_ranking(indices)
+        breadth = self._build_breadth(pools)
+        sentiment = self._build_sentiment(index_ranking, breadth)
+        highlights = self._build_highlights(index_ranking, breadth)
+
         summary = self._build_summary(
             indices,
             pools,
@@ -96,6 +101,8 @@ class MarketBriefUseCase:
             brief_type=request.brief_type,
             review_mode=review_mode,
             adjusted_to_previous_trading_day=calendar_meta.get("adjusted_to_previous_trading_day", False),
+            sentiment=sentiment,
+            highlights=highlights,
         )
 
         return {
@@ -104,6 +111,10 @@ class MarketBriefUseCase:
             "requested_trade_date": requested_trade_date,
             "market": request.market,
             "overview": overview,
+            "index_ranking": index_ranking,
+            "breadth": breadth,
+            "sentiment": sentiment,
+            "highlights": highlights,
             "pools": pools,
             "summary": summary,
             "meta": {
@@ -237,6 +248,95 @@ class MarketBriefUseCase:
             },
         )
 
+    def _build_index_ranking(self, indices: list[Quote]) -> list[dict]:
+        ranked = []
+        for q in indices:
+            ranked.append(
+                {
+                    "symbol": q.symbol,
+                    "name": q.name,
+                    "change_percent": q.change_percent,
+                    "change": q.change,
+                    "price": q.price,
+                    "source": q.source,
+                }
+            )
+        ranked.sort(key=lambda x: (-9999 if x["change_percent"] is None else -x["change_percent"], x["symbol"]))
+        return ranked
+
+    def _build_breadth(self, pools: dict[str, dict]) -> dict:
+        limit_up_count = pools.get("limit_up", {}).get("count", 0)
+        limit_down_count = pools.get("limit_down", {}).get("count", 0)
+        strong_count = pools.get("strong", {}).get("count", 0)
+        ratio = None
+        if limit_down_count == 0:
+            ratio = None if limit_up_count == 0 else float(limit_up_count)
+        else:
+            ratio = round(limit_up_count / limit_down_count, 4)
+        return {
+            "limit_up_count": limit_up_count,
+            "limit_down_count": limit_down_count,
+            "strong_count": strong_count,
+            "limit_up_down_spread": limit_up_count - limit_down_count,
+            "limit_up_down_ratio": ratio,
+        }
+
+    def _build_sentiment(self, index_ranking: list[dict], breadth: dict) -> dict:
+        score = 0.0
+        up = breadth.get("limit_up_count", 0)
+        down = breadth.get("limit_down_count", 0)
+        strong = breadth.get("strong_count", 0)
+
+        if up >= 80:
+            score += 2.0
+        elif up >= 40:
+            score += 1.0
+
+        if down <= 5:
+            score += 1.0
+        elif down >= 20:
+            score -= 2.0
+        elif down >= 10:
+            score -= 1.0
+
+        if strong >= 300:
+            score += 1.0
+        elif strong >= 150:
+            score += 0.5
+
+        strongest = index_ranking[0].get("change_percent") if index_ranking else None
+        weakest = index_ranking[-1].get("change_percent") if index_ranking else None
+        if strongest is not None and strongest >= 1.5:
+            score += 1.0
+        if weakest is not None and weakest <= -1.5:
+            score -= 1.0
+
+        if score >= 3.0:
+            label, label_zh = "hot", "偏热"
+        elif score >= 1.5:
+            label, label_zh = "warm", "偏强"
+        elif score > -1.0:
+            label, label_zh = "neutral", "中性"
+        elif score > -2.0:
+            label, label_zh = "cool", "偏弱"
+        else:
+            label, label_zh = "cold", "偏冷"
+
+        return {
+            "score": round(score, 2),
+            "label": label,
+            "label_zh": label_zh,
+        }
+
+    def _build_highlights(self, index_ranking: list[dict], breadth: dict) -> dict:
+        strongest = index_ranking[0] if index_ranking else None
+        weakest = index_ranking[-1] if index_ranking else None
+        return {
+            "strongest_index": strongest,
+            "weakest_index": weakest,
+            "limit_up_leads_limit_down": breadth.get("limit_up_count", 0) > breadth.get("limit_down_count", 0),
+        }
+
     def _build_summary(
         self,
         indices,
@@ -246,6 +346,8 @@ class MarketBriefUseCase:
         brief_type: str,
         review_mode: bool,
         adjusted_to_previous_trading_day: bool,
+        sentiment: dict,
+        highlights: dict,
     ) -> str:
         index_parts = []
         for q in indices[:4]:
@@ -265,6 +367,18 @@ class MarketBriefUseCase:
 
         index_text = "，".join(index_parts) if index_parts else "指数概览暂不可用"
 
+        strongest = highlights.get("strongest_index") or {}
+        weakest = highlights.get("weakest_index") or {}
+        strongest_text = strongest.get("name")
+        strongest_cp = strongest.get("change_percent")
+        weakest_text = weakest.get("name")
+        weakest_cp = weakest.get("change_percent")
+        extra = ""
+        if strongest_text and weakest_text and strongest_cp is not None and weakest_cp is not None:
+            extra = f"；最强指数 {strongest_text} {strongest_cp:.2f}%，最弱指数 {weakest_text} {weakest_cp:.2f}%，情绪 {sentiment.get('label_zh')}"
+        elif sentiment.get("label_zh"):
+            extra = f"；情绪 {sentiment.get('label_zh')}"
+
         if review_mode and adjusted_to_previous_trading_day:
             prefix = f"{requested_trade_date}（非交易日，按 {effective_trade_date} 复盘，{brief_type}）"
         elif review_mode:
@@ -272,4 +386,4 @@ class MarketBriefUseCase:
         else:
             prefix = f"{effective_trade_date}（{brief_type}）"
 
-        return f"{prefix}市场简报：{index_text}{pool_part}。"
+        return f"{prefix}市场简报：{index_text}{pool_part}{extra}。"

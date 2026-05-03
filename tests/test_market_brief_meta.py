@@ -30,7 +30,12 @@ class _Provider:
             from openclaw_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "pool failed", retryable=True)
-        return [{"symbol": "600000.SH"}]
+        mapping = {
+            "limit_up": [{"symbol": "600000.SH"}] * 3,
+            "limit_down": [{"symbol": "600001.SH"}],
+            "strong": [{"symbol": "600002.SH"}] * 5,
+        }
+        return mapping[pool_type]
 
     def get_trading_calendar(self, market="CN", date=None, **kwargs):
         return {
@@ -48,9 +53,16 @@ class _Provider:
             from openclaw_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "history failed", retryable=True)
+        close_map = {
+            "000001.SH": 101.0,
+            "399001.SZ": 99.5,
+            "399006.SZ": 103.2,
+            "899050.BJ": 98.0,
+        }
+        close = close_map[symbol]
         return [
             _Bar(time="2026-04-30", close=100.0, prev_close=99.0),
-            _Bar(time="2026-05-02", close=101.0, prev_close=100.0),
+            _Bar(time="2026-05-02", close=close, prev_close=100.0),
         ]
 
 
@@ -95,9 +107,11 @@ def test_market_brief_response_contains_meta_for_overview_and_pools():
     assert result["meta"]["overview"]["used_fallback"] is True
     assert result["meta"]["overview"]["mode"] == "realtime"
     assert result["meta"]["pools"]["limit_up"]["used_fallback"] is True
+    assert result["breadth"]["limit_up_count"] == 3
+    assert result["sentiment"]["label"] in {"neutral", "warm", "hot", "cool", "cold"}
 
 
-def test_market_brief_review_mode_uses_historical_overview():
+def test_market_brief_review_mode_uses_historical_overview_and_builds_ranking():
     uc = MarketBriefUseCase()
     uc.router = _Router()
 
@@ -120,3 +134,8 @@ def test_market_brief_review_mode_uses_historical_overview():
     assert result["meta"]["overview"]["mode"] == "historical"
     assert result["overview"]["source"] == "historical-index-history"
     assert result["trade_date"] == "2026-05-02"
+    assert len(result["index_ranking"]) == 4
+    assert result["index_ranking"][0]["symbol"] == "399006.SZ"
+    assert result["highlights"]["strongest_index"]["symbol"] == "399006.SZ"
+    assert result["highlights"]["weakest_index"]["symbol"] == "899050.BJ"
+    assert result["sentiment"]["label_zh"]

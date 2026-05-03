@@ -198,6 +198,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '
 - `trade_date` 非空：走复盘模式
 - 若 `trade_date` 落在非交易日，会自动回退到上一个交易日，并在 `data.meta.calendar` 中标明
 - 复盘模式下，指数概览由历史日线重建，不再直接读取当前实时行情
+- 返回中新增：`index_ranking / breadth / sentiment / highlights`，便于复盘时快速看指数强弱与情绪温度
 
 ### sector_lookup 本地调用样例（板块列表 / 层级）
 
