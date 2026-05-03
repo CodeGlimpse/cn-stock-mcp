@@ -66,7 +66,6 @@ def adapt_zhitu_sector_list_item(raw: dict) -> Instrument:
 def adapt_zhitu_primary_sector_item(raw: dict) -> Instrument:
     name = str(raw.get("mc") or raw.get("name") or "").strip()
     dm = str(raw.get("dm") or "").strip()
-    # 智兔该接口文档字段说明与示例相互矛盾；优先用 mc 作为一级板块标识
     primary_key = name or dm or "UNKNOWN"
     symbol = f"PRIMARY:{primary_key}"
     return Instrument(
@@ -77,5 +76,20 @@ def adapt_zhitu_primary_sector_item(raw: dict) -> Instrument:
         board="sector-primary",
         sec_type="sector",
         raw_symbol=dm or name or None,
+        source="zhitu",
+    )
+
+
+def adapt_zhitu_sector_member_item(raw: dict) -> Instrument:
+    exchange = normalize_exchange(raw.get("jys"))
+    symbol = normalize_symbol(str(raw.get("dm", "")).strip(), exchange)
+    return Instrument(
+        symbol=symbol,
+        name=raw.get("mc"),
+        market="CN",
+        exchange=exchange,
+        board=detect_board(symbol, "stock"),
+        sec_type="stock",
+        raw_symbol=str(raw.get("dm", "")).strip() or None,
         source="zhitu",
     )

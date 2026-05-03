@@ -10,6 +10,7 @@ from openclaw_stock_mcp.providers.adapters.zhitu_instrument_adapters import (
     adapt_zhitu_index_list_item,
     adapt_zhitu_primary_sector_item,
     adapt_zhitu_sector_list_item,
+    adapt_zhitu_sector_member_item,
     adapt_zhitu_stock_list_item,
 )
 from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_orderbook, adapt_zhitu_quote
@@ -75,13 +76,22 @@ class ZhituProvider:
         return items[:limit]
 
     def _normalize_sector_mode(self, mode: str) -> str:
-        # 兼容旧接口名：members
         if mode == "members":
             return "children"
         return mode
 
     def _slice_items(self, items: list, limit: int) -> list:
         return items[:limit] if limit and limit > 0 else items
+
+    def _extract_sector_children_items(self, raw):
+        if isinstance(raw, dict):
+            stocks = raw.get("stocks")
+            if isinstance(stocks, list):
+                return [adapt_zhitu_sector_member_item(item) for item in stocks if isinstance(item, dict)]
+            return []
+        if isinstance(raw, list):
+            return [adapt_zhitu_sector_member_item(item) for item in raw if isinstance(item, dict)]
+        return []
 
     def get_sector_lookup(self, mode: str, sector_type: str | None = None, sector_name: str | None = None, limit: int = 100):
         normalized_mode = self._normalize_sector_mode(mode)
@@ -100,7 +110,7 @@ class ZhituProvider:
             if not sector_name:
                 raise ProviderError("INVALID_ARGUMENT", "sector_name is required when mode=children", retryable=False)
             raw = self._get_json(f"/hs/sectors/{sector_name}")
-            items = [adapt_zhitu_sector_list_item(item) for item in raw if isinstance(item, dict)]
+            items = self._extract_sector_children_items(raw)
             return self._slice_items(items, limit)
 
         raise ProviderError("INVALID_ARGUMENT", f"Unsupported mode: {mode}", retryable=False)

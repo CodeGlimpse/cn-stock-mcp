@@ -26,11 +26,11 @@
 - `sector_lookup`
 - `provider_health`
 
-### sector_lookup（板块列表/层级）当前实现
+### sector_lookup（板块列表/成员股）当前实现
 - 输入模式：`list | children | members(兼容别名)`
 - `list + concept`：调用 `/hs/list/sectors`（概念板块列表）
 - `list + primary`：调用 `/hs/list/primary`（一级板块列表）
-- `children` / `members`：调用 `/hs/sectors/{sector_name}`（层级查询：一级板块下属板块）
+- `children` / `members`：调用 `/hs/sectors/{sector_name}`（按一级板块名称查询股票成员列表）
 - `SectorLookupRequest` 增加参数校验：
   - `mode=list` 默认 `sector_type=concept`
   - `mode=children` 默认 `sector_type=primary`

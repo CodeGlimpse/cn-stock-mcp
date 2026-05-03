@@ -241,7 +241,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '
 - 复盘模式下，指数概览由历史日线重建，不再直接读取当前实时行情
 - 返回中新增：`index_ranking / breadth / sentiment / highlights`，便于复盘时快速看指数强弱与情绪温度
 
-### sector_lookup 本地调用样例（板块列表 / 层级）
+### sector_lookup 本地调用样例（板块列表 / 成员股）
 
 ```bash
 # 概念板块列表（默认）
@@ -250,11 +250,11 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload 
 # 一级板块列表
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"list","sector_type":"primary","limit":10}'
 
-# 层级查询：某一级板块下的子板块（children）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"children","sector_name":"概念指数","limit":20}'
+# 成员股查询：某一级板块下的股票成员（children）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"children","sector_name":"TFG板块趋势","limit":20}'
 
 # 兼容旧模式名 members（语义等同 children）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"members","sector_name":"概念指数","limit":20}'
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"members","sector_name":"TFG板块趋势","limit":20}'
 ```
 
 ### 运行 smoke test
@@ -323,7 +323,8 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 ### sector_lookup 当前语义
 - `mode=list, sector_type=concept`：概念板块列表
 - `mode=list, sector_type=primary`：一级板块列表
-- `mode=children`（或兼容 `members`）：一级板块下属板块列表（层级查询）
+- `mode=children`（或兼容 `members`）：按一级板块名称查询**股票成员列表**
+- `children/members` 的 `sector_name` 需要传入真实可用的一级板块名称，例如：`TFG板块趋势`
 
 ### Transport 状态
 当前已切换为 **MCP Python SDK（FastMCP）stdio transport**。
