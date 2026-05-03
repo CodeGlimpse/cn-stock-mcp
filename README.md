@@ -33,6 +33,7 @@
 - `stock_history(index)` 在 Zhitu 不可用或北证50等边角场景下，已具备 **AKShare index history fallback**
 - `trading_calendar()` 交易日历 / 复盘日期辅助可用
 - `stock_review()` 个股复盘摘要可用
+- `stock_review_batch()` 批量复盘排序可用
 
 ## 快速开始
 
@@ -202,6 +203,21 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review --payload '
   - `volume_ratio_5d / turnover_ratio_5d`
   - `relative_strength_20d / relative_strength_period`
   - `benchmark`（自动按股票所在市场/板块选择指数基准）
+
+### stock_review_batch 批量复盘样例
+
+```bash
+# 批量复盘：按相对强弱排序，适合看股票池
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review_batch --payload '{"symbols":["600519.SH","000001.SZ","300750.SZ"],"trade_date":"2026-05-01","sort_by":"relative_strength","top_n":3}'
+
+# 区间批量复盘：按区间收益排序
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review_batch --payload '{"symbols":["600519.SH","000001.SZ","300750.SZ"],"start_date":"2026-04-01","end_date":"2026-05-01","sort_by":"return","top_n":3}'
+```
+
+说明：
+- `items` 中每一项都是一张个股复盘卡片
+- 可按 `relative_strength / return / max_drawdown / volume_ratio` 排序
+- 适合自选池、候选池、观察池的批量筛查
 
 ### market_brief 一键市场简报样例
 

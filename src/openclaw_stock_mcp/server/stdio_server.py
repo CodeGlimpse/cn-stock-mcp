@@ -11,6 +11,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockHistoryRequest,
     StockOrderbookRequest,
     StockQuoteRequest,
+    StockReviewBatchRequest,
     StockReviewRequest,
     StockSearchRequest,
     TechnicalIndicatorRequest,
@@ -99,6 +100,31 @@ def build_fastmcp_server() -> FastMCP:
             provider=provider,
         )
         return registry.call_tool("stock_review", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="stock_review_batch", description="Batch review multiple stocks and rank the results for replay workflows.")
+    async def stock_review_batch(
+        symbols: list[str],
+        trade_date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        adjust: str = "none",
+        provider: str | None = "akshare",
+        sort_by: str = "relative_strength",
+        descending: bool = True,
+        top_n: int = 20,
+    ):
+        req = StockReviewBatchRequest(
+            symbols=symbols,
+            trade_date=trade_date,
+            start_date=start_date,
+            end_date=end_date,
+            adjust=adjust,
+            provider=provider,
+            sort_by=sort_by,
+            descending=descending,
+            top_n=top_n,
+        )
+        return registry.call_tool("stock_review_batch", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="trading_calendar", description="Query China trading-day calendar for review and backtesting workflows.")
     async def trading_calendar(

@@ -17,6 +17,7 @@
 - `stock_quote`
 - `stock_history`
 - `stock_review`
+- `stock_review_batch`
 - `trading_calendar`
 - `market_overview`
 - `technical_indicator`
@@ -53,6 +54,19 @@
   - `benchmark`（自动匹配指数基准）
   - `windows.daily / weekly / monthly`
   - 可直接阅读的 `summary` 文本
+
+### stock_review_batch（批量个股复盘）
+- 新增 `stock_review_batch` tool
+- 复用 `stock_review` 的单股能力，生成批量复盘卡片
+- 支持排序字段：
+  - `relative_strength`
+  - `return`
+  - `max_drawdown`
+  - `volume_ratio`
+- 输出包含：
+  - `items`（批量卡片）
+  - `partial_failure / errors`
+  - `summary`（批量筛查摘要）
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool
