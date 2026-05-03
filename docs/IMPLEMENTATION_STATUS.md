@@ -44,6 +44,13 @@
 - 输出包含：
   - `latest_bar`
   - `stats`（近5日/20日、4周、3月、区间收益、高低点、均量均额等）
+  - 增强指标：
+    - 波动率：`volatility_20d / period_volatility`
+    - 最大回撤：`max_drawdown_20d / max_drawdown_period`
+    - 连涨/连跌：`up_streak / down_streak`
+    - 量能变化：`volume_ratio_5d / turnover_ratio_5d`
+    - 相对强弱：`relative_strength_20d / relative_strength_period`
+  - `benchmark`（自动匹配指数基准）
   - `windows.daily / weekly / monthly`
   - 可直接阅读的 `summary` 文本
 

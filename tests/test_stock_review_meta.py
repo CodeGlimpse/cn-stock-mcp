@@ -24,6 +24,11 @@ class _Provider:
         }
 
     def get_history(self, symbol, sec_type, interval, start=None, end=None, limit=None, adjust=None):
+        if sec_type == "index":
+            return [
+                _Bar("2026-04-28", 100, 101, 99, 100.0, 99.0, 1000, 10000),
+                _Bar("2026-05-02", 100.2, 100.8, 99.9, 100.5, 100.0, 1200, 12000),
+            ]
         if interval == "1d":
             return [
                 _Bar("2026-04-28", 10, 10.5, 9.8, 10.0, 9.7, 100, 1000),
@@ -56,6 +61,8 @@ class _Resolver:
     class _Resolved:
         symbol = "600519.SH"
         sec_type = "stock"
+        exchange = "SH"
+        board = "main"
 
     def resolve(self, symbol, sec_type):
         return self._Resolved()
@@ -71,6 +78,10 @@ def test_stock_review_trade_date_mode_contains_summary_and_stats():
 
     assert result["mode"] == "trade_date_review"
     assert result["stats"]["return_5d"] is not None
+    assert result["stats"]["volatility_20d"] is not None
+    assert result["stats"]["max_drawdown_20d"] is not None
+    assert result["stats"]["relative_strength_20d"] is not None
+    assert result["benchmark"]["symbol"] == "000001.SH"
     assert result["summary"]
     assert result["meta"]["history"]["weekly"]["interval"] == "1w"
 
@@ -85,4 +96,7 @@ def test_stock_review_range_mode_contains_period_return():
 
     assert result["mode"] == "range_review"
     assert result["stats"]["period_return"] is not None
+    assert result["stats"]["period_volatility"] is not None
+    assert result["stats"]["max_drawdown_period"] is not None
+    assert result["stats"]["relative_strength_period"] is not None
     assert result["summary"]
