@@ -80,6 +80,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{
   "error": null,
   "meta": {
     "schema_version": "v1",
+    "request_id": "req_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tool": "stock_quote"
   }
 }
@@ -100,6 +101,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{
   },
   "meta": {
     "schema_version": "v1",
+    "request_id": "req_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tool": "stock_quote"
   }
 }

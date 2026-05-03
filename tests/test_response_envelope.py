@@ -17,6 +17,8 @@ def test_call_tool_wraps_success_in_envelope():
     assert resp["error"] is None
     assert resp["meta"]["tool"] == "ok"
     assert resp["meta"]["schema_version"] == "v1"
+    assert isinstance(resp["meta"]["request_id"], str)
+    assert resp["meta"]["request_id"].startswith("req_")
 
 
 def test_call_tool_validation_error_in_envelope():
@@ -28,6 +30,7 @@ def test_call_tool_validation_error_in_envelope():
     assert resp["error"]["error_code"] == "INVALID_ARGUMENT"
     assert resp["meta"]["tool"] == "ok"
     assert resp["meta"]["schema_version"] == "v1"
+    assert isinstance(resp["meta"]["request_id"], str)
 
 
 def test_call_tool_not_found_in_envelope():
@@ -37,3 +40,4 @@ def test_call_tool_not_found_in_envelope():
     assert resp["error"]["error_code"] == "TOOL_NOT_FOUND"
     assert resp["meta"]["tool"] == "missing"
     assert resp["meta"]["schema_version"] == "v1"
+    assert isinstance(resp["meta"]["request_id"], str)
