@@ -1,5 +1,6 @@
-from openclaw_stock_mcp.server.mcp_server import MCPServerStub, MCPTool
 from pydantic import BaseModel, Field
+
+from openclaw_stock_mcp.server.mcp_server import MCPServerStub, MCPTool
 
 
 class _Req(BaseModel):
@@ -14,6 +15,8 @@ def test_call_tool_wraps_success_in_envelope():
     assert resp["success"] is True
     assert resp["data"]["v"] == 1
     assert resp["error"] is None
+    assert resp["meta"]["tool"] == "ok"
+    assert resp["meta"]["schema_version"] == "v1"
 
 
 def test_call_tool_validation_error_in_envelope():
@@ -23,6 +26,8 @@ def test_call_tool_validation_error_in_envelope():
     resp = s.call_tool("ok", {"value": 0})
     assert resp["success"] is False
     assert resp["error"]["error_code"] == "INVALID_ARGUMENT"
+    assert resp["meta"]["tool"] == "ok"
+    assert resp["meta"]["schema_version"] == "v1"
 
 
 def test_call_tool_not_found_in_envelope():
@@ -30,3 +35,5 @@ def test_call_tool_not_found_in_envelope():
     resp = s.call_tool("missing", {})
     assert resp["success"] is False
     assert resp["error"]["error_code"] == "TOOL_NOT_FOUND"
+    assert resp["meta"]["tool"] == "missing"
+    assert resp["meta"]["schema_version"] == "v1"
