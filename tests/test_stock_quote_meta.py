@@ -43,6 +43,11 @@ class _Resolver:
         symbol = "600519.SH"
         sec_type = "stock"
 
+    def infer_sec_type(self, raw: str):
+        if raw == "159001.SZ":
+            return "fund"
+        return "stock"
+
     def resolve(self, symbol, sec_type):
         return self._Resolved()
 
@@ -58,3 +63,16 @@ def test_stock_quote_response_contains_meta():
     assert result["partial_failure"] is False
     assert result["meta"]["per_symbol"][0]["used_fallback"] is True
     assert result["meta"]["per_symbol"][0]["final_provider"] == "akshare"
+
+
+def test_stock_quote_rejects_mismatched_symbol_and_sec_type():
+    uc = StockQuoteUseCase()
+    uc.router = _Router()
+    uc.resolver = _Resolver()
+
+    req = type("Req", (), {"symbols": ["159001.SZ"], "sec_type": "index", "provider": None, "provider_preference": None})()
+    result = uc.execute(req)
+
+    assert result["partial_failure"] is True
+    assert result["items"] == []
+    assert result["errors"][0]["error_code"] == "INVALID_ARGUMENT"

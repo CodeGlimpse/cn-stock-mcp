@@ -3,6 +3,7 @@ from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
+from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class StockQuoteUseCase:
@@ -20,6 +21,17 @@ class StockQuoteUseCase:
         fallback = [p for p in ordered[1:] if p != primary]
         return ProviderSelection(primary=primary, fallback=fallback)
 
+    def _validate_symbol_sec_type(self, raw_symbol: str, requested_sec_type: str | None):
+        if not requested_sec_type:
+            return
+        inferred_sec_type = self.resolver.infer_sec_type(raw_symbol)
+        if inferred_sec_type != requested_sec_type:
+            raise ProviderError(
+                "INVALID_ARGUMENT",
+                f"Symbol {raw_symbol} is inferred as {inferred_sec_type}, which conflicts with requested sec_type={requested_sec_type}",
+                retryable=False,
+            )
+
     def execute(self, request):
         items = []
         errors = []
@@ -27,14 +39,15 @@ class StockQuoteUseCase:
         forced_selection = self._selection_from_preference(getattr(request, "provider_preference", None))
 
         for raw_symbol in request.symbols:
-            resolved = self.resolver.resolve(raw_symbol, request.sec_type)
-            selection = forced_selection or self.router.choose_provider(
-                tool_name="stock_quote",
-                symbol=resolved.symbol,
-                sec_type=resolved.sec_type,
-                preferred=getattr(request, "provider", None),
-            )
             try:
+                self._validate_symbol_sec_type(raw_symbol, request.sec_type)
+                resolved = self.resolver.resolve(raw_symbol, request.sec_type)
+                selection = forced_selection or self.router.choose_provider(
+                    tool_name="stock_quote",
+                    symbol=resolved.symbol,
+                    sec_type=resolved.sec_type,
+                    preferred=getattr(request, "provider", None),
+                )
                 quote, fallback_meta = run_with_fallback_meta(
                     self.router,
                     selection,
@@ -54,12 +67,25 @@ class StockQuoteUseCase:
                     }
                 )
             except Exception as exc:
+                try:
+                    resolved = self.resolver.resolve(raw_symbol, request.sec_type)
+                    resolved_symbol = resolved.symbol
+                    resolved_sec_type = resolved.sec_type
+                except Exception:
+                    resolved_symbol = raw_symbol
+                    resolved_sec_type = request.sec_type
+                selection = forced_selection or self.router.choose_provider(
+                    tool_name="stock_quote",
+                    symbol=resolved_symbol,
+                    sec_type=resolved_sec_type,
+                    preferred=getattr(request, "provider", None),
+                )
                 errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
                 meta_items.append(
                     {
                         "symbol": raw_symbol,
-                        "resolved_symbol": resolved.symbol,
-                        "sec_type": resolved.sec_type,
+                        "resolved_symbol": resolved_symbol,
+                        "sec_type": resolved_sec_type,
                         "selected_primary": selection.primary,
                         "selected_fallback": selection.fallback,
                         "attempted": [selection.primary, *selection.fallback],

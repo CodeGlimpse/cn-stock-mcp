@@ -8,6 +8,10 @@ class SymbolResolver:
     def __init__(self) -> None:
         self.normalizer = Normalizer()
 
+    def infer_sec_type(self, raw: str) -> str:
+        symbol = self.normalizer.normalize_symbol(raw)
+        return self._infer_sec_type(symbol)
+
     def resolve(self, raw: str, sec_type: str | None = None) -> Instrument:
         symbol = self.normalizer.normalize_symbol(raw)
         inferred_sec_type = sec_type or self._infer_sec_type(symbol)
