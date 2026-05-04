@@ -935,7 +935,8 @@ OrderBook
 - `sentiment`：板块情绪温度
 - `benchmark_summary`：板块成员基准分布与平均基准收益
 - `continuity`：持续强势/弱势、连涨连跌情况
-- `structure.tags`：板块结构标签，如 `broad_strength / concentrated_strength / high_dispersion`
+- `rotation`：区间模式下的轮动判断，如 `leader_driven / broad_advance / divergent_rotation`
+- `structure.tags`：板块结构标签，如 `broad_strength / concentrated_strength / high_dispersion / trend_divergence`
 - `rankings`：收益 / 相对强弱 / 量比 / 回撤风险榜单
 - `buckets`：`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`
 

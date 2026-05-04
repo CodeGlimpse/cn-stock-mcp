@@ -91,6 +91,84 @@ class _BatchReview:
         }
 
 
+class _RangeBatchReview:
+    def execute(self, request):
+        assert request.start_date == "2026-04-01"
+        assert request.end_date == "2026-04-30"
+        return {
+            "mode": "range_review",
+            "requested_trade_date": None,
+            "requested_start_date": "2026-04-01",
+            "requested_end_date": "2026-04-30",
+            "sort_by": "relative_strength",
+            "descending": True,
+            "filters": {
+                "min_relative_strength": None,
+                "min_return": None,
+                "max_drawdown_limit": None,
+                "min_volume_ratio": None,
+            },
+            "items": [
+                {
+                    "symbol": "300750.SZ",
+                    "return": 14.0,
+                    "relative_strength": 9.0,
+                    "max_drawdown": 4.0,
+                    "volume_ratio": 1.6,
+                    "tags": ["stronger_than_benchmark", "positive_return", "high_volume"],
+                    "summary": "A",
+                    "stats": {"up_streak": 3, "down_streak": 0},
+                    "benchmark": {"symbol": "399006.SZ", "name": "创业板指", "return": 3.5},
+                },
+                {
+                    "symbol": "600519.SH",
+                    "return": -1.0,
+                    "relative_strength": -0.5,
+                    "max_drawdown": 6.0,
+                    "volume_ratio": 0.9,
+                    "tags": [],
+                    "summary": "B",
+                    "stats": {"up_streak": 0, "down_streak": 1},
+                    "benchmark": {"symbol": "000001.SH", "name": "上证指数", "return": 1.2},
+                },
+                {
+                    "symbol": "000001.SZ",
+                    "return": -2.0,
+                    "relative_strength": -1.5,
+                    "max_drawdown": 8.5,
+                    "volume_ratio": 0.7,
+                    "tags": ["drawdown_risk"],
+                    "summary": "C",
+                    "stats": {"up_streak": 0, "down_streak": 2},
+                    "benchmark": {"symbol": "399001.SZ", "name": "深证成指", "return": -0.5},
+                },
+                {
+                    "symbol": "600763.SH",
+                    "return": -3.5,
+                    "relative_strength": -2.2,
+                    "max_drawdown": 9.0,
+                    "volume_ratio": 0.6,
+                    "tags": ["drawdown_risk"],
+                    "summary": "D",
+                    "stats": {"up_streak": 0, "down_streak": 3},
+                    "benchmark": {"symbol": "000001.SH", "name": "上证指数", "return": 1.2},
+                },
+            ],
+            "groups": {
+                "strong_candidates": 1,
+                "risk_candidates": 2,
+                "volume_focus": 1,
+                "up_streak_candidates": 1,
+            },
+            "count": 4,
+            "filtered_from": 4,
+            "total_symbols": 4,
+            "partial_failure": False,
+            "errors": [],
+            "summary": "range batch done",
+        }
+
+
 def _build_req():
     return type(
         "Req",
@@ -176,6 +254,45 @@ def test_sector_review_adds_benchmark_summary_and_continuity():
     assert result["continuity"]["max_down_streak"] == 2
     assert result["continuity"]["sustained_strength_count"] == 1
     assert result["continuity"]["sustained_weakness_count"] == 1
+
+
+def test_sector_review_adds_range_rotation_signals():
+    uc = SectorReviewUseCase()
+    uc.sector_lookup = _SectorLookup()
+    uc.batch_review = _RangeBatchReview()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "sector_name": "算力概念",
+            "trade_date": None,
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "adjust": "none",
+            "provider": "zhitu",
+            "sort_by": "relative_strength",
+            "descending": True,
+            "top_n": 2,
+            "limit": 100,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+        },
+    )()
+
+    result = uc.execute(req)
+
+    assert result["mode"] == "range_review"
+    assert result["rotation"]["range_mode"] is True
+    assert result["rotation"]["label"] == "leader_driven"
+    assert result["rotation"]["label_zh"] == "龙头驱动"
+    assert result["rotation"]["top1_return_contribution"] is not None
+    assert result["rotation"]["top1_return_contribution"] > 0.9
+    assert result["rotation"]["negative_ratio"] > result["rotation"]["positive_ratio"]
+    assert result["rotation"]["leader_symbols"][0] == "300750.SZ"
+    assert "轮动 龙头驱动" in result["summary"]
 
 
 def test_sector_review_raises_when_no_members_found():

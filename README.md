@@ -255,7 +255,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '
 # 单日板块复盘：查看板块成员整体强弱、情绪、龙头/跟风/掉队
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"TFG板块趋势","trade_date":"2026-04-30","top_n":3,"limit":20}'
 
-# 区间板块复盘：适合看一段时间的行业强弱与分化
+# 区间板块复盘：适合看一段时间的行业强弱、结构分化与轮动特征
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"TFG板块趋势","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}'
 ```
 
@@ -268,23 +268,12 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
   - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷）
   - `benchmark_summary`（板块成员基准分布与平均基准收益）
   - `continuity`（持续强势/弱势、连涨连跌情况）
-  - `structure`（板块结构标签，如 broad_strength / high_dispersion）
+  - `rotation`（区间模式下的轮动判断，如 `龙头驱动 / 普涨轮动 / 分化轮动`）
+  - `structure`（板块结构标签，如 `broad_strength / high_dispersion / trend_divergence`）
   - `rankings`（收益/相对强弱/量比/回撤风险榜）
-  - `buckets`（leaders / followers / draggers / risk_alerts 等分层）
+  - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates` 等分层）
 
-```bash
-# 概念板块列表（默认）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"list","sector_type":"concept","limit":10}'
-
-# 一级板块列表
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"list","sector_type":"primary","limit":10}'
-
-# 成员股查询：某一级板块下的股票成员（children）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"children","sector_name":"TFG板块趋势","limit":20}'
-
-# 兼容旧模式名 members（语义等同 children）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_lookup --payload '{"mode":"members","sector_name":"TFG板块趋势","limit":20}'
-```
+### sector_lookup 本地调用样例（板块列表 / 成员股）
 
 ### 运行 smoke test
 

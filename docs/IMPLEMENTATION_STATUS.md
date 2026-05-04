@@ -92,7 +92,8 @@
   - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷）
   - `benchmark_summary`（板块成员基准分布与平均基准收益）
   - `continuity`（持续强势/弱势、连涨连跌情况）
-  - `structure`（板块结构标签，如 `broad_strength / high_dispersion / benchmark_outperform`）
+  - `rotation`（区间模式下的轮动判断，如 `leader_driven / broad_advance / divergent_rotation`）
+  - `structure`（板块结构标签，如 `broad_strength / high_dispersion / benchmark_outperform / trend_divergence`）
   - `rankings`（收益 / 相对强弱 / 量比 / 回撤风险榜）
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`）
   - 可直接阅读的 `summary` 文本

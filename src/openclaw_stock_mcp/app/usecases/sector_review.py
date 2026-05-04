@@ -55,6 +55,14 @@ class SectorReviewUseCase:
         benchmark_summary = self._build_benchmark_summary(items)
         rankings = self._build_rankings(items, request.top_n)
         continuity = self._build_continuity(items)
+        rotation = self._build_rotation(
+            items=items,
+            stats=stats,
+            breadth=breadth,
+            continuity=continuity,
+            rankings=rankings,
+            mode=batch_resp.get("mode"),
+        )
         structure = self._build_structure(
             items=items,
             member_count=len(symbols),
@@ -77,6 +85,7 @@ class SectorReviewUseCase:
             structure=structure,
             continuity=continuity,
             mode=batch_resp.get("mode"),
+            rotation=rotation,
         )
 
         return {
@@ -92,6 +101,7 @@ class SectorReviewUseCase:
             "sentiment": sentiment,
             "benchmark_summary": benchmark_summary,
             "continuity": continuity,
+            "rotation": rotation,
             "structure": structure,
             "leaders": rankings["leaders_by_return"],
             "laggards": rankings["laggards_by_return"],
@@ -338,6 +348,62 @@ class SectorReviewUseCase:
             "tags": tags,
         }
 
+    def _build_rotation(self, items: list[dict], stats: dict, breadth: dict, continuity: dict, rankings: dict, mode: str | None) -> dict:
+        reviewed_count = len(items)
+        positive_ratio = (breadth.get("positive_count", 0) / reviewed_count) if reviewed_count else 0.0
+        negative_ratio = (breadth.get("negative_count", 0) / reviewed_count) if reviewed_count else 0.0
+        outperform_ratio = (breadth.get("stronger_than_benchmark_count", 0) / reviewed_count) if reviewed_count else 0.0
+        strong_trend_ratio = (continuity.get("sustained_strength_count", 0) / reviewed_count) if reviewed_count else 0.0
+        weak_trend_ratio = (continuity.get("sustained_weakness_count", 0) / reviewed_count) if reviewed_count else 0.0
+        positive_returns = sorted([float(item.get("return")) for item in items if item.get("return") is not None and item.get("return") > 0], reverse=True)
+        total_positive_return = sum(positive_returns) if positive_returns else 0.0
+        top1_contribution = (positive_returns[0] / total_positive_return) if total_positive_return > 0 and positive_returns else None
+        top3_contribution = (sum(positive_returns[:3]) / total_positive_return) if total_positive_return > 0 and positive_returns else None
+        best_return = stats.get("best_return")
+        avg_return = stats.get("avg_return")
+        avg_rs = stats.get("avg_relative_strength")
+        dispersion = stats.get("return_stddev")
+        leader_symbols = [item.get("symbol") for item in rankings.get("leaders_by_return", []) if item.get("symbol")]
+        laggard_symbols = [item.get("symbol") for item in rankings.get("laggards_by_return", []) if item.get("symbol")]
+
+        score = 0.0
+        if avg_return is not None:
+            score += avg_return / 5.0
+        if avg_rs is not None:
+            score += avg_rs / 4.0
+        score += positive_ratio - negative_ratio
+        score += strong_trend_ratio * 0.5
+        score -= weak_trend_ratio * 0.5
+
+        if negative_ratio >= 0.6 and avg_return is not None and avg_return < 0:
+            label, label_zh = "broad_decline", "普跌走弱"
+        elif top1_contribution is not None and top1_contribution >= 0.65 and best_return is not None and best_return >= 5 and positive_ratio <= 0.5:
+            label, label_zh = "leader_driven", "龙头驱动"
+        elif positive_ratio >= 0.6 and outperform_ratio >= 0.5 and top3_contribution is not None and top3_contribution <= 0.85:
+            label, label_zh = "broad_advance", "普涨轮动"
+        elif strong_trend_ratio >= 0.4 and avg_rs is not None and avg_rs > 0:
+            label, label_zh = "persistent_uptrend", "持续走强"
+        elif dispersion is not None and dispersion >= 4 and positive_ratio >= 0.3 and negative_ratio >= 0.3:
+            label, label_zh = "divergent_rotation", "分化轮动"
+        else:
+            label, label_zh = "mixed_rotation", "混合轮动"
+
+        return {
+            "label": label,
+            "label_zh": label_zh,
+            "score": score,
+            "positive_ratio": positive_ratio,
+            "negative_ratio": negative_ratio,
+            "outperform_ratio": outperform_ratio,
+            "strong_trend_ratio": strong_trend_ratio,
+            "weak_trend_ratio": weak_trend_ratio,
+            "top1_return_contribution": top1_contribution,
+            "top3_return_contribution": top3_contribution,
+            "leader_symbols": leader_symbols,
+            "laggard_symbols": laggard_symbols,
+            "range_mode": mode == "range_review",
+        }
+
     def _build_buckets(self, items: list[dict], top_n: int) -> dict:
         strong_candidates = [item for item in items if item.get("relative_strength") is not None and item.get("relative_strength") > 0 and item.get("return") is not None and item.get("return") > 0]
         weak_candidates = [item for item in items if item.get("relative_strength") is not None and item.get("relative_strength") < 0 and item.get("return") is not None and item.get("return") < 0]
@@ -370,15 +436,18 @@ class SectorReviewUseCase:
     def _fmt_pct(self, value):
         return "未知" if value is None else f"{value:.2f}%"
 
-    def _build_summary(self, sector_name: str, member_count: int, reviewed_count: int, stats: dict, breadth: dict, sentiment: dict, benchmark_summary: dict, rankings: dict, structure: dict, continuity: dict, mode: str | None) -> str:
+    def _build_summary(self, sector_name: str, member_count: int, reviewed_count: int, stats: dict, breadth: dict, sentiment: dict, benchmark_summary: dict, rankings: dict, structure: dict, continuity: dict, mode: str | None, rotation: dict | None = None) -> str:
         leader = rankings["leaders_by_return"][0].get("symbol") if rankings.get("leaders_by_return") else "未知"
         laggard = rankings["laggards_by_return"][0].get("symbol") if rankings.get("laggards_by_return") else "未知"
         strong = rankings["leaders_by_relative_strength"][0].get("symbol") if rankings.get("leaders_by_relative_strength") else "未知"
         benchmark_name = benchmark_summary.get("dominant_benchmark_name") or benchmark_summary.get("dominant_benchmark_symbol") or "基准"
         mode_label = "区间复盘" if mode == "range_review" else "单日复盘"
+        rotation_part = ""
+        if mode == "range_review" and rotation:
+            rotation_part = f"轮动 {rotation.get('label_zh')}；"
         return (
             f"板块复盘完成：{sector_name}，{mode_label}；成员 {member_count} 只，成功复盘 {reviewed_count} 只；"
             f"平均收益 {self._fmt_pct(stats.get('avg_return'))}，平均相对{benchmark_name}强弱 {self._fmt_pct(stats.get('avg_relative_strength'))}，情绪 {sentiment.get('label_zh')}；"
-            f"上涨 {breadth.get('positive_count', 0)} 只，下跌 {breadth.get('negative_count', 0)} 只，持续强势 {continuity.get('sustained_strength_count', 0)} 只；"
+            f"{rotation_part}上涨 {breadth.get('positive_count', 0)} 只，下跌 {breadth.get('negative_count', 0)} 只，持续强势 {continuity.get('sustained_strength_count', 0)} 只；"
             f"收益领涨 {leader}，相对强势 {strong}，落后 {laggard}；结构标签 {', '.join(structure.get('tags', []))}。"
         )
