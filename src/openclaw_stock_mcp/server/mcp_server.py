@@ -12,6 +12,7 @@ from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
+from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
 from openclaw_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
 from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
 from openclaw_stock_mcp.app.usecases.stock_review import StockReviewUseCase
@@ -26,6 +27,7 @@ from openclaw_stock_mcp.server.schemas import (
     MarketOverviewRequest,
     MarketPoolRequest,
     SectorLookupRequest,
+    SectorReviewRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
     StockQuoteRequest,
@@ -120,6 +122,7 @@ def create_server() -> MCPServerStub:
     market_pool = MarketPoolUseCase()
     stock_orderbook = OrderbookUseCase()
     sector_lookup = SectorLookupUseCase()
+    sector_review = SectorReviewUseCase()
     provider_health = ProviderHealthUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
@@ -134,6 +137,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="market_pool", description="Get market pools such as limit-up, limit-down, and strong stocks.", input_model=MarketPoolRequest, handler=market_pool.execute))
     server.register_tool(MCPTool(name="stock_orderbook", description="Get order book data for supported instruments.", input_model=StockOrderbookRequest, handler=stock_orderbook.execute))
     server.register_tool(MCPTool(name="sector_lookup", description="Lookup sector lists and members.", input_model=SectorLookupRequest, handler=sector_lookup.execute))
+    server.register_tool(MCPTool(name="sector_review", description="Generate a review summary for a sector by aggregating its member stocks.", input_model=SectorReviewRequest, handler=sector_review.execute))
     server.register_tool(MCPTool(name="provider_health", description="Run provider self checks for zhitu and akshare.", input_model=EmptyRequest, handler=provider_health.execute))
 
     return server

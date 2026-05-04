@@ -64,6 +64,7 @@ v1.1 定义以下 tools：
 6. `market_pool`
 7. `stock_orderbook`（可选实现）
 8. `sector_lookup`（可选实现）
+9. `sector_review`（板块复盘 / 板块成员聚合分析）
 
 ---
 
@@ -864,6 +865,79 @@ OrderBook
 说明：
 - `members` 是兼容旧模式名，语义等同 `children`
 - 当前返回的是**股票成员列表**，不是子板块列表
+
+---
+
+## 7.9 `sector_review`
+
+### 7.9.1 用途
+对指定板块做聚合复盘：先获取板块成员股，再对成员股做批量复盘，输出板块层面的强弱、情绪、结构与候选分层。
+
+### 7.9.2 输入 Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "sector_name": {"type": "string"},
+    "trade_date": {"type": "string"},
+    "start_date": {"type": "string"},
+    "end_date": {"type": "string"},
+    "adjust": {"type": "string", "enum": ["none", "qfq", "hfq"]},
+    "provider": {"type": "string", "enum": ["zhitu"]},
+    "sort_by": {"type": "string", "enum": ["relative_strength", "return", "max_drawdown", "volume_ratio"]},
+    "descending": {"type": "boolean"},
+    "top_n": {"type": "integer", "minimum": 1, "maximum": 20},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 500},
+    "min_relative_strength": {"type": "number"},
+    "min_return": {"type": "number"},
+    "max_drawdown_limit": {"type": "number"},
+    "min_volume_ratio": {"type": "number"}
+  },
+  "required": ["sector_name"]
+}
+```
+
+### 7.9.3 输入约束
+- `trade_date` 与 `start_date/end_date` 互斥
+- 区间模式必须同时提供 `start_date + end_date`
+- 默认模式为 `trade_date=today`
+- `provider` 当前固定为 `zhitu`，用于获取板块成员；成员股复盘当前复用 `akshare` 路径
+
+### 7.9.4 输出 Schema
+
+```json
+{
+  "sector_name": "TFG板块趋势",
+  "mode": "trade_date_review",
+  "trade_date": "2026-04-30",
+  "member_count": 20,
+  "reviewed_count": 18,
+  "breadth": {},
+  "stats": {},
+  "sentiment": {"label": "warm", "label_zh": "偏强", "score": 2.0},
+  "benchmark_summary": {},
+  "continuity": {},
+  "structure": {"tags": ["broad_strength"]},
+  "rankings": {},
+  "buckets": {},
+  "items": [],
+  "summary": "...",
+  "partial_failure": false,
+  "errors": [],
+  "meta": {}
+}
+```
+
+### 7.9.5 输出说明
+- `breadth`：上涨/下跌/放量/连涨连跌分布
+- `stats`：平均收益、相对强弱、量比、回撤、离散度
+- `sentiment`：板块情绪温度
+- `benchmark_summary`：板块成员基准分布与平均基准收益
+- `continuity`：持续强势/弱势、连涨连跌情况
+- `structure.tags`：板块结构标签，如 `broad_strength / concentrated_strength / high_dispersion`
+- `rankings`：收益 / 相对强弱 / 量比 / 回撤风险榜单
+- `buckets`：`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`
 
 ---
 

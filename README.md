@@ -249,7 +249,28 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '
 - 复盘模式下，指数概览由历史日线重建，不再直接读取当前实时行情
 - 返回中新增：`index_ranking / breadth / sentiment / highlights`，便于复盘时快速看指数强弱与情绪温度
 
-### sector_lookup 本地调用样例（板块列表 / 成员股）
+### sector_review 板块复盘样例
+
+```bash
+# 单日板块复盘：查看板块成员整体强弱、情绪、龙头/跟风/掉队
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"TFG板块趋势","trade_date":"2026-04-30","top_n":3,"limit":20}'
+
+# 区间板块复盘：适合看一段时间的行业强弱与分化
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"TFG板块趋势","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}'
+```
+
+说明：
+- 先通过 `sector_lookup(mode=children)` 获取板块成员股
+- 再复用 `stock_review_batch` 生成成员股复盘卡片
+- 返回除 `items` 外，还包含：
+  - `breadth`（上涨/下跌/放量/连涨连跌分布）
+  - `stats`（平均收益、相对强弱、回撤、离散度）
+  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷）
+  - `benchmark_summary`（板块成员基准分布与平均基准收益）
+  - `continuity`（持续强势/弱势、连涨连跌情况）
+  - `structure`（板块结构标签，如 broad_strength / high_dispersion）
+  - `rankings`（收益/相对强弱/量比/回撤风险榜）
+  - `buckets`（leaders / followers / draggers / risk_alerts 等分层）
 
 ```bash
 # 概念板块列表（默认）

@@ -75,6 +75,28 @@
   - `partial_failure / errors`
   - `summary`（批量筛查摘要）
 
+### sector_review（板块复盘 / 板块成员聚合分析）
+- 新增 `sector_review` tool
+- 当前路径：
+  - `sector_lookup(children)` 获取板块成员股（当前 provider：`zhitu`）
+  - `stock_review_batch` 对成员股做批量复盘（当前复用 `akshare` 路径）
+- 支持两种模式：
+  - `trade_date`：单日板块复盘
+  - `start_date + end_date`：区间板块复盘
+- 支持参数：
+  - `sort_by / descending / top_n / limit`
+  - `min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
+- 输出包含：
+  - `breadth`（上涨/下跌/放量/连涨连跌分布）
+  - `stats`（平均收益、相对强弱、量比、回撤、离散度）
+  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷）
+  - `benchmark_summary`（板块成员基准分布与平均基准收益）
+  - `continuity`（持续强势/弱势、连涨连跌情况）
+  - `structure`（板块结构标签，如 `broad_strength / high_dispersion / benchmark_outperform`）
+  - `rankings`（收益 / 相对强弱 / 量比 / 回撤风险榜）
+  - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`）
+  - 可直接阅读的 `summary` 文本
+
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool
 - 当前 provider：`akshare`
