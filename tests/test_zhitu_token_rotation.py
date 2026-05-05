@@ -49,6 +49,17 @@ class _Zhitu(ZhituProvider):
         self.client = _Client()
         self._instrument_name_cache = {}
         self._token_cooldowns = {}
+        self._token_stats = {
+            token: {
+                'total_requests': 0,
+                'success_count': 0,
+                'failure_count': 0,
+                'rate_limit_count': 0,
+                'last_success_at': None,
+                'last_failure_at': None,
+            }
+            for token in self.tokens
+        }
 
 
 class _ZhituAll429(ZhituProvider):
@@ -60,6 +71,17 @@ class _ZhituAll429(ZhituProvider):
         self.client = _RateLimitedClient()
         self._instrument_name_cache = {}
         self._token_cooldowns = {}
+        self._token_stats = {
+            token: {
+                'total_requests': 0,
+                'success_count': 0,
+                'failure_count': 0,
+                'rate_limit_count': 0,
+                'last_success_at': None,
+                'last_failure_at': None,
+            }
+            for token in self.tokens
+        }
 
 
 def test_zhitu_provider_switches_token_on_429():
@@ -73,6 +95,7 @@ def test_zhitu_provider_switches_token_on_429():
     assert 'TOKEN_A' in provider._token_cooldowns
 
 
+
 def test_zhitu_provider_raises_rate_limit_when_all_tokens_limited():
     provider = _ZhituAll429()
 
@@ -84,3 +107,25 @@ def test_zhitu_provider_raises_rate_limit_when_all_tokens_limited():
         assert exc.retryable is True
 
     assert [call['token'] for call in provider.client.calls] == ['TOKEN_A', 'TOKEN_B']
+
+
+def test_zhitu_token_health_contains_observability_fields():
+    provider = _Zhitu()
+    provider._get_json('/hz/list/hszs')
+
+    rows = provider.get_token_health()
+    by_token = {row['token']: row for row in rows}
+
+    assert set(by_token.keys()) == {'TOKEN_A', 'TOKEN_B'}
+
+    a = by_token['TOKEN_A']
+    assert a['total_requests'] == 1
+    assert a['failure_count'] == 1
+    assert a['rate_limit_count'] == 1
+    assert a['cooldown_remaining_seconds'] >= 0
+
+    b = by_token['TOKEN_B']
+    assert b['total_requests'] == 1
+    assert b['success_count'] == 1
+    assert b['failure_count'] == 0
+    assert b['success_rate'] == 1.0

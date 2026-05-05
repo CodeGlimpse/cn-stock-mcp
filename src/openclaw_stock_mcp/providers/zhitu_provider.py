@@ -37,17 +37,87 @@ class ZhituProvider:
         self.client = build_http_client(self.settings.zhitu_timeout_seconds)
         self._instrument_name_cache: dict[tuple[str, str], str] = {}
         self._token_cooldowns: dict[str, float] = {}
+        self._token_stats: dict[str, dict[str, float | int | None]] = {
+            token: {
+                "total_requests": 0,
+                "success_count": 0,
+                "failure_count": 0,
+                "rate_limit_count": 0,
+                "last_success_at": None,
+                "last_failure_at": None,
+            }
+            for token in self.tokens
+        }
+
+    def _now(self) -> float:
+        return time.time()
+
+    def _ensure_token_state(self, token: str):
+        if token not in self._token_stats:
+            self._token_stats[token] = {
+                "total_requests": 0,
+                "success_count": 0,
+                "failure_count": 0,
+                "rate_limit_count": 0,
+                "last_success_at": None,
+                "last_failure_at": None,
+            }
+
+    def _token_score(self, token: str, now: float | None = None) -> float:
+        self._ensure_token_state(token)
+        stats = self._token_stats[token]
+        now = now if now is not None else self._now()
+
+        total = int(stats.get("total_requests", 0) or 0)
+        success = int(stats.get("success_count", 0) or 0)
+        failures = int(stats.get("failure_count", 0) or 0)
+        rate_limits = int(stats.get("rate_limit_count", 0) or 0)
+        cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
+        last_failure_at = stats.get("last_failure_at")
+
+        success_rate = (success / total) if total > 0 else 0.5
+        base = success_rate * 100.0
+        penalty = failures * 1.5 + rate_limits * 8.0
+
+        if cooldown_until > now:
+            penalty += 100.0
+
+        if isinstance(last_failure_at, (int, float)):
+            age = max(0.0, now - float(last_failure_at))
+            if age < 300:
+                penalty += (300 - age) / 30.0
+
+        return base - penalty
 
     def _available_tokens(self) -> list[str]:
         if not self.tokens:
             return []
-        now = time.time()
+
+        now = self._now()
         available = [token for token in self.tokens if self._token_cooldowns.get(token, 0) <= now]
-        return available or list(self.tokens)
+        candidates = available or list(self.tokens)
+        return sorted(candidates, key=lambda token: self._token_score(token, now), reverse=True)
 
     def _mark_token_rate_limited(self, token: str):
         cooldown_seconds = max(int(getattr(self.settings, "zhitu_token_cooldown_seconds", 60) or 60), 1)
-        self._token_cooldowns[token] = time.time() + cooldown_seconds
+        self._token_cooldowns[token] = self._now() + cooldown_seconds
+        self._record_token_failure(token, rate_limited=True)
+
+    def _record_token_success(self, token: str):
+        self._ensure_token_state(token)
+        stats = self._token_stats[token]
+        stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
+        stats["success_count"] = int(stats.get("success_count", 0) or 0) + 1
+        stats["last_success_at"] = self._now()
+
+    def _record_token_failure(self, token: str, rate_limited: bool = False):
+        self._ensure_token_state(token)
+        stats = self._token_stats[token]
+        stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
+        stats["failure_count"] = int(stats.get("failure_count", 0) or 0) + 1
+        if rate_limited:
+            stats["rate_limit_count"] = int(stats.get("rate_limit_count", 0) or 0) + 1
+        stats["last_failure_at"] = self._now()
 
     def _get_json(self, path: str, params: dict | None = None):
         tokens = self._available_tokens()
@@ -64,13 +134,16 @@ class ZhituProvider:
             try:
                 response = self.client.get(url, params=request_params)
                 response.raise_for_status()
+                self._record_token_success(token)
                 return response.json()
             except httpx.TimeoutException as exc:
+                self._record_token_failure(token)
                 last_error = ProviderTimeoutError("PROVIDER_TIMEOUT", f"Zhitu request timed out: {path}", retryable=True)
                 break
             except httpx.HTTPStatusError as exc:
                 status_code = exc.response.status_code
                 if status_code in (401, 403):
+                    self._record_token_failure(token)
                     last_error = ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu authentication failed", retryable=False)
                     continue
                 if status_code == 429:
@@ -79,11 +152,14 @@ class ZhituProvider:
                     if idx < len(tokens) - 1:
                         continue
                     raise last_error from exc
+                self._record_token_failure(token)
                 last_error = ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu http error: {status_code}", retryable=True)
                 raise last_error from exc
             except ProviderError:
+                self._record_token_failure(token)
                 raise
             except Exception as exc:
+                self._record_token_failure(token)
                 last_error = ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu request failed: {exc}", retryable=True)
                 raise last_error from exc
 
@@ -349,3 +425,34 @@ class ZhituProvider:
         if pool_type == "limit_down":
             return [adapt_zhitu_limit_down_item(item) for item in raw]
         return [adapt_zhitu_strong_item(item) for item in raw]
+
+    def get_token_health(self) -> list[dict]:
+        now = self._now()
+        rows: list[dict] = []
+        for token in self.tokens:
+            self._ensure_token_state(token)
+            stats = self._token_stats[token]
+            total = int(stats.get("total_requests", 0) or 0)
+            success = int(stats.get("success_count", 0) or 0)
+            failures = int(stats.get("failure_count", 0) or 0)
+            rate_limits = int(stats.get("rate_limit_count", 0) or 0)
+            cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
+            success_rate = (success / total) if total > 0 else None
+            rows.append(
+                {
+                    "token": token,
+                    "score": round(self._token_score(token, now), 3),
+                    "total_requests": total,
+                    "success_count": success,
+                    "failure_count": failures,
+                    "rate_limit_count": rate_limits,
+                    "success_rate": success_rate,
+                    "cooldown_until": cooldown_until if cooldown_until > now else None,
+                    "cooldown_remaining_seconds": max(0, int(cooldown_until - now)) if cooldown_until > now else 0,
+                    "last_success_at": stats.get("last_success_at"),
+                    "last_failure_at": stats.get("last_failure_at"),
+                    "is_current": token == self.token,
+                }
+            )
+        rows.sort(key=lambda item: item["score"], reverse=True)
+        return rows
