@@ -3,6 +3,7 @@ from __future__ import annotations
 from statistics import pstdev
 
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
+from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA, REVIEW_WINDOWS
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
 from openclaw_stock_mcp.providers.errors import ProviderError
@@ -98,6 +99,8 @@ class StockReviewUseCase:
             "summary": summary,
             "source": daily_meta["final_provider"],
             "meta": {
+                "metric_schema": REVIEW_METRIC_SCHEMA,
+                "metric_windows": REVIEW_WINDOWS.get("trade_date", {}),
                 "calendar": {
                     "requested_trade_date": requested_trade_date,
                     "effective_trade_date": effective_trade_date,
@@ -193,6 +196,8 @@ class StockReviewUseCase:
             "summary": summary,
             "source": daily_meta["final_provider"],
             "meta": {
+                "metric_schema": REVIEW_METRIC_SCHEMA,
+                "metric_windows": REVIEW_WINDOWS.get("range_review", {}),
                 "calendar": {
                     "requested_start_date": request.start_date,
                     "requested_end_date": request.end_date,

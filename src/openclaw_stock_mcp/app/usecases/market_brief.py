@@ -4,6 +4,7 @@ from datetime import datetime
 
 from openclaw_stock_mcp.app.models.quote import Quote
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
+from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.providers.errors import ProviderError
 
@@ -118,6 +119,7 @@ class MarketBriefUseCase:
             "pools": pools,
             "summary": summary,
             "meta": {
+                "metric_schema": REVIEW_METRIC_SCHEMA,
                 "review_mode": review_mode,
                 "calendar": calendar_meta,
                 "overview": overview_meta,

@@ -3,6 +3,7 @@ from __future__ import annotations
 from statistics import median, pstdev
 from types import SimpleNamespace
 
+from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from openclaw_stock_mcp.app.usecases.stock_review_batch import StockReviewBatchUseCase
@@ -112,6 +113,7 @@ class SectorReviewUseCase:
             "partial_failure": batch_resp.get("partial_failure", False),
             "errors": batch_resp.get("errors", []),
             "meta": {
+                "metric_schema": REVIEW_METRIC_SCHEMA,
                 "sector_lookup": {
                     "source": members_resp.get("source"),
                     "total": members_resp.get("total"),

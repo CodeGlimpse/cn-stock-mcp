@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
+from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA
 from openclaw_stock_mcp.app.usecases.stock_review import StockReviewUseCase
 
 
@@ -55,6 +56,15 @@ class StockReviewBatchUseCase:
             "partial_failure": len(errors) > 0,
             "errors": errors,
             "summary": self._build_summary(top_items, request.sort_by, groups),
+            "meta": {
+                "metric_schema": REVIEW_METRIC_SCHEMA,
+                "score_fields": {
+                    "relative_strength": "relative_strength_pct",
+                    "return": "return_pct",
+                    "max_drawdown": "max_drawdown_pct",
+                    "volume_ratio": "volume_ratio",
+                },
+            },
         }
 
     def _to_card(self, review: dict) -> dict:
