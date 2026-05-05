@@ -69,17 +69,11 @@ class StockReviewBatchUseCase:
 
     def _to_card(self, review: dict) -> dict:
         stats = review.get("stats", {})
-        relative_strength = stats.get("relative_strength_20d")
-        if relative_strength is None:
-            relative_strength = stats.get("relative_strength_period")
-        period_return = stats.get("period_return")
-        if period_return is None:
-            period_return = stats.get("return_20d")
-        max_drawdown = stats.get("max_drawdown_period")
-        if max_drawdown is None:
-            max_drawdown = stats.get("max_drawdown_20d")
-        volume_ratio = stats.get("volume_ratio_5d")
-        tags = self._build_tags(stats, relative_strength, period_return, max_drawdown, volume_ratio)
+        relative_strength = stats.get("relative_strength_pct")
+        return_pct = stats.get("return_pct")
+        max_drawdown = stats.get("max_drawdown_pct")
+        volume_ratio = stats.get("volume_ratio")
+        tags = self._build_tags(stats, relative_strength, return_pct, max_drawdown, volume_ratio)
 
         latest_bar = review.get("latest_bar")
         return {
@@ -90,7 +84,7 @@ class StockReviewBatchUseCase:
             "end_date": review.get("end_date"),
             "close": getattr(latest_bar, "close", None) if latest_bar is not None else None,
             "relative_strength": relative_strength,
-            "return": period_return,
+            "return": return_pct,
             "max_drawdown": max_drawdown,
             "volume_ratio": volume_ratio,
             "tags": tags,
@@ -100,11 +94,11 @@ class StockReviewBatchUseCase:
             "source": review.get("source"),
         }
 
-    def _build_tags(self, stats: dict, relative_strength, period_return, max_drawdown, volume_ratio):
+    def _build_tags(self, stats: dict, relative_strength, return_pct, max_drawdown, volume_ratio):
         tags = []
         if relative_strength is not None and relative_strength > 0:
             tags.append("stronger_than_benchmark")
-        if period_return is not None and period_return > 0:
+        if return_pct is not None and return_pct > 0:
             tags.append("positive_return")
         if max_drawdown is not None and max_drawdown >= 8:
             tags.append("drawdown_risk")

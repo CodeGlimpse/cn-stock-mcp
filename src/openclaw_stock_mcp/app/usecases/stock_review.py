@@ -45,20 +45,20 @@ class StockReviewUseCase:
 
         streaks = self._streaks(daily)
         stats = {
-            "return_5d": self._window_return(daily, 5),
-            "return_20d": self._window_return(daily, 20),
-            "range_20d_high": self._max_field(daily[-20:], "high"),
-            "range_20d_low": self._min_field(daily[-20:], "low"),
-            "weekly_return_4w": self._window_return(weekly, 4),
-            "monthly_return_3m": self._window_return(monthly, 3),
-            "volatility_20d": self._volatility(daily[-20:]),
-            "max_drawdown_20d": self._max_drawdown(daily[-20:]),
+            "return_pct_5d": self._window_return(daily, 5),
+            "return_pct": self._window_return(daily, 20),
+            "high": self._max_field(daily[-20:], "high"),
+            "low": self._min_field(daily[-20:], "low"),
+            "return_pct_4w": self._window_return(weekly, 4),
+            "return_pct_3m": self._window_return(monthly, 3),
+            "volatility_pct": self._volatility(daily[-20:]),
+            "max_drawdown_pct": self._max_drawdown(daily[-20:]),
             "up_streak": streaks["up_streak"],
             "down_streak": streaks["down_streak"],
-            "volume_ratio_5d": self._ratio_to_prev_avg(daily, "volume", 5),
-            "turnover_ratio_5d": self._ratio_to_prev_avg(daily, "turnover", 5),
-            "distance_to_20d_high": self._distance_to_level(latest.close, self._max_field(daily[-20:], "high")),
-            "distance_to_20d_low": self._distance_to_level(latest.close, self._min_field(daily[-20:], "low")),
+            "volume_ratio": self._ratio_to_prev_avg(daily, "volume", 5),
+            "turnover_ratio": self._ratio_to_prev_avg(daily, "turnover", 5),
+            "distance_to_high_pct": self._distance_to_level(latest.close, self._max_field(daily[-20:], "high")),
+            "distance_to_low_pct": self._distance_to_level(latest.close, self._min_field(daily[-20:], "low")),
         }
 
         benchmark = self._build_benchmark_context(
@@ -68,7 +68,7 @@ class StockReviewUseCase:
             adjust=request.adjust,
             range_mode=False,
         )
-        stats["relative_strength_20d"] = self._relative_strength(stats.get("return_20d"), benchmark.get("return"))
+        stats["relative_strength_pct"] = self._relative_strength(stats.get("return_pct"), benchmark.get("return_pct"))
 
         summary = self._build_trade_date_summary(
             symbol=resolved.symbol,
@@ -143,19 +143,19 @@ class StockReviewUseCase:
         streaks = self._streaks(daily)
         stats = {
             "bars": len(daily),
-            "period_return": total_return,
-            "period_high": self._max_field(daily, "high"),
-            "period_low": self._min_field(daily, "low"),
+            "return_pct": total_return,
+            "high": self._max_field(daily, "high"),
+            "low": self._min_field(daily, "low"),
             "avg_turnover": self._avg_field(daily, "turnover"),
             "avg_volume": self._avg_field(daily, "volume"),
-            "weekly_return": self._window_return(weekly, len(weekly)),
-            "monthly_return": self._window_return(monthly, len(monthly)),
-            "period_volatility": self._volatility(daily),
-            "max_drawdown_period": self._max_drawdown(daily),
+            "return_pct_weekly": self._window_return(weekly, len(weekly)),
+            "return_pct_monthly": self._window_return(monthly, len(monthly)),
+            "volatility_pct": self._volatility(daily),
+            "max_drawdown_pct": self._max_drawdown(daily),
             "up_streak": streaks["up_streak"],
             "down_streak": streaks["down_streak"],
-            "volume_ratio_5d": self._ratio_to_prev_avg(daily, "volume", 5),
-            "turnover_ratio_5d": self._ratio_to_prev_avg(daily, "turnover", 5),
+            "volume_ratio": self._ratio_to_prev_avg(daily, "volume", 5),
+            "turnover_ratio": self._ratio_to_prev_avg(daily, "turnover", 5),
         }
 
         benchmark = self._build_benchmark_context(
@@ -165,7 +165,7 @@ class StockReviewUseCase:
             adjust=request.adjust,
             range_mode=True,
         )
-        stats["relative_strength_period"] = self._relative_strength(stats.get("period_return"), benchmark.get("return"))
+        stats["relative_strength_pct"] = self._relative_strength(stats.get("return_pct"), benchmark.get("return_pct"))
 
         summary = self._build_range_summary(
             symbol=resolved.symbol,
@@ -362,7 +362,7 @@ class StockReviewUseCase:
             return {
                 "symbol": benchmark_ref["symbol"],
                 "name": benchmark_ref["name"],
-                "return": bench_return,
+                "return_pct": bench_return,
                 "latest_bar": bars[-1] if bars else None,
                 "source": meta["final_provider"],
                 "meta": meta,
@@ -372,7 +372,7 @@ class StockReviewUseCase:
             return {
                 "symbol": benchmark_ref["symbol"],
                 "name": benchmark_ref["name"],
-                "return": None,
+                "return_pct": None,
                 "latest_bar": None,
                 "source": None,
                 "meta": {"error": str(exc)},
@@ -408,14 +408,14 @@ class StockReviewUseCase:
     def _build_trade_date_summary(self, symbol: str, requested_trade_date: str, effective_trade_date: str, latest_close, daily_change_percent, stats: dict, benchmark: dict, adjusted: bool):
         prefix = f"{requested_trade_date}（按 {effective_trade_date} 复盘）" if adjusted else f"{effective_trade_date} 个股复盘"
         benchmark_part = ""
-        if benchmark.get("return") is not None:
-            benchmark_part = f"；相对{benchmark.get('name')} 强弱 {self._fmt_pct(stats.get('relative_strength_20d'))}"
+        if benchmark.get("return_pct") is not None:
+            benchmark_part = f"；相对{benchmark.get('name')} 强弱 {self._fmt_pct(stats.get('relative_strength_pct'))}"
         return (
             f"{prefix}：{symbol} 收于 {self._fmt_num(latest_close)}，日涨跌 {self._fmt_pct(daily_change_percent)}；"
-            f"近5日 {self._fmt_pct(stats.get('return_5d'))}，近20日 {self._fmt_pct(stats.get('return_20d'))}，"
-            f"4周 {self._fmt_pct(stats.get('weekly_return_4w'))}，3月 {self._fmt_pct(stats.get('monthly_return_3m'))}；"
-            f"20日波动 {self._fmt_pct(stats.get('volatility_20d'))}，20日最大回撤 {self._fmt_pct(stats.get('max_drawdown_20d'))}，"
-            f"量比(5日) {self._fmt_ratio(stats.get('volume_ratio_5d'))}{benchmark_part}。"
+            f"近5日 {self._fmt_pct(stats.get('return_pct_5d'))}，主窗口收益 {self._fmt_pct(stats.get('return_pct'))}，"
+            f"4周 {self._fmt_pct(stats.get('return_pct_4w'))}，3月 {self._fmt_pct(stats.get('return_pct_3m'))}；"
+            f"波动 {self._fmt_pct(stats.get('volatility_pct'))}，最大回撤 {self._fmt_pct(stats.get('max_drawdown_pct'))}，"
+            f"量比(5日) {self._fmt_ratio(stats.get('volume_ratio'))}{benchmark_part}。"
         )
 
     def _build_range_summary(self, symbol: str, requested_start: str, requested_end: str, effective_start: str, effective_end: str, stats: dict, benchmark: dict, adjusted: bool):
@@ -424,11 +424,11 @@ class StockReviewUseCase:
         else:
             prefix = f"{effective_start}~{effective_end} 区间复盘"
         benchmark_part = ""
-        if benchmark.get("return") is not None:
-            benchmark_part = f"；相对{benchmark.get('name')} 强弱 {self._fmt_pct(stats.get('relative_strength_period'))}"
+        if benchmark.get("return_pct") is not None:
+            benchmark_part = f"；相对{benchmark.get('name')} 强弱 {self._fmt_pct(stats.get('relative_strength_pct'))}"
         return (
-            f"{prefix}：{symbol} 区间涨跌 {self._fmt_pct(stats.get('period_return'))}，"
-            f"区间高/低 {self._fmt_num(stats.get('period_high'))}/{self._fmt_num(stats.get('period_low'))}，"
-            f"区间波动 {self._fmt_pct(stats.get('period_volatility'))}，最大回撤 {self._fmt_pct(stats.get('max_drawdown_period'))}，"
+            f"{prefix}：{symbol} 区间涨跌 {self._fmt_pct(stats.get('return_pct'))}，"
+            f"区间高/低 {self._fmt_num(stats.get('high'))}/{self._fmt_num(stats.get('low'))}，"
+            f"区间波动 {self._fmt_pct(stats.get('volatility_pct'))}，最大回撤 {self._fmt_pct(stats.get('max_drawdown_pct'))}，"
             f"日均成交额 {self._fmt_num(stats.get('avg_turnover'))}{benchmark_part}。"
         )

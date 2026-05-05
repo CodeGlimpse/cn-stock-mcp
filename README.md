@@ -225,11 +225,11 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_review --payload '
 - `start_date + end_date` 模式：输出区间收益、高低点、均量/均额等
 - 返回结构含 `windows.daily / weekly / monthly`，便于后续脚本继续加工
 - 增强版额外提供：
-  - `volatility_20d / period_volatility`
-  - `max_drawdown_20d / max_drawdown_period`
+  - `volatility_pct`
+  - `max_drawdown_pct`
   - `up_streak / down_streak`
-  - `volume_ratio_5d / turnover_ratio_5d`
-  - `relative_strength_20d / relative_strength_period`
+  - `volume_ratio / turnover_ratio`
+  - `relative_strength_pct`
   - `benchmark`（自动按股票所在市场/板块选择指数基准）
 
 ### stock_review_batch 批量复盘样例

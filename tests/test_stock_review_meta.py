@@ -77,16 +77,16 @@ def test_stock_review_trade_date_mode_contains_summary_and_stats():
     result = uc.execute(req)
 
     assert result["mode"] == "trade_date_review"
-    assert result["stats"]["return_5d"] is not None
-    assert result["stats"]["volatility_20d"] is not None
-    assert result["stats"]["max_drawdown_20d"] is not None
-    assert result["stats"]["relative_strength_20d"] is not None
+    assert result["stats"]["return_pct_5d"] is not None
+    assert result["stats"]["volatility_pct"] is not None
+    assert result["stats"]["max_drawdown_pct"] is not None
+    assert result["stats"]["relative_strength_pct"] is not None
     assert result["benchmark"]["symbol"] == "000001.SH"
     assert result["summary"]
     assert result["meta"]["history"]["weekly"]["interval"] == "1w"
 
 
-def test_stock_review_range_mode_contains_period_return():
+def test_stock_review_range_mode_contains_return_pct():
     uc = StockReviewUseCase()
     uc.router = _Router()
     uc.resolver = _Resolver()
@@ -95,8 +95,8 @@ def test_stock_review_range_mode_contains_period_return():
     result = uc.execute(req)
 
     assert result["mode"] == "range_review"
-    assert result["stats"]["period_return"] is not None
-    assert result["stats"]["period_volatility"] is not None
-    assert result["stats"]["max_drawdown_period"] is not None
-    assert result["stats"]["relative_strength_period"] is not None
+    assert result["stats"]["return_pct"] is not None
+    assert result["stats"]["volatility_pct"] is not None
+    assert result["stats"]["max_drawdown_pct"] is not None
+    assert result["stats"]["relative_strength_pct"] is not None
     assert result["summary"]
