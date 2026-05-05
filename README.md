@@ -43,6 +43,26 @@
 pip install -e .
 ```
 
+### 开发环境安装（推荐）
+
+```bash
+# 方式1：使用 Makefile
+make setup-dev
+
+# 方式2：使用 requirements-dev
+pip install -r requirements-dev.txt
+```
+
+### 运行测试
+
+```bash
+# 默认：仅跑稳定回归（不含 live 网络测试）
+make test
+
+# 跑全部测试（含 live）
+make test-all
+```
+
 ### 配置
 
 ```bash
