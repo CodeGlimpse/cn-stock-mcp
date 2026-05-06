@@ -352,6 +352,126 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 5. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
 6. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
 
+## OpenClaw news agent integration
+
+推荐把这套 MCP 与 `news` 专用 agent 一起使用，并采用：
+
+- **repo 内维护 skill**
+- **OpenClaw 用 `skills.load.extraDirs` 挂载**
+- **`news` agent / `fernwehnewsbot` 负责市场数据与复盘场景**
+
+### 1. repo-managed skill
+
+本仓库内置了给 OpenClaw `news` agent 使用的 routing skill：
+
+- `skills/newsbot-stock-routing/`
+
+这个 skill 的职责是：
+
+- 把 CN 市场数据 / 行情 / 复盘 / 板块轮动请求路由到对应工具
+- 统一解释 `review_envelope_v1`
+- 约束 payload 安全规则
+- 明确 `sentiment.score` 与 `rotation.score` 的不同语义
+
+建议将它视为以下内容的唯一 source of truth：
+
+- tool routing
+- provider routing 约定
+- payload 安全规则
+- `market_brief` / `sector_review` 的统一输出解释方式
+
+### 2. OpenClaw 配置示例
+
+在 `~/.openclaw/openclaw.json` 中添加：
+
+```json5
+{
+  skills: {
+    load: {
+      extraDirs: [
+        "/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp/skills"
+      ],
+      watch: true,
+      watchDebounceMs: 250,
+    },
+    entries: {
+      "newsbot-stock-routing": {
+        enabled: true,
+      },
+    },
+  },
+}
+```
+
+说明：
+
+- `extraDirs` 让 OpenClaw 从本仓库直接加载 skill
+- 这样代码、schema、测试、文档、skill 可在同一 repo 内同步演进
+- 不建议长期维护一个脱离 repo 的 workspace-local 复制版 skill
+
+### 3. 推荐 agent 侧分工
+
+推荐由 `news` agent 处理以下请求：
+
+- 市场简报 / 收盘复盘
+- 板块强弱 / 板块轮动 / 龙头跟风拖累
+- 单股复盘 / 股票池批量对比
+- 技术指标 / 交易日 / 涨停跌停强势股池
+
+推荐分工逻辑：
+
+- **数据获取与结构化分析**：走 `openclaw-stock-mcp`
+- **新闻背景、政策、宏观、国际比较、知识讲解**：由 `news` agent 常规研究能力补充
+
+### 4. skill 验证命令
+
+当你修改了 skill、OpenClaw 配置、或本仓库 schema 后，建议执行：
+
+```bash
+openclaw skills list --eligible
+openclaw skills info newsbot-stock-routing
+```
+
+期望结果：
+
+- `newsbot-stock-routing` 状态为 `Ready`
+- Source 为 `openclaw-extra`
+- Config requirement 中可看到：`mcp.servers.openclaw-stock-mcp`
+
+### 5. 真实 smoke test 建议
+
+建议至少验证这些真实路径：
+
+1. `market_brief` 非交易日回退
+   - 检查 `requested_trade_date != trade_date`
+2. `sector_review` 单日复盘
+   - 检查 `subject_type=sector`
+   - 检查 `sentiment.score_semantics=sentiment_temperature_v1`
+3. `sector_review` 区间复盘
+   - 检查 `rotation.label_zh`
+   - 检查 `meta.rotation_score_schema.schema=rotation_signal_v1`
+4. `market_brief`
+   - 检查 `meta.review_envelope_schema.schema=review_envelope_v1`
+   - 检查 `leaders / laggards / buckets` 正常生成
+
+### 6. 维护规则
+
+当修改以下任一项时，请在同一组变更中一起审阅并更新 `skills/newsbot-stock-routing/`：
+
+- `market_brief`
+- `sector_review`
+- `review_envelope_v1`
+- `sentiment_temperature_v1`
+- `rotation_signal_v1`
+- provider routing 行为
+- payload 参数校验规则
+
+本仓库内额外提供：
+
+- `skills/MIGRATION_NEWSBOT_SKILL.md`
+
+用于说明 newsbot skill 从 workspace-local 迁移到 repo-managed 的背景与维护约定。
+
 ## 说明
 
 ### 数据源 API 文档入口
