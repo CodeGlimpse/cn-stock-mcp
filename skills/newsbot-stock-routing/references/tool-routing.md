@@ -134,6 +134,11 @@
 {"tool":"stock_candidate_scan","payload":{"pool_type":"strong","trade_date":"2026-05-06","limit":5,"top_n":3}}
 ```
 
+### 候选扫描（标签精筛）
+```json
+{"tool":"stock_candidate_scan","payload":{"pool_type":"strong","trade_date":"2026-05-06","top_n":5,"require_source_tags":["pool:strong"],"exclude_risk_flags":["weak_relative_strength"],"must_have_reason_tags":["strong_return","active_volume"],"exclude_reason_tags":["slight_positive_return"]}}
+```
+
 ### 观察池复盘
 ```json
 {"tool":"watchlist_review","payload":{"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}}

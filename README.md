@@ -341,6 +341,9 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_candidate_scan --p
 
 # 从多个一级板块 + 手工自选组合一个候选 universe
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_candidate_scan --payload '{"symbols":["600519.SH"],"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","limit":5,"top_n":3}'
+
+# 组合精筛：来源 + 风险 + 信号标签
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_candidate_scan --payload '{"pool_type":"strong","trade_date":"2026-05-06","top_n":5,"require_source_tags":["pool:strong"],"exclude_risk_flags":["weak_relative_strength"],"must_have_reason_tags":["strong_return","active_volume"],"exclude_reason_tags":["slight_positive_return"]}'
 ```
 
 说明：

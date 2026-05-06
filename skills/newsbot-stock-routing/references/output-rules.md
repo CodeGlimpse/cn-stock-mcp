@@ -47,6 +47,7 @@
 - `reason_tags / risk_flags`
 - `rankings`（尤其 `leaders_by_candidate_score`）
 - `buckets`（`candidates / watchlist / risk_alerts`）
+- 如使用了标签精筛，明确写出 `must_have_reason_tags / exclude_reason_tags` 条件
 - 再补基础收益 / 相对强弱 / 回撤 / 量比
 
 ### `watchlist_review`
