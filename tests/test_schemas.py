@@ -99,3 +99,16 @@ def test_stock_candidate_scan_request_new_filter_fields():
 
     assert req.require_source_tags == ["pool:strong"]
     assert req.exclude_risk_flags == ["weak_relative_strength"]
+
+
+def test_stock_candidate_scan_request_reason_tag_filters():
+    from openclaw_stock_mcp.server.schemas import StockCandidateScanRequest
+
+    req = StockCandidateScanRequest(
+        symbols=["600519.SH"],
+        must_have_reason_tags=[" strong_return ", "high_volume", "strong_return"],
+        exclude_reason_tags=[" slight_positive_return ", ""],
+    )
+
+    assert req.must_have_reason_tags == ["strong_return", "high_volume"]
+    assert req.exclude_reason_tags == ["slight_positive_return"]

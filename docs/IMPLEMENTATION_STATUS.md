@@ -410,6 +410,6 @@
 
 
 ### stock_candidate_scan（二轮增强）
-- 新增过滤参数：`min_up_streak`、`max_down_streak`、`require_source_tags`、`exclude_risk_flags`
+- 新增过滤参数：`min_up_streak`、`max_down_streak`、`require_source_tags`、`exclude_risk_flags`、`must_have_reason_tags`、`exclude_reason_tags`
 - 新增解释字段：`candidate_score_breakdown`（分项得分 + total）
 - 保持原有接口兼容（老参数全部可继续使用）

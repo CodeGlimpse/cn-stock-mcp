@@ -148,6 +148,8 @@ def test_stock_candidate_scan_builds_universe_scores_and_buckets():
             "max_down_streak": None,
             "require_source_tags": None,
             "exclude_risk_flags": None,
+            "must_have_reason_tags": None,
+            "exclude_reason_tags": None,
         },
     )()
 
@@ -204,6 +206,8 @@ def test_stock_candidate_scan_applies_filters():
             "max_down_streak": None,
             "require_source_tags": None,
             "exclude_risk_flags": None,
+            "must_have_reason_tags": None,
+            "exclude_reason_tags": None,
         },
     )()
 
@@ -245,6 +249,8 @@ def test_stock_candidate_scan_new_filters():
             "max_down_streak": 1,
             "require_source_tags": ["pool:strong"],
             "exclude_risk_flags": ["weak_relative_strength"],
+            "must_have_reason_tags": None,
+            "exclude_reason_tags": None,
         },
     )()
 
@@ -252,3 +258,48 @@ def test_stock_candidate_scan_new_filters():
 
     assert len(result["items"]) == 1
     assert result["items"][0]["symbol"] == "300750.SZ"
+
+
+def test_stock_candidate_scan_reason_tag_filters():
+    uc = StockCandidateScanUseCase()
+    uc.sector_lookup = _SectorLookup()
+    uc.market_pool = _MarketPool()
+    uc.batch_review = _BatchReview()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "symbols": ["600519.SH"],
+            "sector_names": ["1000信息", "1000工业"],
+            "sector_type": "primary",
+            "pool_type": "strong",
+            "trade_date": "2026-05-06",
+            "start_date": None,
+            "end_date": None,
+            "adjust": "none",
+            "provider": "mixed",
+            "sort_by": "candidate_score",
+            "descending": True,
+            "top_n": 10,
+            "limit": 10,
+            "min_candidate_score": None,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+            "min_up_streak": None,
+            "max_down_streak": None,
+            "require_source_tags": None,
+            "exclude_risk_flags": None,
+            "must_have_reason_tags": ["strong_return", "active_volume"],
+            "exclude_reason_tags": ["slight_positive_return"],
+        },
+    )()
+
+    result = uc.execute(req)
+
+    assert len(result["items"]) == 1
+    assert result["items"][0]["symbol"] == "300750.SZ"
+    assert "strong_return" in result["items"][0]["reason_tags"]
+    assert "active_volume" in result["items"][0]["reason_tags"]

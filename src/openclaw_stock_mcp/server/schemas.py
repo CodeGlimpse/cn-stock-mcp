@@ -381,6 +381,8 @@ class StockCandidateScanRequest(BaseModel):
     max_down_streak: int | None = Field(default=None, ge=0, le=50)
     require_source_tags: list[str] | None = Field(default=None, max_length=20)
     exclude_risk_flags: list[str] | None = Field(default=None, max_length=20)
+    must_have_reason_tags: list[str] | None = Field(default=None, max_length=30)
+    exclude_reason_tags: list[str] | None = Field(default=None, max_length=30)
 
     @model_validator(mode="after")
     def validate_request(self):
@@ -458,6 +460,8 @@ class StockCandidateScanRequest(BaseModel):
 
         self.require_source_tags = _norm_list(self.require_source_tags)
         self.exclude_risk_flags = _norm_list(self.exclude_risk_flags)
+        self.must_have_reason_tags = _norm_list(self.must_have_reason_tags)
+        self.exclude_reason_tags = _norm_list(self.exclude_reason_tags)
 
         return self
 

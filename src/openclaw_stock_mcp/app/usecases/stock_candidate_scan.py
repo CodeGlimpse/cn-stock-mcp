@@ -143,10 +143,12 @@ class StockCandidateScanUseCase:
                     "min_return": request.min_return,
                     "max_drawdown_limit": request.max_drawdown_limit,
                     "min_volume_ratio": request.min_volume_ratio,
-                    "min_up_streak": request.min_up_streak,
-                    "max_down_streak": request.max_down_streak,
-                    "require_source_tags": request.require_source_tags,
-                    "exclude_risk_flags": request.exclude_risk_flags,
+                    "min_up_streak": getattr(request, "min_up_streak", None),
+                    "max_down_streak": getattr(request, "max_down_streak", None),
+                    "require_source_tags": getattr(request, "require_source_tags", None),
+                    "exclude_risk_flags": getattr(request, "exclude_risk_flags", None),
+                    "must_have_reason_tags": getattr(request, "must_have_reason_tags", None),
+                    "exclude_reason_tags": getattr(request, "exclude_reason_tags", None),
                 },
                 "batch_review": {
                     "sort_by": batch_resp.get("sort_by"),
@@ -434,21 +436,29 @@ class StockCandidateScanUseCase:
             if request.min_volume_ratio is not None:
                 if item.get("volume_ratio") is None or item.get("volume_ratio") < request.min_volume_ratio:
                     continue
-            if request.min_up_streak is not None:
+            if getattr(request, "min_up_streak", None) is not None:
                 up_streak = int((item.get("stats") or {}).get("up_streak", 0) or 0)
-                if up_streak < request.min_up_streak:
+                if up_streak < getattr(request, "min_up_streak", None):
                     continue
-            if request.max_down_streak is not None:
+            if getattr(request, "max_down_streak", None) is not None:
                 down_streak = int((item.get("stats") or {}).get("down_streak", 0) or 0)
-                if down_streak > request.max_down_streak:
+                if down_streak > getattr(request, "max_down_streak", None):
                     continue
-            if request.require_source_tags:
+            if getattr(request, "require_source_tags", None):
                 tags = set(item.get("source_tags") or [])
-                if not all(tag in tags for tag in request.require_source_tags):
+                if not all(tag in tags for tag in getattr(request, "require_source_tags", None)):
                     continue
-            if request.exclude_risk_flags:
+            if getattr(request, "exclude_risk_flags", None):
                 risks = set(item.get("risk_flags") or [])
-                if any(flag in risks for flag in request.exclude_risk_flags):
+                if any(flag in risks for flag in getattr(request, "exclude_risk_flags", None)):
+                    continue
+            if getattr(request, "must_have_reason_tags", None):
+                reasons = set(item.get("reason_tags") or [])
+                if not all(tag in reasons for tag in getattr(request, "must_have_reason_tags", None)):
+                    continue
+            if getattr(request, "exclude_reason_tags", None):
+                reasons = set(item.get("reason_tags") or [])
+                if any(tag in reasons for tag in getattr(request, "exclude_reason_tags", None)):
                     continue
             filtered.append(item)
         return filtered
