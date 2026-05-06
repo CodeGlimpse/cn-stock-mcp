@@ -14,6 +14,14 @@
 - smoke test 脚本
 - provider_health 自检
 
+## 文档导航
+
+- `docs/README_DOCS.md`：文档总览与阅读顺序
+- `docs/IMPLEMENTATION_STATUS.md`：当前实现状态与限制（事实源）
+- `docs/INTERFACE_SCHEMA.md`：对外输入/输出契约与路由约束
+- `docs/ERROR_MODEL.md`：统一错误码与 retry/fallback 语义
+- `docs/INTEGRATION.md`：本地启动、OpenClaw 挂载与联调清单
+
 ## 当前已验证通过的能力
 
 ### 智兔主链路
@@ -607,7 +615,7 @@ openclaw skills info newsbot-stock-routing
 ## 说明
 
 ### 数据源 API 文档入口
-- 统一索引见：`docs/DATA_SOURCE_API_DOCS.md`
+- 统一索引见：`docs/INTERFACE_SCHEMA.md`（“上游数据源文档入口”章节）
 
 ### 股票历史的当前实现
 - `stock_history(stock)` 当前通过 **AKShare 腾讯历史接口** 实现
