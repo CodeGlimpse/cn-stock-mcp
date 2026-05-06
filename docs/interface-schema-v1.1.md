@@ -65,6 +65,7 @@ v1.1 定义以下 tools：
 7. `stock_orderbook`（可选实现）
 8. `sector_lookup`（可选实现）
 9. `sector_review`（板块复盘 / 板块成员聚合分析）
+10. `market_brief`（市场简报 / 市场级复盘聚合）
 
 ---
 
@@ -908,37 +909,165 @@ OrderBook
 
 ```json
 {
+  "subject_type": "sector",
+  "subject_name": "TFG板块趋势",
   "sector_name": "TFG板块趋势",
   "mode": "trade_date_review",
   "trade_date": "2026-04-30",
+  "requested_trade_date": "2026-04-30",
+  "start_date": null,
+  "end_date": null,
   "member_count": 20,
   "reviewed_count": 18,
   "breadth": {},
   "stats": {},
-  "sentiment": {"label": "warm", "label_zh": "偏强", "score": 2.0},
+  "sentiment": {
+    "label": "warm",
+    "label_zh": "偏强",
+    "score": 2.0,
+    "normalized_score": 70.0,
+    "score_semantics": "sentiment_temperature_v1"
+  },
   "benchmark_summary": {},
   "continuity": {},
+  "rotation": {},
   "structure": {"tags": ["broad_strength"]},
+  "leaders": [],
+  "laggards": [],
   "rankings": {},
   "buckets": {},
   "items": [],
   "summary": "...",
   "partial_failure": false,
   "errors": [],
-  "meta": {}
+  "meta": {
+    "review_envelope_schema": {"schema": "review_envelope_v1"},
+    "sentiment_score_schema": {"schema": "sentiment_temperature_v1"},
+    "rotation_score_schema": {"schema": "rotation_signal_v1"}
+  }
 }
 ```
 
 ### 7.9.5 输出说明
+- `sector_review` 采用统一 `review_envelope_v1`
+- `subject_type=sector`
+- `subject_name=sector_name`
 - `breadth`：上涨/下跌/放量/连涨连跌分布
 - `stats`：平均收益、相对强弱、量比、回撤、离散度
-- `sentiment`：板块情绪温度
+- `sentiment`：板块情绪温度；`score` 统一为 `[-5, 5]`，`normalized_score` 统一为 `[0, 100]`
 - `benchmark_summary`：板块成员基准分布与平均基准收益
 - `continuity`：持续强势/弱势、连涨连跌情况
 - `rotation`：区间模式下的轮动判断，如 `leader_driven / broad_advance / divergent_rotation`
 - `structure.tags`：板块结构标签，如 `broad_strength / concentrated_strength / high_dispersion / trend_divergence`
+- `leaders / laggards / items`：统一 review item-card 结构
 - `rankings`：收益 / 相对强弱 / 量比 / 回撤风险榜单
 - `buckets`：`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`
+- `meta.review_envelope_schema`：声明当前返回遵循的公共 review envelope
+- `meta.sentiment_score_schema`：声明 `sentiment.score` 的统一语义
+- `meta.rotation_score_schema`：声明 `rotation.score` 的独立语义，避免与 `sentiment.score` 混用
+
+---
+
+## 7.10 `market_brief`
+
+### 7.10.1 用途
+生成市场级简报与复盘聚合结果：结合指数概览、历史指数日线、交易日历与市场股池，输出与 `sector_review` 同构的 review envelope，同时保留市场简报专有兼容字段。
+
+### 7.10.2 输入 Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "brief_type": {"type": "string", "enum": ["pre_open", "intraday", "close"]},
+    "market": {"type": "string", "enum": ["CN"]},
+    "trade_date": {"type": "string"},
+    "include_pools": {"type": "boolean"},
+    "top_n": {"type": "integer", "minimum": 1, "maximum": 50},
+    "provider": {"type": "string", "enum": ["akshare", "zhitu", "mixed"]}
+  }
+}
+```
+
+### 7.10.3 输入约束
+- `trade_date` 为空时走实时模式，`mode=realtime_brief`
+- `trade_date` 非空时走复盘模式，`mode=trade_date_review`
+- 若 `trade_date` 落在非交易日，自动回退到上一个交易日，并通过 `meta.calendar` 返回
+- `include_pools=false` 时仍返回统一 envelope，但 `pools / buckets` 可能为空
+
+### 7.10.4 输出 Schema
+
+```json
+{
+  "subject_type": "market",
+  "subject_name": "CN",
+  "brief_type": "close",
+  "mode": "trade_date_review",
+  "trade_date": "2026-05-01",
+  "requested_trade_date": "2026-05-03",
+  "start_date": null,
+  "end_date": null,
+  "member_count": 4,
+  "reviewed_count": 4,
+  "market": "CN",
+  "overview": {},
+  "index_ranking": [],
+  "breadth": {},
+  "stats": {},
+  "sentiment": {
+    "label": "warm",
+    "label_zh": "偏强",
+    "score": 2.0,
+    "normalized_score": 70.0,
+    "score_semantics": "sentiment_temperature_v1"
+  },
+  "benchmark_summary": {
+    "applicable": false,
+    "benchmark_mix": []
+  },
+  "continuity": {
+    "applicable": false
+  },
+  "rotation": {
+    "label": "broad_advance",
+    "label_zh": "普涨轮动",
+    "score": 1.5
+  },
+  "structure": {},
+  "highlights": {},
+  "leaders": [],
+  "laggards": [],
+  "rankings": {},
+  "buckets": {},
+  "items": [],
+  "pools": {},
+  "summary": "...",
+  "partial_failure": false,
+  "errors": [],
+  "meta": {
+    "review_envelope_schema": {"schema": "review_envelope_v1"},
+    "sentiment_score_schema": {"schema": "sentiment_temperature_v1"},
+    "rotation_score_schema": {"schema": "rotation_signal_v1"}
+  }
+}
+```
+
+### 7.10.5 输出说明
+- `market_brief` 与 `sector_review` 共用同一套 `review_envelope_v1`
+- `subject_type=market`
+- `subject_name=market`
+- `member_count / reviewed_count` 在当前实现中等于参与排序的指数数量
+- `leaders / laggards / items` 与 `sector_review` 统一为同一类 review item-card 结构
+- `stats / sentiment / structure / rotation / rankings / buckets` 可按统一方式被下游消费
+- `benchmark_summary / continuity` 在市场级简报中当前多为“不适用”，因此返回 `null / [] / applicable=false`，而不是省略键
+- 以下字段是 `market_brief` 的兼容专有字段：
+  - `overview`
+  - `index_ranking`
+  - `highlights`
+  - `pools`
+- `meta.review_envelope_schema`：声明当前返回遵循的公共 review envelope
+- `meta.sentiment_score_schema`：声明 `sentiment.score` 的统一语义
+- `meta.rotation_score_schema`：声明 `rotation.score` 的独立语义，避免与 `sentiment.score` 混用
 
 ---
 

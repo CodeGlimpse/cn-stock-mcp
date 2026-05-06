@@ -3,7 +3,12 @@ from __future__ import annotations
 from statistics import median, pstdev
 from types import SimpleNamespace
 
-from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA
+from openclaw_stock_mcp.app.services.metric_schema import (
+    REVIEW_ENVELOPE_SCHEMA,
+    REVIEW_METRIC_SCHEMA,
+    SENTIMENT_SCORE_SCHEMA,
+    build_sentiment_payload,
+)
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from openclaw_stock_mcp.app.usecases.stock_review_batch import StockReviewBatchUseCase
@@ -90,9 +95,12 @@ class SectorReviewUseCase:
         )
 
         return {
+            "subject_type": "sector",
+            "subject_name": request.sector_name,
             "sector_name": request.sector_name,
             "mode": batch_resp.get("mode"),
             "trade_date": batch_resp.get("requested_trade_date"),
+            "requested_trade_date": batch_resp.get("requested_trade_date"),
             "start_date": batch_resp.get("requested_start_date"),
             "end_date": batch_resp.get("requested_end_date"),
             "member_count": len(symbols),
@@ -113,7 +121,17 @@ class SectorReviewUseCase:
             "partial_failure": batch_resp.get("partial_failure", False),
             "errors": batch_resp.get("errors", []),
             "meta": {
+                "review_envelope_schema": REVIEW_ENVELOPE_SCHEMA,
                 "metric_schema": REVIEW_METRIC_SCHEMA,
+                "sentiment_score_schema": SENTIMENT_SCORE_SCHEMA,
+                "rotation_score_schema": {
+                    "schema": "rotation_signal_v1",
+                    "score": {
+                        "higher_is_stronger": True,
+                        "unit": "heuristic_point",
+                        "note": "relative signal used only for sector internal comparison; not normalized across tools",
+                    },
+                },
                 "sector_lookup": {
                     "source": members_resp.get("source"),
                     "total": members_resp.get("total"),
@@ -215,18 +233,7 @@ class SectorReviewUseCase:
         if high_volume >= 3:
             score += 0.5
 
-        if score >= 3:
-            label, label_zh = "hot", "偏热"
-        elif score >= 1.5:
-            label, label_zh = "warm", "偏强"
-        elif score > -1:
-            label, label_zh = "neutral", "中性"
-        elif score > -2.5:
-            label, label_zh = "cool", "偏弱"
-        else:
-            label, label_zh = "cold", "偏冷"
-
-        return {"score": score, "label": label, "label_zh": label_zh}
+        return build_sentiment_payload(score)
 
     def _build_benchmark_summary(self, items: list[dict]) -> dict:
         benchmark_items = []

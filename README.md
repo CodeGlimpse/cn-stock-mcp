@@ -267,7 +267,13 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '
 - `trade_date` 非空：走复盘模式
 - 若 `trade_date` 落在非交易日，会自动回退到上一个交易日，并在 `data.meta.calendar` 中标明
 - 复盘模式下，指数概览由历史日线重建，不再直接读取当前实时行情
-- 返回中新增：`index_ranking / breadth / sentiment / highlights`，便于复盘时快速看指数强弱与情绪温度
+- `market_brief` 与 `sector_review` 现统一对齐到 `review_envelope_v1`
+  - 公共顶层字段：`subject_type / subject_name / mode / trade_date / requested_trade_date / start_date / end_date / member_count / reviewed_count / breadth / stats / sentiment / benchmark_summary / continuity / rotation / structure / leaders / laggards / rankings / buckets / items / summary / partial_failure / errors / meta`
+  - `market_brief` 仍保留兼容字段：`overview / index_ranking / highlights / pools`
+- `sentiment` 评分语义统一为 `sentiment_temperature_v1`
+  - `score`: `[-5, 5]`
+  - `normalized_score`: `[0, 100]`
+- `rotation.score` 与 `sentiment.score` 不同语义，单独通过 `meta.rotation_score_schema` 标明
 
 ### sector_review 板块复盘样例
 
@@ -282,16 +288,21 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
 说明：
 - 先通过 `sector_lookup(mode=children)` 获取板块成员股
 - 再复用 `stock_review_batch` 生成成员股复盘卡片
+- `sector_review` 现采用与 `market_brief` 相同的 `review_envelope_v1`
+  - `subject_type=sector`
+  - `subject_name=sector_name`
+  - `leaders / laggards / items` 与 `market_brief` 统一为同一类 item-card 结构
 - 返回除 `items` 外，还包含：
   - `breadth`（上涨/下跌/放量/连涨连跌分布）
   - `stats`（平均收益、相对强弱、回撤、离散度）
-  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷）
+  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷；统一 `score/normalized_score` 语义）
   - `benchmark_summary`（板块成员基准分布与平均基准收益）
   - `continuity`（持续强势/弱势、连涨连跌情况）
   - `rotation`（区间模式下的轮动判断，如 `龙头驱动 / 普涨轮动 / 分化轮动`）
   - `structure`（板块结构标签，如 `broad_strength / high_dispersion / trend_divergence`）
   - `rankings`（收益/相对强弱/量比/回撤风险榜）
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates` 等分层）
+- `rotation.score` 通过 `meta.rotation_score_schema` 单独声明，不与 `sentiment.score` 混用
 
 ### sector_lookup 本地调用样例（板块列表 / 成员股）
 

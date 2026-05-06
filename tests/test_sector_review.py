@@ -199,6 +199,8 @@ def test_sector_review_aggregates_members_and_batch_review():
 
     result = uc.execute(_build_req())
 
+    assert result["subject_type"] == "sector"
+    assert result["subject_name"] == "算力概念"
     assert result["sector_name"] == "算力概念"
     assert result["member_count"] == 3
     assert result["reviewed_count"] == 3
@@ -219,6 +221,8 @@ def test_sector_review_adds_sentiment_structure_rankings_and_buckets():
 
     assert result["sentiment"]["label"] in {"hot", "warm", "neutral", "cool", "cold"}
     assert result["sentiment"]["label_zh"]
+    assert result["sentiment"]["score_semantics"] == "sentiment_temperature_v1"
+    assert 0.0 <= result["sentiment"]["normalized_score"] <= 100.0
     assert result["rankings"]["leaders_by_return"][0]["symbol"] == "300750.SZ"
     assert result["rankings"]["leaders_by_relative_strength"][0]["symbol"] == "300750.SZ"
     assert result["rankings"]["leaders_by_volume_ratio"][0]["symbol"] == "300750.SZ"
@@ -246,10 +250,13 @@ def test_sector_review_adds_benchmark_summary_and_continuity():
 
     result = uc.execute(_build_req())
 
+    assert result["meta"]["review_envelope_schema"]["schema"] == "review_envelope_v1"
     assert result["benchmark_summary"]["dominant_benchmark_symbol"] in {"399006.SZ", "000001.SH", "399001.SZ"}
     assert result["benchmark_summary"]["dominant_member_count"] == 1
     assert result["benchmark_summary"]["avg_benchmark_return"] is not None
     assert len(result["benchmark_summary"]["benchmark_mix"]) == 3
+    assert result["meta"]["sentiment_score_schema"]["schema"] == "sentiment_temperature_v1"
+    assert result["meta"]["rotation_score_schema"]["schema"] == "rotation_signal_v1"
     assert result["continuity"]["max_up_streak"] == 2
     assert result["continuity"]["max_down_streak"] == 2
     assert result["continuity"]["sustained_strength_count"] == 1
@@ -288,6 +295,7 @@ def test_sector_review_adds_range_rotation_signals():
     assert result["rotation"]["range_mode"] is True
     assert result["rotation"]["label"] == "leader_driven"
     assert result["rotation"]["label_zh"] == "龙头驱动"
+    assert isinstance(result["rotation"]["score"], float)
     assert result["rotation"]["top1_return_contribution"] is not None
     assert result["rotation"]["top1_return_contribution"] > 0.9
     assert result["rotation"]["negative_ratio"] > result["rotation"]["positive_ratio"]

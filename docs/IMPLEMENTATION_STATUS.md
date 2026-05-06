@@ -86,10 +86,14 @@
 - 支持参数：
   - `sort_by / descending / top_n / limit`
   - `min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
+- 已与 `market_brief` 对齐到统一 `review_envelope_v1`
+  - 新增统一字段：`subject_type / subject_name / requested_trade_date`
+  - `leaders / laggards / items` 统一为同一类 review item-card
+  - `meta.review_envelope_schema / meta.sentiment_score_schema / meta.rotation_score_schema` 明确暴露
 - 输出包含：
   - `breadth`（上涨/下跌/放量/连涨连跌分布）
   - `stats`（平均收益、相对强弱、量比、回撤、离散度）
-  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷）
+  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷；统一 `score=[-5,5]`、`normalized_score=[0,100]`）
   - `benchmark_summary`（板块成员基准分布与平均基准收益）
   - `continuity`（持续强势/弱势、连涨连跌情况）
   - `rotation`（区间模式下的轮动判断，如 `leader_driven / broad_advance / divergent_rotation`）
@@ -199,13 +203,20 @@
   - `trade_date`: 可选，默认当天
   - `include_pools`: 是否包含股池摘要
   - `top_n`: 股池展示条数
+- 已与 `sector_review` 对齐到统一 `review_envelope_v1`
+  - 新增统一字段：`subject_type / subject_name / stats / benchmark_summary / continuity / rotation / rankings / buckets / items`
+  - `leaders / laggards` 改为同一类 review item-card
+  - `meta.review_envelope_schema / meta.sentiment_score_schema / meta.rotation_score_schema` 明确暴露
 - 输出包含：
-  - 指数概览数据
-  - 指数强弱排序：`index_ranking`
+  - 指数概览数据（兼容字段：`overview`）
+  - 指数强弱排序（兼容字段：`index_ranking`）
   - 市场宽度摘要：`breadth`
-  - 情绪温度：`sentiment`
-  - 关键高亮：`highlights`
-  - 股池统计（涨停/跌停/强势）
+  - 情绪温度：`sentiment`（与 `sector_review` 共用 `sentiment_temperature_v1`）
+  - 市场结构：`structure`
+  - 市场轮动：`rotation`
+  - 关键高亮（兼容字段：`highlights`）
+  - 股池统计（兼容字段：`pools`）
+  - 统一榜单与分层：`leaders / laggards / rankings / buckets / items`
   - 可直接给 newsbot 使用的 `summary` 文本
   - `meta.review_mode / meta.calendar / meta.overview / meta.pools`
 

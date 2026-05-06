@@ -4,7 +4,12 @@ from datetime import datetime
 
 from openclaw_stock_mcp.app.models.quote import Quote
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
-from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA
+from openclaw_stock_mcp.app.services.metric_schema import (
+    REVIEW_ENVELOPE_SCHEMA,
+    REVIEW_METRIC_SCHEMA,
+    SENTIMENT_SCORE_SCHEMA,
+    build_sentiment_payload,
+)
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.providers.errors import ProviderError
 
@@ -94,6 +99,16 @@ class MarketBriefUseCase:
         sentiment = self._build_sentiment(index_ranking, breadth)
         highlights = self._build_highlights(index_ranking, breadth)
 
+        stats = self._build_stats(index_ranking, breadth)
+        continuity = self._build_continuity(index_ranking)
+        leaders = self._build_item_cards(index_ranking[: request.top_n], mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date)
+        laggards = self._build_item_cards(list(reversed(index_ranking[-request.top_n:])), mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date) if index_ranking and request.top_n else []
+        rankings = self._build_rankings(leaders, laggards, index_ranking, request.top_n, effective_trade_date, review_mode)
+        buckets = self._build_buckets(pools, request.top_n, effective_trade_date, review_mode)
+        benchmark_summary = self._build_benchmark_summary(index_ranking)
+        rotation = self._build_rotation(index_ranking, breadth, review_mode)
+        structure = self._build_structure(index_ranking, breadth)
+        items = self._build_item_cards(index_ranking, mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date)
         summary = self._build_summary(
             indices,
             pools,
@@ -106,20 +121,52 @@ class MarketBriefUseCase:
             highlights=highlights,
         )
 
+        partial_failure = bool(overview_meta.get("partial_failure"))
+        errors = list(overview_meta.get("errors", []))
+
         return {
+            "subject_type": "market",
+            "subject_name": request.market,
             "brief_type": request.brief_type,
+            "mode": "trade_date_review" if review_mode else "realtime_brief",
             "trade_date": effective_trade_date,
             "requested_trade_date": requested_trade_date,
+            "start_date": None,
+            "end_date": None,
+            "member_count": len(index_ranking),
+            "reviewed_count": len(index_ranking),
             "market": request.market,
             "overview": overview,
             "index_ranking": index_ranking,
             "breadth": breadth,
+            "stats": stats,
             "sentiment": sentiment,
+            "benchmark_summary": benchmark_summary,
+            "continuity": continuity,
+            "rotation": rotation,
+            "structure": structure,
             "highlights": highlights,
+            "leaders": leaders,
+            "laggards": laggards,
+            "rankings": rankings,
+            "buckets": buckets,
+            "items": items,
             "pools": pools,
             "summary": summary,
+            "partial_failure": partial_failure,
+            "errors": errors,
             "meta": {
+                "review_envelope_schema": REVIEW_ENVELOPE_SCHEMA,
                 "metric_schema": REVIEW_METRIC_SCHEMA,
+                "sentiment_score_schema": SENTIMENT_SCORE_SCHEMA,
+                "rotation_score_schema": {
+                    "schema": "rotation_signal_v1",
+                    "score": {
+                        "higher_is_stronger": True,
+                        "unit": "heuristic_point",
+                        "note": "relative signal used only for market internal comparison; not normalized across tools",
+                    },
+                },
                 "review_mode": review_mode,
                 "calendar": calendar_meta,
                 "overview": overview_meta,
@@ -313,22 +360,7 @@ class MarketBriefUseCase:
         if weakest is not None and weakest <= -1.5:
             score -= 1.0
 
-        if score >= 3.0:
-            label, label_zh = "hot", "偏热"
-        elif score >= 1.5:
-            label, label_zh = "warm", "偏强"
-        elif score > -1.0:
-            label, label_zh = "neutral", "中性"
-        elif score > -2.0:
-            label, label_zh = "cool", "偏弱"
-        else:
-            label, label_zh = "cold", "偏冷"
-
-        return {
-            "score": round(score, 2),
-            "label": label,
-            "label_zh": label_zh,
-        }
+        return build_sentiment_payload(score)
 
     def _build_highlights(self, index_ranking: list[dict], breadth: dict) -> dict:
         strongest = index_ranking[0] if index_ranking else None
@@ -337,6 +369,200 @@ class MarketBriefUseCase:
             "strongest_index": strongest,
             "weakest_index": weakest,
             "limit_up_leads_limit_down": breadth.get("limit_up_count", 0) > breadth.get("limit_down_count", 0),
+        }
+
+    def _build_structure(self, index_ranking: list[dict], breadth: dict) -> dict:
+        index_count = len(index_ranking)
+        advancing_count = sum(1 for item in index_ranking if item.get("change_percent") is not None and item.get("change_percent") > 0)
+        declining_count = sum(1 for item in index_ranking if item.get("change_percent") is not None and item.get("change_percent") < 0)
+        spread = breadth.get("limit_up_down_spread", 0)
+        tags: list[str] = []
+
+        if spread > 0:
+            tags.append("limit_up_advantage")
+        elif spread < 0:
+            tags.append("limit_down_pressure")
+
+        if breadth.get("strong_count", 0) >= 150:
+            tags.append("broad_activity")
+
+        if advancing_count >= max(3, index_count):
+            tags.append("index_breadth_positive")
+        elif declining_count >= max(3, index_count):
+            tags.append("index_breadth_negative")
+
+        return {
+            "coverage_ratio": 1.0 if index_count else 0.0,
+            "positive_ratio": (advancing_count / index_count) if index_count else 0.0,
+            "stronger_ratio": None,
+            "high_volume_ratio": None,
+            "index_count": index_count,
+            "advancing_index_count": advancing_count,
+            "declining_index_count": declining_count,
+            "tags": tags,
+        }
+
+    def _build_stats(self, index_ranking: list[dict], breadth: dict) -> dict:
+        changes = [float(item.get("change_percent")) for item in index_ranking if item.get("change_percent") is not None]
+        return {
+            "avg_return": (sum(changes) / len(changes)) if changes else None,
+            "median_return": None,
+            "avg_relative_strength": None,
+            "median_relative_strength": None,
+            "avg_volume_ratio": None,
+            "median_volume_ratio": None,
+            "max_drawdown_worst": None,
+            "avg_max_drawdown": None,
+            "best_return": max(changes) if changes else None,
+            "worst_return": min(changes) if changes else None,
+            "return_spread": ((max(changes) - min(changes)) if len(changes) >= 2 else None),
+            "return_stddev": None,
+            "relative_strength_stddev": None,
+            "limit_up_count": breadth.get("limit_up_count"),
+            "limit_down_count": breadth.get("limit_down_count"),
+            "strong_count": breadth.get("strong_count"),
+        }
+
+    def _build_continuity(self, index_ranking: list[dict]) -> dict:
+        return {
+            "max_up_streak": None,
+            "max_down_streak": None,
+            "avg_up_streak": None,
+            "avg_down_streak": None,
+            "sustained_strength_count": None,
+            "sustained_weakness_count": None,
+            "applicable": False,
+            "subject_size": len(index_ranking),
+        }
+
+    def _build_benchmark_summary(self, index_ranking: list[dict]) -> dict:
+        return {
+            "dominant_benchmark_symbol": None,
+            "dominant_benchmark_name": None,
+            "dominant_member_count": 0,
+            "avg_benchmark_return": None,
+            "benchmark_mix": [],
+            "applicable": False,
+            "subject_size": len(index_ranking),
+        }
+
+    def _build_rotation(self, index_ranking: list[dict], breadth: dict, review_mode: bool) -> dict:
+        strongest = index_ranking[0].get("change_percent") if index_ranking else None
+        weakest = index_ranking[-1].get("change_percent") if index_ranking else None
+        spread = breadth.get("limit_up_down_spread", 0)
+        score = 0.0
+        if spread > 0:
+            score += 1.0
+        elif spread < 0:
+            score -= 1.0
+        if strongest is not None:
+            score += strongest / 3.0
+        if weakest is not None:
+            score += weakest / 3.0
+
+        if spread > 0 and strongest is not None and strongest > 0:
+            label, label_zh = "broad_advance", "普涨轮动"
+        elif spread < 0 and weakest is not None and weakest < 0:
+            label, label_zh = "broad_decline", "普跌走弱"
+        else:
+            label, label_zh = "mixed_rotation", "混合轮动"
+
+        return {
+            "label": label,
+            "label_zh": label_zh,
+            "score": round(score, 2),
+            "positive_ratio": None,
+            "negative_ratio": None,
+            "outperform_ratio": None,
+            "strong_trend_ratio": None,
+            "weak_trend_ratio": None,
+            "top1_return_contribution": None,
+            "top3_return_contribution": None,
+            "leader_symbols": [self._value(item, "symbol") for item in index_ranking[:1] if self._value(item, "symbol")],
+            "laggard_symbols": [self._value(item, "symbol") for item in index_ranking[-1:] if self._value(item, "symbol")],
+            "range_mode": review_mode,
+            "applicable": review_mode,
+        }
+
+    def _value(self, item, key: str, default=None):
+        if isinstance(item, dict):
+            return item.get(key, default)
+        return getattr(item, key, default)
+
+    def _build_item_cards(self, ranking_items: list[dict], mode: str, trade_date: str) -> list[dict]:
+        cards = []
+        for item in ranking_items:
+            cards.append(
+                {
+                    "symbol": self._value(item, "symbol"),
+                    "name": self._value(item, "name"),
+                    "mode": mode,
+                    "trade_date": trade_date,
+                    "start_date": None,
+                    "end_date": None,
+                    "close": self._value(item, "price"),
+                    "relative_strength": None,
+                    "return": self._value(item, "change_percent"),
+                    "max_drawdown": None,
+                    "volume_ratio": None,
+                    "tags": [],
+                    "benchmark": None,
+                    "stats": {
+                        "change": self._value(item, "change"),
+                    },
+                    "summary": None,
+                    "source": self._value(item, "source"),
+                }
+            )
+        return cards
+
+    def _build_rankings(self, leaders: list[dict], laggards: list[dict], index_ranking: list[dict], top_n: int, trade_date: str, review_mode: bool) -> dict:
+        items = self._build_item_cards(index_ranking, mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=trade_date)
+        sorted_by_return = sorted(items, key=lambda item: (float("-inf") if item.get("return") is None else item.get("return")), reverse=True)
+        sorted_by_return_asc = sorted(items, key=lambda item: (float("inf") if item.get("return") is None else item.get("return")))
+        return {
+            "leaders_by_return": sorted_by_return[:top_n],
+            "laggards_by_return": sorted_by_return_asc[:top_n],
+            "leaders_by_relative_strength": [],
+            "leaders_by_volume_ratio": [],
+            "drawdown_risk": [],
+        }
+
+    def _build_buckets(self, pools: dict[str, dict], top_n: int, trade_date: str, review_mode: bool) -> dict:
+        def pool_cards(pool_type: str):
+            top_items = pools.get(pool_type, {}).get("top_items", [])
+            cards = []
+            for item in top_items[:top_n]:
+                cards.append(
+                    {
+                        "symbol": self._value(item, "symbol"),
+                        "name": self._value(item, "name"),
+                        "mode": "trade_date_review" if review_mode else "realtime_brief",
+                        "trade_date": trade_date,
+                        "start_date": None,
+                        "end_date": None,
+                        "close": self._value(item, "price"),
+                        "relative_strength": None,
+                        "return": self._value(item, "change_percent"),
+                        "max_drawdown": None,
+                        "volume_ratio": None,
+                        "tags": [pool_type],
+                        "benchmark": None,
+                        "stats": {},
+                        "summary": None,
+                        "source": self._value(item, "source") or pools.get(pool_type, {}).get("source"),
+                    }
+                )
+            return cards
+
+        return {
+            "strong_candidates": pool_cards("strong"),
+            "weak_candidates": pool_cards("limit_down"),
+            "volume_focus": [],
+            "risk_alerts": pool_cards("limit_down"),
+            "leaders": pool_cards("limit_up"),
+            "followers": pool_cards("strong"),
+            "draggers": pool_cards("limit_down"),
         }
 
     def _build_summary(

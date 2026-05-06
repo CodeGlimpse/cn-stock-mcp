@@ -104,11 +104,22 @@ def test_market_brief_response_contains_meta_for_overview_and_pools():
     result = uc.execute(req)
 
     assert "meta" in result
+    assert result["subject_type"] == "market"
+    assert result["subject_name"] == "CN"
+    assert result["mode"] == "realtime_brief"
+    assert result["member_count"] == result["reviewed_count"]
     assert result["meta"]["overview"]["used_fallback"] is True
     assert result["meta"]["overview"]["mode"] == "realtime"
     assert result["meta"]["pools"]["limit_up"]["used_fallback"] is True
+    assert result["meta"]["review_envelope_schema"]["schema"] == "review_envelope_v1"
+    assert result["meta"]["sentiment_score_schema"]["schema"] == "sentiment_temperature_v1"
     assert result["breadth"]["limit_up_count"] == 3
+    assert "stats" in result and "rotation" in result and "continuity" in result and "benchmark_summary" in result
     assert result["sentiment"]["label"] in {"neutral", "warm", "hot", "cool", "cold"}
+    assert 0.0 <= result["sentiment"]["normalized_score"] <= 100.0
+    assert "leaders" in result
+    assert "laggards" in result
+    assert result["buckets"]["leaders"][0]["symbol"] == "600000.SH"
 
 
 def test_market_brief_review_mode_uses_historical_overview_and_builds_ranking():
@@ -131,6 +142,7 @@ def test_market_brief_review_mode_uses_historical_overview_and_builds_ranking():
     result = uc.execute(req)
 
     assert result["meta"]["review_mode"] is True
+    assert result["mode"] == "trade_date_review"
     assert result["meta"]["overview"]["mode"] == "historical"
     assert result["overview"]["source"] == "historical-index-history"
     assert result["trade_date"] == "2026-05-02"
@@ -139,3 +151,5 @@ def test_market_brief_review_mode_uses_historical_overview_and_builds_ranking():
     assert result["highlights"]["strongest_index"]["symbol"] == "399006.SZ"
     assert result["highlights"]["weakest_index"]["symbol"] == "899050.BJ"
     assert result["sentiment"]["label_zh"]
+    assert result["sentiment"]["score_semantics"] == "sentiment_temperature_v1"
+    assert result["structure"]["index_count"] == 4
