@@ -41,6 +41,14 @@
 - 量比
 - tags / groups
 
+### `stock_candidate_scan`
+优先说：
+- `candidate_score / candidate_label`
+- `reason_tags / risk_flags`
+- `rankings`（尤其 `leaders_by_candidate_score`）
+- `buckets`（`candidates / watchlist / risk_alerts`）
+- 再补基础收益 / 相对强弱 / 回撤 / 量比
+
 ## 2. 日期解释规则
 
 如果：

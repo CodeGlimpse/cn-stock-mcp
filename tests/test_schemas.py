@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
+from openclaw_stock_mcp.server.schemas import StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -37,3 +37,23 @@ def test_sector_rotation_review_rejects_duplicate_or_blank_sector_list():
         SectorRotationReviewRequest(sector_names=["电力设备", " 电力设备 ", ""], trade_date="2026-05-06")
 
     assert "at least 2 distinct" in str(exc.value)
+
+
+def test_stock_candidate_scan_requires_one_universe_source():
+    with pytest.raises(ValidationError) as exc:
+        StockCandidateScanRequest()
+
+    assert "at least one of symbols/sector_names/pool_type" in str(exc.value)
+
+
+def test_stock_candidate_scan_normalizes_pool_and_deduplicates_inputs():
+    req = StockCandidateScanRequest(
+        symbols=["600519.SH", "600519.SH", " 000001.SZ "],
+        sector_names=[" 1000信息 ", "1000信息", "1000工业"],
+        pool_type="涨停",
+        trade_date="2026-05-06",
+    )
+
+    assert req.pool_type == "limit_up"
+    assert req.symbols == ["600519.SH", "000001.SZ"]
+    assert req.sector_names == ["1000信息", "1000工业"]

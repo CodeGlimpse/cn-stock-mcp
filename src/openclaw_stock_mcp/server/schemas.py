@@ -358,6 +358,92 @@ class SectorRotationReviewRequest(BaseModel):
         return self
 
 
+class StockCandidateScanRequest(BaseModel):
+    symbols: list[str] | None = Field(default=None, max_length=100)
+    sector_names: list[str] | None = Field(default=None, max_length=10)
+    sector_type: Literal["primary"] = "primary"
+    pool_type: str | None = None
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    adjust: AdjustType = "none"
+    provider: ProviderName | None = "mixed"
+    sort_by: Literal["candidate_score", "relative_strength", "return", "volume_ratio", "max_drawdown"] = "candidate_score"
+    descending: bool = True
+    top_n: int = Field(default=20, ge=1, le=100)
+    limit: int = Field(default=20, ge=1, le=100)
+    min_candidate_score: float | None = None
+    min_relative_strength: float | None = None
+    min_return: float | None = None
+    max_drawdown_limit: float | None = None
+    min_volume_ratio: float | None = None
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+        elif self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+        else:
+            self.trade_date = dt_date.today().isoformat()
+
+        normalized_symbols: list[str] = []
+        seen_symbols: set[str] = set()
+        for symbol in self.symbols or []:
+            value = (symbol or "").strip()
+            if not value or value in seen_symbols:
+                continue
+            seen_symbols.add(value)
+            normalized_symbols.append(value)
+        self.symbols = normalized_symbols or None
+
+        normalized_sectors: list[str] = []
+        seen_sectors: set[str] = set()
+        for name in self.sector_names or []:
+            value = (name or "").strip()
+            if not value or value in seen_sectors:
+                continue
+            seen_sectors.add(value)
+            normalized_sectors.append(value)
+        self.sector_names = normalized_sectors or None
+
+        if self.pool_type is not None:
+            raw = (self.pool_type or "").strip().lower()
+            alias = {
+                "limit_up": "limit_up",
+                "ztgc": "limit_up",
+                "up": "limit_up",
+                "涨停": "limit_up",
+                "limit_down": "limit_down",
+                "dtgc": "limit_down",
+                "down": "limit_down",
+                "跌停": "limit_down",
+                "strong": "strong",
+                "qsgc": "strong",
+                "强势": "strong",
+            }
+            normalized_pool = alias.get(raw)
+            if not normalized_pool:
+                raise ValueError(
+                    "pool_type must be one of: limit_up/limit_down/strong "
+                    "(aliases: ztgc/dtgc/qsgc, up/down, 涨停/跌停/强势)"
+                )
+            self.pool_type = normalized_pool
+
+        if not self.symbols and not self.sector_names and not self.pool_type:
+            raise ValueError("at least one of symbols/sector_names/pool_type must be provided")
+
+        return self
+
+
 class StockOrderbookRequest(BaseModel):
     symbol: str
     sec_type: Literal["stock"] = "stock"

@@ -26,6 +26,7 @@
 - `sector_lookup`
 - `provider_health`
 - `sector_rotation_review`
+- `stock_candidate_scan`
 
 ### sector_lookup（板块列表/成员股）当前实现
 - 输入模式：`list | children | members(兼容别名)`
@@ -144,6 +145,38 @@
   - `sector_rotation_review([1000信息,1000工业], trade_date=2026-05-06, limit=5)` 已真实返回成功
   - `sector_rotation_review([1000信息,1000工业,1000医药], trade_date=2026-05-06, limit=5)` 已真实返回成功
   - `sector_rotation_review([1000信息,1000工业,1000医药,1000公用,1000可选], trade_date=2026-05-06, limit=5)` 已真实返回成功
+
+### stock_candidate_scan（候选扫描 / 股票 universe 筛选）
+- 新增 `stock_candidate_scan` tool
+- 当前路径：
+  - `symbols[]`：直接作为手工 universe
+  - `sector_names[]`：通过 `sector_lookup(children)` 扩展成员股
+  - `pool_type`：通过 `market_pool` 扩展池成员
+  - 合并去重后复用 `stock_review_batch`，再补 `candidate_score / candidate_label / reason_tags / risk_flags`
+- 当前支持：
+  - `trade_date`：单日候选扫描
+  - `start_date + end_date`：区间候选扫描
+- 当前参数：
+  - `symbols[] / sector_names[] / sector_type / pool_type`
+  - `sort_by / descending / top_n / limit`
+  - `min_candidate_score / min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
+- 当前排序字段：
+  - `candidate_score`
+  - `relative_strength`
+  - `return`
+  - `volume_ratio`
+  - `max_drawdown`
+- 当前输出包含：
+  - 顶层 `subject_type=candidate_scan`
+  - `candidate_score_schema=candidate_score_v1`
+  - `items` 中每项新增：`candidate_score / candidate_label / reason_tags / risk_flags / source_tags`
+  - `rankings`（候选分 / 相对强弱 / 收益 / 量比 / 回撤）
+  - `buckets`（`candidates / watchlist / observe / risk_alerts`）
+- 当前定位：
+  - 从板块、股池、自选池里做第一轮筛查
+  - 为后续 `stock_review / stock_review_batch` 提供优先级
+- 已完成真实验收：
+  - `stock_candidate_scan(pool_type=strong, trade_date=2026-05-06, limit=3, top_n=2)` 已真实返回成功
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool

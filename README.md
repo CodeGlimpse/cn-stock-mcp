@@ -35,6 +35,7 @@
 - `stock_review()` 个股复盘摘要可用
 - `stock_review_batch()` 批量复盘排序可用
 - `sector_rotation_review()` 多板块横向轮动复盘可用（当前建议 primary 板块；live 验收已通过最小规模样例）
+- `stock_candidate_scan()` 候选扫描可用（支持 symbols / primary 板块 / strong池 组合成 universe）
 
 ## 快速开始
 
@@ -330,6 +331,35 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_rotation_review -
 - `member_top_n` 控制每个板块返回多少个 `leaders / laggards` 摘要
 - 当前 live 路径仍相对较重，但已补充受控并发与共享缓存优化；验收已通过 `2 个 primary 板块 + limit=5`、`3 个 primary 板块 + limit=5`、`5 个 primary 板块 + limit=5` 的真实样例，较大 `limit` 仍建议按需逐步放大
 
+### stock_candidate_scan 候选扫描样例
+
+```bash
+# 从 strong 池扫描候选
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_candidate_scan --payload '{"pool_type":"strong","trade_date":"2026-05-06","limit":3,"top_n":2}'
+
+# 从多个一级板块 + 手工自选组合一个候选 universe
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_candidate_scan --payload '{"symbols":["600519.SH"],"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","limit":5,"top_n":3}'
+```
+
+说明：
+- 当前 v1 用于 **从一个股票 universe 里找值得优先看的候选**，不替代 `stock_review_batch`
+- universe 目前支持三种来源，可单独或组合使用：
+  - `symbols[]`
+  - `sector_names[]`（当前建议 `primary`）
+  - `pool_type`（如 `strong / limit_up / limit_down`）
+- 内部路径：
+  - `sector_lookup(children)` 解析板块成员
+  - `market_pool` 解析池成员
+  - 合并去重后复用 `stock_review_batch` 做批量复盘
+  - 再根据 `relative_strength / return / volume_ratio / drawdown / streak` 生成 `candidate_score`
+- 输出重点：
+  - `candidate_score / candidate_label / reason_tags / risk_flags`
+  - `rankings`（候选分 / 相对强弱 / 收益 / 量比 / 回撤）
+  - `buckets`（`candidates / watchlist / observe / risk_alerts`）
+- 当前最适合：
+  - 从强势池、候选行业、自选池里做第一轮筛查
+  - 给后续 `stock_review` / `stock_review_batch` 提供优先级
+
 ### sector_lookup 本地调用样例（板块列表 / 成员股）
 
 ### 运行 smoke test
@@ -378,6 +408,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 5. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
 6. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
 7. `sector_rotation_review {"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":2,"member_top_n":2,"limit":5}`
+8. `stock_candidate_scan {"pool_type":"strong","trade_date":"2026-05-06","limit":3,"top_n":2}`
 
 ## OpenClaw news agent integration
 
@@ -484,6 +515,10 @@ openclaw skills info newsbot-stock-routing
    - 检查 `subject_type=sector_rotation`
    - 检查 `meta.item_schema.schema=sector_rotation_item_v1`
    - 检查 `rotation.label_zh / rankings / buckets` 正常生成
+6. `stock_candidate_scan` 候选扫描
+   - 检查 `subject_type=candidate_scan`
+   - 检查 `meta.candidate_score_schema.schema=candidate_score_v1`
+   - 检查 `candidate_score / candidate_label / buckets` 正常生成
 
 ### 6. 维护规则
 

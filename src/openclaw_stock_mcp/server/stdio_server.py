@@ -12,6 +12,7 @@ from openclaw_stock_mcp.server.schemas import (
     SectorRotationReviewRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
+    StockCandidateScanRequest,
     StockQuoteRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
@@ -216,6 +217,49 @@ def build_fastmcp_server() -> FastMCP:
             provider=provider,
         )
         return registry.call_tool("market_pool", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="stock_candidate_scan", description="Scan a stock universe and rank candidate setups.")
+    async def stock_candidate_scan(
+        symbols: list[str] | None = None,
+        sector_names: list[str] | None = None,
+        sector_type: str = "primary",
+        pool_type: str | None = None,
+        trade_date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        adjust: str = "none",
+        provider: str | None = "mixed",
+        sort_by: str = "candidate_score",
+        descending: bool = True,
+        top_n: int = 20,
+        limit: int = 20,
+        min_candidate_score: float | None = None,
+        min_relative_strength: float | None = None,
+        min_return: float | None = None,
+        max_drawdown_limit: float | None = None,
+        min_volume_ratio: float | None = None,
+    ):
+        req = StockCandidateScanRequest(
+            symbols=symbols,
+            sector_names=sector_names,
+            sector_type=sector_type,
+            pool_type=pool_type,
+            trade_date=trade_date,
+            start_date=start_date,
+            end_date=end_date,
+            adjust=adjust,
+            provider=provider,
+            sort_by=sort_by,
+            descending=descending,
+            top_n=top_n,
+            limit=limit,
+            min_candidate_score=min_candidate_score,
+            min_relative_strength=min_relative_strength,
+            min_return=min_return,
+            max_drawdown_limit=max_drawdown_limit,
+            min_volume_ratio=min_volume_ratio,
+        )
+        return registry.call_tool("stock_candidate_scan", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="stock_orderbook", description="Get order book data for supported instruments.")
     async def stock_orderbook(

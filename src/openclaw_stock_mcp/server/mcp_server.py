@@ -11,6 +11,7 @@ from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCas
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
+from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
 from openclaw_stock_mcp.app.usecases.sector_rotation_review import SectorRotationReviewUseCase
@@ -32,6 +33,7 @@ from openclaw_stock_mcp.server.schemas import (
     SectorRotationReviewRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
+    StockCandidateScanRequest,
     StockQuoteRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
@@ -123,6 +125,7 @@ def create_server() -> MCPServerStub:
     technical_indicator = TechnicalIndicatorUseCase()
     market_pool = MarketPoolUseCase()
     stock_orderbook = OrderbookUseCase()
+    stock_candidate_scan = StockCandidateScanUseCase()
     sector_lookup = SectorLookupUseCase()
     sector_review = SectorReviewUseCase()
     sector_rotation_review = SectorRotationReviewUseCase()
@@ -139,6 +142,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="technical_indicator", description="Get technical indicator series such as MACD, MA, BOLL, KDJ.", input_model=TechnicalIndicatorRequest, handler=technical_indicator.execute))
     server.register_tool(MCPTool(name="market_pool", description="Get market pools such as limit-up, limit-down, and strong stocks.", input_model=MarketPoolRequest, handler=market_pool.execute))
     server.register_tool(MCPTool(name="stock_orderbook", description="Get order book data for supported instruments.", input_model=StockOrderbookRequest, handler=stock_orderbook.execute))
+    server.register_tool(MCPTool(name="stock_candidate_scan", description="Scan a stock universe and rank candidate setups.", input_model=StockCandidateScanRequest, handler=stock_candidate_scan.execute))
     server.register_tool(MCPTool(name="sector_lookup", description="Lookup sector lists and members.", input_model=SectorLookupRequest, handler=sector_lookup.execute))
     server.register_tool(MCPTool(name="sector_review", description="Generate a review summary for a sector by aggregating its member stocks.", input_model=SectorReviewRequest, handler=sector_review.execute))
     server.register_tool(MCPTool(name="sector_rotation_review", description="Compare multiple sectors and summarize cross-sector rotation signals.", input_model=SectorRotationReviewRequest, handler=sector_rotation_review.execute))
