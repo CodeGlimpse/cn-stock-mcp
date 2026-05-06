@@ -84,3 +84,18 @@ def test_multi_timeframe_review_requires_two_distinct_intervals():
         MultiTimeframeReviewRequest(symbol="600519.SH", intervals=["d", "1d"])
 
     assert "at least 2 distinct" in str(exc.value)
+
+
+def test_stock_candidate_scan_request_new_filter_fields():
+    from openclaw_stock_mcp.server.schemas import StockCandidateScanRequest
+
+    req = StockCandidateScanRequest(
+        symbols=["600519.SH"],
+        require_source_tags=[" pool:strong ", "pool:strong"],
+        exclude_risk_flags=[" weak_relative_strength ", ""],
+        min_up_streak=2,
+        max_down_streak=3,
+    )
+
+    assert req.require_source_tags == ["pool:strong"]
+    assert req.exclude_risk_flags == ["weak_relative_strength"]

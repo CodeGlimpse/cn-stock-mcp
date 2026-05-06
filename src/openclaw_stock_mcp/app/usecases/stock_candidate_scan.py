@@ -143,6 +143,10 @@ class StockCandidateScanUseCase:
                     "min_return": request.min_return,
                     "max_drawdown_limit": request.max_drawdown_limit,
                     "min_volume_ratio": request.min_volume_ratio,
+                    "min_up_streak": request.min_up_streak,
+                    "max_down_streak": request.max_down_streak,
+                    "require_source_tags": request.require_source_tags,
+                    "exclude_risk_flags": request.exclude_risk_flags,
                 },
                 "batch_review": {
                     "sort_by": batch_resp.get("sort_by"),
@@ -268,21 +272,29 @@ class StockCandidateScanUseCase:
         }
 
     def _to_candidate_card(self, item: dict, source_tags: list[str]) -> dict:
-        candidate_score, candidate_label, reason_tags, risk_flags = self._candidate_signal(item)
+        candidate_score, candidate_label, reason_tags, risk_flags, score_breakdown = self._candidate_signal(item)
         return {
             **item,
             "candidate_score": candidate_score,
             "candidate_label": candidate_label,
             "reason_tags": reason_tags,
             "risk_flags": risk_flags,
+            "candidate_score_breakdown": score_breakdown,
             "source_tags": source_tags,
             "review_tags": item.get("tags", []),
         }
 
-    def _candidate_signal(self, item: dict) -> tuple[float, str, list[str], list[str]]:
+    def _candidate_signal(self, item: dict) -> tuple[float, str, list[str], list[str], dict]:
         score = 0.0
         reasons: list[str] = []
         risks: list[str] = []
+        breakdown = {
+            "relative_strength": 0.0,
+            "return": 0.0,
+            "volume": 0.0,
+            "drawdown": 0.0,
+            "streak": 0.0,
+        }
 
         relative_strength = item.get("relative_strength")
         return_pct = item.get("return")
@@ -295,77 +307,99 @@ class StockCandidateScanUseCase:
         if relative_strength is not None:
             if relative_strength >= 10:
                 score += 5.0
+                breakdown["relative_strength"] += 5.0
                 reasons.append("very_strong_relative_strength")
             elif relative_strength >= 5:
                 score += 4.0
+                breakdown["relative_strength"] += 4.0
                 reasons.append("strong_relative_strength")
             elif relative_strength >= 2:
                 score += 3.0
+                breakdown["relative_strength"] += 3.0
                 reasons.append("positive_relative_strength")
             elif relative_strength > 0:
                 score += 1.5
+                breakdown["relative_strength"] += 1.5
                 reasons.append("slight_relative_strength")
             elif relative_strength <= -10:
                 score -= 4.0
+                breakdown["relative_strength"] -= 4.0
                 risks.append("very_weak_relative_strength")
             elif relative_strength < 0:
                 score -= 1.5
+                breakdown["relative_strength"] -= 1.5
                 risks.append("weak_relative_strength")
 
         if return_pct is not None:
             if return_pct >= 15:
                 score += 4.0
+                breakdown["return"] += 4.0
                 reasons.append("high_momentum")
             elif return_pct >= 8:
                 score += 3.0
+                breakdown["return"] += 3.0
                 reasons.append("strong_return")
             elif return_pct >= 3:
                 score += 2.0
+                breakdown["return"] += 2.0
                 reasons.append("positive_return")
             elif return_pct > 0:
                 score += 1.0
+                breakdown["return"] += 1.0
                 reasons.append("slight_positive_return")
             elif return_pct <= -5:
                 score -= 3.0
+                breakdown["return"] -= 3.0
                 risks.append("negative_return")
             elif return_pct < 0:
                 score -= 1.0
+                breakdown["return"] -= 1.0
                 risks.append("soft_negative_return")
 
         if volume_ratio is not None:
             if volume_ratio >= 2.0:
                 score += 2.0
+                breakdown["volume"] += 2.0
                 reasons.append("high_volume")
             elif volume_ratio >= 1.2:
                 score += 1.0
+                breakdown["volume"] += 1.0
                 reasons.append("active_volume")
 
         if max_drawdown is not None:
             if max_drawdown <= 3:
                 score += 1.5
+                breakdown["drawdown"] += 1.5
                 reasons.append("low_drawdown")
             elif max_drawdown <= 5:
                 score += 1.0
+                breakdown["drawdown"] += 1.0
                 reasons.append("controlled_drawdown")
             elif max_drawdown >= 10:
                 score -= 2.5
+                breakdown["drawdown"] -= 2.5
                 risks.append("severe_drawdown")
             elif max_drawdown >= 8:
                 score -= 1.5
+                breakdown["drawdown"] -= 1.5
                 risks.append("drawdown_risk")
 
         if up_streak >= 3:
             score += 1.5
+            breakdown["streak"] += 1.5
             reasons.append("strong_up_streak")
         elif up_streak >= 2:
             score += 1.0
+            breakdown["streak"] += 1.0
             reasons.append("up_streak")
 
         if down_streak >= 3:
             score -= 2.0
+            breakdown["streak"] -= 2.0
             risks.append("strong_down_streak")
         elif down_streak >= 2:
             score -= 1.0
+            breakdown["streak"] -= 1.0
             risks.append("down_streak")
 
         severe_risk = any(flag in {"very_weak_relative_strength", "severe_drawdown", "strong_down_streak"} for flag in risks)
@@ -380,7 +414,8 @@ class StockCandidateScanUseCase:
             label = "risk_alert"
         else:
             label = "observe"
-        return rounded, label, reasons, risks
+        breakdown["total"] = round(score, 2)
+        return rounded, label, reasons, risks, breakdown
 
     def _apply_filters(self, items: list[dict], request) -> list[dict]:
         filtered = []
@@ -398,6 +433,22 @@ class StockCandidateScanUseCase:
                     continue
             if request.min_volume_ratio is not None:
                 if item.get("volume_ratio") is None or item.get("volume_ratio") < request.min_volume_ratio:
+                    continue
+            if request.min_up_streak is not None:
+                up_streak = int((item.get("stats") or {}).get("up_streak", 0) or 0)
+                if up_streak < request.min_up_streak:
+                    continue
+            if request.max_down_streak is not None:
+                down_streak = int((item.get("stats") or {}).get("down_streak", 0) or 0)
+                if down_streak > request.max_down_streak:
+                    continue
+            if request.require_source_tags:
+                tags = set(item.get("source_tags") or [])
+                if not all(tag in tags for tag in request.require_source_tags):
+                    continue
+            if request.exclude_risk_flags:
+                risks = set(item.get("risk_flags") or [])
+                if any(flag in risks for flag in request.exclude_risk_flags):
                     continue
             filtered.append(item)
         return filtered

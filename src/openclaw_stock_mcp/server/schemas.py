@@ -377,6 +377,10 @@ class StockCandidateScanRequest(BaseModel):
     min_return: float | None = None
     max_drawdown_limit: float | None = None
     min_volume_ratio: float | None = None
+    min_up_streak: int | None = Field(default=None, ge=0, le=50)
+    max_down_streak: int | None = Field(default=None, ge=0, le=50)
+    require_source_tags: list[str] | None = Field(default=None, max_length=20)
+    exclude_risk_flags: list[str] | None = Field(default=None, max_length=20)
 
     @model_validator(mode="after")
     def validate_request(self):
@@ -440,6 +444,20 @@ class StockCandidateScanRequest(BaseModel):
 
         if not self.symbols and not self.sector_names and not self.pool_type:
             raise ValueError("at least one of symbols/sector_names/pool_type must be provided")
+
+        def _norm_list(values: list[str] | None) -> list[str] | None:
+            normalized: list[str] = []
+            seen: set[str] = set()
+            for raw in values or []:
+                value = (raw or "").strip()
+                if not value or value in seen:
+                    continue
+                seen.add(value)
+                normalized.append(value)
+            return normalized or None
+
+        self.require_source_tags = _norm_list(self.require_source_tags)
+        self.exclude_risk_flags = _norm_list(self.exclude_risk_flags)
 
         return self
 

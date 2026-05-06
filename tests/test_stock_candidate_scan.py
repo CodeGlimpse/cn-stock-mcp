@@ -144,6 +144,10 @@ def test_stock_candidate_scan_builds_universe_scores_and_buckets():
             "min_return": None,
             "max_drawdown_limit": None,
             "min_volume_ratio": None,
+            "min_up_streak": None,
+            "max_down_streak": None,
+            "require_source_tags": None,
+            "exclude_risk_flags": None,
         },
     )()
 
@@ -164,6 +168,8 @@ def test_stock_candidate_scan_builds_universe_scores_and_buckets():
     assert result["errors"][0]["scope"] == "stock_review"
     assert result["meta"]["candidate_score_schema"]["schema"] == "candidate_score_v1"
     assert result["meta"]["review_envelope_schema"]["schema"] == "review_envelope_v1"
+    assert "candidate_score_breakdown" in result["items"][0]
+    assert "total" in result["items"][0]["candidate_score_breakdown"]
 
 
 def test_stock_candidate_scan_applies_filters():
@@ -194,6 +200,51 @@ def test_stock_candidate_scan_applies_filters():
             "min_return": 8.0,
             "max_drawdown_limit": 5.0,
             "min_volume_ratio": 1.2,
+            "min_up_streak": None,
+            "max_down_streak": None,
+            "require_source_tags": None,
+            "exclude_risk_flags": None,
+        },
+    )()
+
+    result = uc.execute(req)
+
+    assert len(result["items"]) == 1
+    assert result["items"][0]["symbol"] == "300750.SZ"
+
+
+def test_stock_candidate_scan_new_filters():
+    uc = StockCandidateScanUseCase()
+    uc.sector_lookup = _SectorLookup()
+    uc.market_pool = _MarketPool()
+    uc.batch_review = _BatchReview()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "symbols": ["600519.SH"],
+            "sector_names": ["1000信息", "1000工业"],
+            "sector_type": "primary",
+            "pool_type": "strong",
+            "trade_date": "2026-05-06",
+            "start_date": None,
+            "end_date": None,
+            "adjust": "none",
+            "provider": "mixed",
+            "sort_by": "candidate_score",
+            "descending": True,
+            "top_n": 10,
+            "limit": 10,
+            "min_candidate_score": None,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+            "min_up_streak": 2,
+            "max_down_streak": 1,
+            "require_source_tags": ["pool:strong"],
+            "exclude_risk_flags": ["weak_relative_strength"],
         },
     )()
 
