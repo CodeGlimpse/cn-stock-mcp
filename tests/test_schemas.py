@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
+from openclaw_stock_mcp.server.schemas import WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -57,3 +57,17 @@ def test_stock_candidate_scan_normalizes_pool_and_deduplicates_inputs():
     assert req.pool_type == "limit_up"
     assert req.symbols == ["600519.SH", "000001.SZ"]
     assert req.sector_names == ["1000信息", "1000工业"]
+
+
+def test_watchlist_review_normalizes_symbols_and_defaults_trade_date():
+    req = WatchlistReviewRequest(symbols=[" 600519.SH ", "600519.SH", "000001.SZ"], watchlist_name="  核心池  ")
+    assert req.symbols == ["600519.SH", "000001.SZ"]
+    assert req.watchlist_name == "核心池"
+    assert req.trade_date is not None
+
+
+def test_watchlist_review_rejects_trade_date_with_range():
+    with pytest.raises(ValidationError) as exc:
+        WatchlistReviewRequest(symbols=["600519.SH"], trade_date="2026-05-06", start_date="2026-04-01", end_date="2026-05-01")
+
+    assert "trade_date cannot be combined" in str(exc.value)

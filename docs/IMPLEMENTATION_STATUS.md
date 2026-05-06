@@ -27,6 +27,7 @@
 - `provider_health`
 - `sector_rotation_review`
 - `stock_candidate_scan`
+- `watchlist_review`
 
 ### sector_lookup（板块列表/成员股）当前实现
 - 输入模式：`list | children | members(兼容别名)`
@@ -177,6 +178,35 @@
   - 为后续 `stock_review / stock_review_batch` 提供优先级
 - 已完成真实验收：
   - `stock_candidate_scan(pool_type=strong, trade_date=2026-05-06, limit=3, top_n=2)` 已真实返回成功
+
+### watchlist_review（观察池复盘 / 持续跟踪分层）
+- 新增 `watchlist_review` tool
+- 当前路径：
+  - 显式传入 `symbols[]` 作为观察池
+  - 复用 `stock_review_batch` 批量复盘
+  - 再补 `watchlist_score / status_label / reason_tags / risk_flags`
+- 当前支持：
+  - `trade_date`：单日观察池复盘
+  - `start_date + end_date`：区间观察池复盘
+- 当前参数：
+  - `symbols[] / watchlist_name`
+  - `sort_by / descending / top_n`
+  - `min_watchlist_score / min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
+- 当前排序字段：
+  - `watchlist_score`
+  - `relative_strength`
+  - `return`
+  - `volume_ratio`
+  - `max_drawdown`
+- 当前输出包含：
+  - 顶层 `subject_type=watchlist`
+  - `watchlist_score_schema=watchlist_score_v1`
+  - `items` 中每项新增：`watchlist_score / status_label / reason_tags / risk_flags`
+  - `rankings`（观察分 / 相对强弱 / 收益 / 量比）
+  - `buckets`（`focus / monitor / observe / risk_alerts`）
+- 当前定位：
+  - 复盘一个固定观察池 / 核心池 / 自选池
+  - 给出继续重点看、跟踪、观察、风险预警的分层
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool

@@ -10,6 +10,7 @@
 - 单股复盘 → `stock_review`
 - 股票池批量对比 → `stock_review_batch`
 - 候选扫描 / 找优先级 → `stock_candidate_scan`
+- 固定观察池 / 自选池复盘 → `watchlist_review`
 - 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`
 - 多板块横向比较 / 板块轮动 → `sector_rotation_review`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
@@ -70,6 +71,7 @@
 - `stock_history(stock)`：`akshare`
 - `stock_history(index)`：`zhitu` 主，`akshare` 备
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
+- `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `sector_review`：成员股获取走 `zhitu`，成员复盘当前复用 `akshare`
 - `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；当前建议 `primary` 板块、较小 `limit` 起步
@@ -129,4 +131,9 @@
 ### 候选扫描
 ```json
 {"tool":"stock_candidate_scan","payload":{"pool_type":"strong","trade_date":"2026-05-06","limit":5,"top_n":3}}
+```
+
+### 观察池复盘
+```json
+{"tool":"watchlist_review","payload":{"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}}
 ```

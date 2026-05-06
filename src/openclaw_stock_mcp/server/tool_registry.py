@@ -14,6 +14,7 @@ from .schemas import (
     StockSearchRequest,
     TechnicalIndicatorRequest,
     TradingCalendarRequest,
+    WatchlistReviewRequest,
 )
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "StockReviewRequest",
     "StockReviewBatchRequest",
     "TradingCalendarRequest",
+    "WatchlistReviewRequest",
     "MarketOverviewRequest",
     "MarketBriefRequest",
     "TechnicalIndicatorRequest",

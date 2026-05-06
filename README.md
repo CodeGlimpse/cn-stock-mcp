@@ -36,6 +36,7 @@
 - `stock_review_batch()` 批量复盘排序可用
 - `sector_rotation_review()` 多板块横向轮动复盘可用（当前建议 primary 板块；live 验收已通过最小规模样例）
 - `stock_candidate_scan()` 候选扫描可用（支持 symbols / primary 板块 / strong池 组合成 universe）
+- `watchlist_review()` 观察池复盘可用（适合持续跟踪固定股票池）
 
 ## 快速开始
 
@@ -360,6 +361,28 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_candidate_scan --p
   - 从强势池、候选行业、自选池里做第一轮筛查
   - 给后续 `stock_review` / `stock_review_batch` 提供优先级
 
+### watchlist_review 观察池复盘样例
+
+```bash
+# 单日观察池复盘
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool watchlist_review --payload '{"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}'
+
+# 区间观察池复盘
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool watchlist_review --payload '{"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","start_date":"2026-04-01","end_date":"2026-05-06","top_n":3}'
+```
+
+说明：
+- 当前 v1 用于 **固定股票池的持续跟踪和优先级划分**，不替代 `stock_review_batch`
+- 内部路径：直接复用 `stock_review_batch`，再补 `watchlist_score / status_label / reason_tags / risk_flags`
+- 输出重点：
+  - `watchlist_score / status_label`
+  - `reason_tags / risk_flags`
+  - `rankings`（观察分 / 相对强弱 / 收益 / 量比）
+  - `buckets`（`focus / monitor / observe / risk_alerts`）
+- 当前最适合：
+  - 跟踪固定观察池、自选池、核心池
+  - 在“继续重点看 / 正常跟踪 / 暂时观察 / 风险警报”之间分层
+
 ### sector_lookup 本地调用样例（板块列表 / 成员股）
 
 ### 运行 smoke test
@@ -409,6 +432,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 6. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
 7. `sector_rotation_review {"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":2,"member_top_n":2,"limit":5}`
 8. `stock_candidate_scan {"pool_type":"strong","trade_date":"2026-05-06","limit":3,"top_n":2}`
+9. `watchlist_review {"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}`
 
 ## OpenClaw news agent integration
 
@@ -519,6 +543,10 @@ openclaw skills info newsbot-stock-routing
    - 检查 `subject_type=candidate_scan`
    - 检查 `meta.candidate_score_schema.schema=candidate_score_v1`
    - 检查 `candidate_score / candidate_label / buckets` 正常生成
+7. `watchlist_review` 观察池复盘
+   - 检查 `subject_type=watchlist`
+   - 检查 `meta.watchlist_score_schema.schema=watchlist_score_v1`
+   - 检查 `watchlist_score / status_label / buckets` 正常生成
 
 ### 6. 维护规则
 

@@ -49,6 +49,14 @@
 - `buckets`（`candidates / watchlist / risk_alerts`）
 - 再补基础收益 / 相对强弱 / 回撤 / 量比
 
+### `watchlist_review`
+优先说：
+- `watchlist_score / status_label`
+- `reason_tags / risk_flags`
+- `rankings`（尤其 `leaders_by_watchlist_score`）
+- `buckets`（`focus / monitor / risk_alerts`）
+- 再补基础收益 / 相对强弱 / 回撤 / 量比
+
 ## 2. 日期解释规则
 
 如果：

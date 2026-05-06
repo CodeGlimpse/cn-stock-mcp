@@ -19,6 +19,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockSearchRequest,
     TechnicalIndicatorRequest,
     TradingCalendarRequest,
+    WatchlistReviewRequest,
 )
 
 
@@ -128,6 +129,43 @@ def build_fastmcp_server() -> FastMCP:
             top_n=top_n,
         )
         return registry.call_tool("stock_review_batch", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="watchlist_review", description="Review and prioritize a watchlist of symbols.")
+    async def watchlist_review(
+        symbols: list[str],
+        watchlist_name: str | None = None,
+        trade_date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        adjust: str = "none",
+        provider: str | None = "akshare",
+        sort_by: str = "watchlist_score",
+        descending: bool = True,
+        top_n: int = 20,
+        min_watchlist_score: float | None = None,
+        min_relative_strength: float | None = None,
+        min_return: float | None = None,
+        max_drawdown_limit: float | None = None,
+        min_volume_ratio: float | None = None,
+    ):
+        req = WatchlistReviewRequest(
+            symbols=symbols,
+            watchlist_name=watchlist_name,
+            trade_date=trade_date,
+            start_date=start_date,
+            end_date=end_date,
+            adjust=adjust,
+            provider=provider,
+            sort_by=sort_by,
+            descending=descending,
+            top_n=top_n,
+            min_watchlist_score=min_watchlist_score,
+            min_relative_strength=min_relative_strength,
+            min_return=min_return,
+            max_drawdown_limit=max_drawdown_limit,
+            min_volume_ratio=min_volume_ratio,
+        )
+        return registry.call_tool("watchlist_review", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="trading_calendar", description="Query China trading-day calendar for review and backtesting workflows.")
     async def trading_calendar(

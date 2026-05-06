@@ -444,6 +444,58 @@ class StockCandidateScanRequest(BaseModel):
         return self
 
 
+class WatchlistReviewRequest(BaseModel):
+    symbols: list[str] = Field(min_length=1, max_length=100)
+    watchlist_name: str | None = None
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    adjust: AdjustType = "none"
+    provider: Literal["akshare"] | None = "akshare"
+    sort_by: Literal["watchlist_score", "relative_strength", "return", "max_drawdown", "volume_ratio"] = "watchlist_score"
+    descending: bool = True
+    top_n: int = Field(default=20, ge=1, le=100)
+    min_watchlist_score: float | None = None
+    min_relative_strength: float | None = None
+    min_return: float | None = None
+    max_drawdown_limit: float | None = None
+    min_volume_ratio: float | None = None
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+        elif self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+        else:
+            self.trade_date = dt_date.today().isoformat()
+
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for symbol in self.symbols:
+            value = (symbol or "").strip()
+            if not value or value in seen:
+                continue
+            seen.add(value)
+            normalized.append(value)
+
+        if not normalized:
+            raise ValueError("symbols must contain at least 1 non-empty symbol")
+
+        self.symbols = normalized
+        if self.watchlist_name is not None:
+            self.watchlist_name = self.watchlist_name.strip() or None
+        return self
+
+
 class StockOrderbookRequest(BaseModel):
     symbol: str
     sec_type: Literal["stock"] = "stock"

@@ -11,6 +11,7 @@ from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCas
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
+from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
 from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
@@ -40,6 +41,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockSearchRequest,
     TechnicalIndicatorRequest,
     TradingCalendarRequest,
+    WatchlistReviewRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -119,6 +121,7 @@ def create_server() -> MCPServerStub:
     stock_history = StockHistoryUseCase()
     stock_review = StockReviewUseCase()
     stock_review_batch = StockReviewBatchUseCase()
+    watchlist_review = WatchlistReviewUseCase()
     trading_calendar = TradingCalendarUseCase()
     market_overview = MarketOverviewUseCase()
     market_brief = MarketBriefUseCase()
@@ -136,6 +139,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="stock_history", description="Get historical price bars for an instrument.", input_model=StockHistoryRequest, handler=stock_history.execute))
     server.register_tool(MCPTool(name="stock_review", description="Generate a review summary for a stock on a trade date or over a date range.", input_model=StockReviewRequest, handler=stock_review.execute))
     server.register_tool(MCPTool(name="stock_review_batch", description="Batch review multiple stocks and rank the results for replay workflows.", input_model=StockReviewBatchRequest, handler=stock_review_batch.execute))
+    server.register_tool(MCPTool(name="watchlist_review", description="Review and prioritize a watchlist of symbols.", input_model=WatchlistReviewRequest, handler=watchlist_review.execute))
     server.register_tool(MCPTool(name="trading_calendar", description="Query China trading-day calendar for review and backtesting workflows.", input_model=TradingCalendarRequest, handler=trading_calendar.execute))
     server.register_tool(MCPTool(name="market_overview", description="Get high-level overview of China market major indices.", input_model=MarketOverviewRequest, handler=market_overview.execute))
     server.register_tool(MCPTool(name="market_brief", description="Generate a compact market brief by combining overview and pool data.", input_model=MarketBriefRequest, handler=market_brief.execute))
