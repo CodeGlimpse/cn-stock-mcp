@@ -7,6 +7,7 @@ from openclaw_stock_mcp.server.schemas import (
     MarketBriefRequest,
     MarketOverviewRequest,
     MarketPoolRequest,
+    MultiTimeframeReviewRequest,
     SectorLookupRequest,
     SectorReviewRequest,
     SectorRotationReviewRequest,
@@ -217,6 +218,31 @@ def build_fastmcp_server() -> FastMCP:
             provider=provider,
         )
         return registry.call_tool("market_brief", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="multi_timeframe_review", description="Review a symbol across multiple timeframes and summarize alignment/conflicts.")
+    async def multi_timeframe_review(
+        symbol: str,
+        intervals: list[str],
+        indicators: list[str] | None = None,
+        sec_type: str = "stock",
+        trade_date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 120,
+        provider: str | None = "mixed",
+    ):
+        req = MultiTimeframeReviewRequest(
+            symbol=symbol,
+            intervals=intervals,
+            indicators=indicators,
+            sec_type=sec_type,
+            trade_date=trade_date,
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
+            provider=provider,
+        )
+        return registry.call_tool("multi_timeframe_review", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="technical_indicator", description="Get technical indicator series such as MACD, MA, BOLL, KDJ.")
     async def technical_indicator(

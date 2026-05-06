@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
+from openclaw_stock_mcp.server.schemas import MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -71,3 +71,16 @@ def test_watchlist_review_rejects_trade_date_with_range():
         WatchlistReviewRequest(symbols=["600519.SH"], trade_date="2026-05-06", start_date="2026-04-01", end_date="2026-05-01")
 
     assert "trade_date cannot be combined" in str(exc.value)
+
+
+def test_multi_timeframe_review_normalizes_intervals_and_defaults_indicators():
+    req = MultiTimeframeReviewRequest(symbol="600519.SH", intervals=["15", "d", "w", "15"])
+    assert req.intervals == ["15m", "1d", "1w"]
+    assert req.indicators == ["macd", "ma", "kdj"]
+
+
+def test_multi_timeframe_review_requires_two_distinct_intervals():
+    with pytest.raises(ValidationError) as exc:
+        MultiTimeframeReviewRequest(symbol="600519.SH", intervals=["d", "1d"])
+
+    assert "at least 2 distinct" in str(exc.value)

@@ -37,6 +37,7 @@
 - `sector_rotation_review()` 多板块横向轮动复盘可用（当前建议 primary 板块；live 验收已通过最小规模样例）
 - `stock_candidate_scan()` 候选扫描可用（支持 symbols / primary 板块 / strong池 组合成 universe）
 - `watchlist_review()` 观察池复盘可用（适合持续跟踪固定股票池）
+- `multi_timeframe_review()` 多周期复盘可用（适合看单只标的不同周期是否共振或冲突）
 
 ## 快速开始
 
@@ -383,6 +384,34 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool watchlist_review --paylo
   - 跟踪固定观察池、自选池、核心池
   - 在“继续重点看 / 正常跟踪 / 暂时观察 / 风险警报”之间分层
 
+### multi_timeframe_review 多周期复盘样例
+
+```bash
+# 单只指数多周期复盘
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool multi_timeframe_review --payload '{"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}'
+
+# 单只股票多周期复盘
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool multi_timeframe_review --payload '{"symbol":"600519.SH","sec_type":"stock","intervals":["30","d","w"],"indicators":["macd","ma","kdj"],"limit":60}'
+```
+
+说明：
+- 当前 v1 用于 **单只标的跨多个周期的共振/冲突分析**
+- 输入重点：
+  - `symbol`
+  - `intervals[]`（至少 2 个）
+  - `indicators[]`（默认 `macd / ma / kdj`）
+- 内部路径：
+  - `stock_history` 拉各周期 bars
+  - `technical_indicator` 拉各周期指标
+  - 再汇总成 `trend_score / trend_label / signal_tags / conflict_notes`
+- 输出重点：
+  - 每个周期一张 `timeframe card`
+  - 顶层 `alignment_score_schema=multi_timeframe_alignment_v1`
+  - `buckets` 中可直接看 `bullish_timeframes / neutral_timeframes / bearish_timeframes / conflict_points`
+- 当前最适合：
+  - 判断短中期是否共振
+  - 判断“日线强但短线弱”这类冲突
+
 ### sector_lookup 本地调用样例（板块列表 / 成员股）
 
 ### 运行 smoke test
@@ -433,6 +462,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 7. `sector_rotation_review {"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":2,"member_top_n":2,"limit":5}`
 8. `stock_candidate_scan {"pool_type":"strong","trade_date":"2026-05-06","limit":3,"top_n":2}`
 9. `watchlist_review {"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}`
+10. `multi_timeframe_review {"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}`
 
 ## OpenClaw news agent integration
 
@@ -547,6 +577,10 @@ openclaw skills info newsbot-stock-routing
    - 检查 `subject_type=watchlist`
    - 检查 `meta.watchlist_score_schema.schema=watchlist_score_v1`
    - 检查 `watchlist_score / status_label / buckets` 正常生成
+8. `multi_timeframe_review` 多周期复盘
+   - 检查 `subject_type=multi_timeframe`
+   - 检查 `meta.alignment_score_schema.schema=multi_timeframe_alignment_v1`
+   - 检查 `trend_label / conflict_points / items` 正常生成
 
 ### 6. 维护规则
 

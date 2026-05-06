@@ -57,6 +57,13 @@
 - `buckets`（`focus / monitor / risk_alerts`）
 - 再补基础收益 / 相对强弱 / 回撤 / 量比
 
+### `multi_timeframe_review`
+优先说：
+- `alignment_score` 对应的结构标签（当前看 `summary / structure.tags`）
+- `trend_label` 按周期展开
+- `conflict_points`
+- 再补各周期 `signal_tags / timeframe_return`
+
 ## 2. 日期解释规则
 
 如果：

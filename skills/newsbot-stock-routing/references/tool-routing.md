@@ -7,6 +7,7 @@
 - 市场简报 / 收盘复盘 → `market_brief`
 - 实时价格 / 涨跌 / 快照 → `stock_quote`
 - 历史走势 / K线 / 分时 → `stock_history`
+- 单只标的多周期共振 / 周期冲突 → `multi_timeframe_review`
 - 单股复盘 → `stock_review`
 - 股票池批量对比 → `stock_review_batch`
 - 候选扫描 / 找优先级 → `stock_candidate_scan`
@@ -136,4 +137,9 @@
 ### 观察池复盘
 ```json
 {"tool":"watchlist_review","payload":{"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}}
+```
+
+### 多周期复盘
+```json
+{"tool":"multi_timeframe_review","payload":{"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}}
 ```

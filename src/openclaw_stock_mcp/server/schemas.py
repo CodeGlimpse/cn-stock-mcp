@@ -496,6 +496,72 @@ class WatchlistReviewRequest(BaseModel):
         return self
 
 
+class MultiTimeframeReviewRequest(BaseModel):
+    symbol: str
+    intervals: list[str] = Field(min_length=2, max_length=8)
+    indicators: list[IndicatorType] | None = None
+    sec_type: Literal["stock", "index", "fund"] = "stock"
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    limit: int = Field(default=120, ge=20, le=500)
+    provider: ProviderName | None = "mixed"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+        elif self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+
+        interval_alias = {
+            "5": "5m",
+            "15": "15m",
+            "30": "30m",
+            "60": "60m",
+            "d": "1d",
+            "w": "1w",
+            "m": "1M",
+            "y": "1y",
+            "5m": "5m",
+            "15m": "15m",
+            "30m": "30m",
+            "60m": "60m",
+            "1d": "1d",
+            "1w": "1w",
+            "1m": None,
+            "1y": "1y",
+        }
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for interval in self.intervals:
+            raw = (interval or "").strip()
+            mapped = interval_alias.get(raw.lower())
+            if mapped is None:
+                raise ValueError(
+                    "intervals must contain only: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y; 1m is not supported in current version"
+                )
+            if mapped in seen:
+                continue
+            seen.add(mapped)
+            normalized.append(mapped)
+
+        if len(normalized) < 2:
+            raise ValueError("intervals must contain at least 2 distinct valid intervals")
+
+        self.intervals = normalized
+        self.indicators = self.indicators or ["macd", "ma", "kdj"]
+        return self
+
+
 class StockOrderbookRequest(BaseModel):
     symbol: str
     sec_type: Literal["stock"] = "stock"

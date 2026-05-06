@@ -11,6 +11,7 @@ from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCas
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
+from openclaw_stock_mcp.app.usecases.multi_timeframe_review import MultiTimeframeReviewUseCase
 from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
 from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
@@ -29,6 +30,7 @@ from openclaw_stock_mcp.server.schemas import (
     MarketBriefRequest,
     MarketOverviewRequest,
     MarketPoolRequest,
+    MultiTimeframeReviewRequest,
     SectorLookupRequest,
     SectorReviewRequest,
     SectorRotationReviewRequest,
@@ -126,6 +128,7 @@ def create_server() -> MCPServerStub:
     market_overview = MarketOverviewUseCase()
     market_brief = MarketBriefUseCase()
     technical_indicator = TechnicalIndicatorUseCase()
+    multi_timeframe_review = MultiTimeframeReviewUseCase()
     market_pool = MarketPoolUseCase()
     stock_orderbook = OrderbookUseCase()
     stock_candidate_scan = StockCandidateScanUseCase()
@@ -144,6 +147,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="market_overview", description="Get high-level overview of China market major indices.", input_model=MarketOverviewRequest, handler=market_overview.execute))
     server.register_tool(MCPTool(name="market_brief", description="Generate a compact market brief by combining overview and pool data.", input_model=MarketBriefRequest, handler=market_brief.execute))
     server.register_tool(MCPTool(name="technical_indicator", description="Get technical indicator series such as MACD, MA, BOLL, KDJ.", input_model=TechnicalIndicatorRequest, handler=technical_indicator.execute))
+    server.register_tool(MCPTool(name="multi_timeframe_review", description="Review a symbol across multiple timeframes and summarize alignment/conflicts.", input_model=MultiTimeframeReviewRequest, handler=multi_timeframe_review.execute))
     server.register_tool(MCPTool(name="market_pool", description="Get market pools such as limit-up, limit-down, and strong stocks.", input_model=MarketPoolRequest, handler=market_pool.execute))
     server.register_tool(MCPTool(name="stock_orderbook", description="Get order book data for supported instruments.", input_model=StockOrderbookRequest, handler=stock_orderbook.execute))
     server.register_tool(MCPTool(name="stock_candidate_scan", description="Scan a stock universe and rank candidate setups.", input_model=StockCandidateScanRequest, handler=stock_candidate_scan.execute))

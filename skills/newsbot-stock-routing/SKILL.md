@@ -22,6 +22,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 固定观察池 / 自选池持续跟踪 → `watchlist_review`
 - 实时价格 / 涨跌快照 → `stock_quote`
 - 历史走势 / K 线 / 分时 → `stock_history`
+- 单只标的跨周期共振 / 冲突 → `multi_timeframe_review`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势股池 → `market_pool`
 - 是否交易日 / 上下个交易日 → `trading_calendar`

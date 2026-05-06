@@ -28,6 +28,7 @@
 - `sector_rotation_review`
 - `stock_candidate_scan`
 - `watchlist_review`
+- `multi_timeframe_review`
 
 ### sector_lookup（板块列表/成员股）当前实现
 - 输入模式：`list | children | members(兼容别名)`
@@ -207,6 +208,29 @@
 - 当前定位：
   - 复盘一个固定观察池 / 核心池 / 自选池
   - 给出继续重点看、跟踪、观察、风险预警的分层
+
+### multi_timeframe_review（多周期复盘 / 跨周期共振分析）
+- 新增 `multi_timeframe_review` tool
+- 当前路径：
+  - 对 `intervals[]` 中每个周期分别调用 `stock_history`
+  - 对 `indicators[]` 中每个指标分别调用 `technical_indicator`
+  - 再聚合成跨周期 `trend_score / trend_label / signal_tags / conflict_notes`
+- 当前支持：
+  - 单只标的跨多个周期复盘
+  - `trade_date` 或 `start_date + end_date`
+- 当前参数：
+  - `symbol / sec_type / intervals[] / indicators[] / limit`
+- 当前输出包含：
+  - 顶层 `subject_type=multi_timeframe`
+  - `items`（每个周期一张 card）
+  - `trend_score / trend_label / signal_tags / conflict_notes`
+  - `alignment_score_schema=multi_timeframe_alignment_v1`
+  - `buckets`（`bullish_timeframes / neutral_timeframes / bearish_timeframes / conflict_points`）
+- 当前定位：
+  - 判断短中长周期是否一致
+  - 判断不同周期之间的结构冲突
+- 已完成真实验收：
+  - `multi_timeframe_review(symbol=000001.SH, sec_type=index, intervals=[15,d,w], indicators=[macd,ma,kdj], limit=60)` 已真实返回成功
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool
