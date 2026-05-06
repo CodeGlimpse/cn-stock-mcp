@@ -4,6 +4,7 @@ from .schemas import (
     MarketPoolRequest,
     SectorLookupRequest,
     SectorReviewRequest,
+    SectorRotationReviewRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
     StockQuoteRequest,
@@ -28,4 +29,5 @@ __all__ = [
     "StockOrderbookRequest",
     "SectorLookupRequest",
     "SectorReviewRequest",
+    "SectorRotationReviewRequest",
 ]

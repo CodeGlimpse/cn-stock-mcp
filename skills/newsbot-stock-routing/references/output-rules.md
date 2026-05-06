@@ -25,6 +25,14 @@
 4. `continuity`
 5. 再补 `leaders / laggards`
 
+### `sector_rotation_review`
+优先说：
+1. `rotation.label_zh`
+2. `rankings`（尤其 `leaders_by_avg_relative_strength / leaders_by_avg_return`）
+3. `buckets`（如 `mainline_sectors / risk_sectors`）
+4. `structure.tags`
+5. 再补各板块 `leaders / laggards`
+
 ### `stock_review / stock_review_batch`
 优先说：
 - 收益
@@ -55,6 +63,7 @@
 
 - `market_pool` 若存在 `extra.data_quality == "suspect"` 或 `anomaly_flags`，必须提示上游异常值风险
 - `sector_lookup(children)` 要明确写“成员股”，不要写“子板块”
+- `sector_rotation_review` 的 `items` 是板块卡片，不是个股卡片；不要按股票字段去解读。
 - `rotation.score` 不能写成“情绪分”
 - 看到空字段时，不要脑补“没有问题”
 

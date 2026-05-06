@@ -9,6 +9,7 @@ from openclaw_stock_mcp.server.schemas import (
     MarketPoolRequest,
     SectorLookupRequest,
     SectorReviewRequest,
+    SectorRotationReviewRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
     StockQuoteRequest,
@@ -280,6 +281,45 @@ def build_fastmcp_server() -> FastMCP:
             min_volume_ratio=min_volume_ratio,
         )
         return registry.call_tool("sector_review", req.model_dump(exclude_none=True))
+
+    @mcp.tool(name="sector_rotation_review", description="Compare multiple sectors and summarize cross-sector rotation signals.")
+    async def sector_rotation_review(
+        sector_names: list[str],
+        sector_type: str = "primary",
+        trade_date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        adjust: str = "none",
+        provider: str | None = "zhitu",
+        sort_by: str = "avg_relative_strength",
+        descending: bool = True,
+        top_n: int = 5,
+        limit: int = 100,
+        member_top_n: int = 3,
+        min_relative_strength: float | None = None,
+        min_return: float | None = None,
+        max_drawdown_limit: float | None = None,
+        min_volume_ratio: float | None = None,
+    ):
+        req = SectorRotationReviewRequest(
+            sector_names=sector_names,
+            sector_type=sector_type,
+            trade_date=trade_date,
+            start_date=start_date,
+            end_date=end_date,
+            adjust=adjust,
+            provider=provider,
+            sort_by=sort_by,
+            descending=descending,
+            top_n=top_n,
+            limit=limit,
+            member_top_n=member_top_n,
+            min_relative_strength=min_relative_strength,
+            min_return=min_return,
+            max_drawdown_limit=max_drawdown_limit,
+            min_volume_ratio=min_volume_ratio,
+        )
+        return registry.call_tool("sector_rotation_review", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="provider_health", description="Run provider self checks for zhitu and akshare.")
     async def provider_health():

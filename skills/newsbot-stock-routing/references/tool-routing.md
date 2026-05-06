@@ -9,7 +9,8 @@
 - 历史走势 / K线 / 分时 → `stock_history`
 - 单股复盘 → `stock_review`
 - 股票池批量对比 → `stock_review_batch`
-- 板块复盘 / 行业强弱 / 板块轮动 / 龙头跟风拖累 → `sector_review`
+- 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`
+- 多板块横向比较 / 板块轮动 → `sector_rotation_review`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -69,6 +70,7 @@
 - `stock_history(index)`：`zhitu` 主，`akshare` 备
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
 - `sector_review`：成员股获取走 `zhitu`，成员复盘当前复用 `akshare`
+- `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；当前建议 `primary` 板块、较小 `limit` 起步
 - `market_overview` / `market_pool` / `stock_orderbook` / `sector_lookup`：`zhitu`
 
 如用户明确要求优先顺序，再传：
@@ -115,4 +117,9 @@
 ### 板块区间轮动复盘
 ```json
 {"tool":"sector_review","payload":{"sector_name":"TFG板块趋势","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}}
+```
+
+### 板块轮动复盘（多板块）
+```json
+{"tool":"sector_rotation_review","payload":{"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":2,"member_top_n":2,"limit":5}}
 ```

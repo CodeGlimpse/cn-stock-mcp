@@ -1,34 +1,32 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from types import SimpleNamespace
 
 from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
 from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA
 from openclaw_stock_mcp.app.usecases.stock_review import StockReviewUseCase
+from openclaw_stock_mcp.infra.config import get_settings
 
 
 class StockReviewBatchUseCase:
     def __init__(self) -> None:
+        self.settings = get_settings()
         self.single = StockReviewUseCase()
 
     def execute(self, request):
         items = []
         errors = []
 
+        reviews = self._collect_reviews(request)
         for symbol in request.symbols:
-            try:
-                single_req = SimpleNamespace(
-                    symbol=symbol,
-                    trade_date=request.trade_date,
-                    start_date=request.start_date,
-                    end_date=request.end_date,
-                    adjust=request.adjust,
-                    provider=request.provider,
-                )
-                review = self.single.execute(single_req)
-                items.append(self._to_card(review))
-            except Exception as exc:
-                errors.append({"symbol": symbol, **serialize_exception(exc)})
+            review = reviews.get(symbol)
+            if review is None:
+                continue
+            if isinstance(review, Exception):
+                errors.append({"symbol": symbol, **serialize_exception(review)})
+                continue
+            items.append(self._to_card(review))
 
         filtered_items = self._apply_filters(items, request)
         sorted_items = self._sort_items(filtered_items, request.sort_by, request.descending)
@@ -66,6 +64,43 @@ class StockReviewBatchUseCase:
                 },
             },
         }
+
+    def _collect_reviews(self, request) -> dict[str, dict | Exception]:
+        symbols = list(request.symbols)
+        if not symbols:
+            return {}
+
+        max_workers = max(1, min(len(symbols), int(getattr(self.settings, "stock_review_batch_max_workers", 4) or 4)))
+        if max_workers == 1:
+            return {symbol: self._run_single(symbol, request) for symbol in symbols}
+
+        results: dict[str, dict | Exception] = {}
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_map = {executor.submit(self._run_single, symbol, request): symbol for symbol in symbols}
+            for future in as_completed(future_map):
+                symbol = future_map[future]
+                try:
+                    results[symbol] = future.result()
+                except Exception as exc:  # pragma: no cover
+                    results[symbol] = exc
+        return results
+
+    def _run_single(self, symbol: str, request):
+        try:
+            single_req = SimpleNamespace(
+                symbol=symbol,
+                trade_date=request.trade_date,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                adjust=request.adjust,
+                provider=request.provider,
+            )
+            injected_single = getattr(self, "single", None)
+            if injected_single is not None and injected_single.__class__ is not StockReviewUseCase:
+                return injected_single.execute(single_req)
+            return StockReviewUseCase().execute(single_req)
+        except Exception as exc:
+            return exc
 
     def _to_card(self, review: dict) -> dict:
         stats = review.get("stats", {})

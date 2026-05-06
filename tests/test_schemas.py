@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import StockHistoryRequest, TechnicalIndicatorRequest
+from openclaw_stock_mcp.server.schemas import SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -30,3 +30,10 @@ def test_technical_indicator_rejects_1m_interval():
         TechnicalIndicatorRequest(symbol="000001.SH", sec_type="index", interval="1m", indicator="macd")
 
     assert "1m is not supported" in str(exc.value)
+
+
+def test_sector_rotation_review_rejects_duplicate_or_blank_sector_list():
+    with pytest.raises(ValidationError) as exc:
+        SectorRotationReviewRequest(sector_names=["电力设备", " 电力设备 ", ""], trade_date="2026-05-06")
+
+    assert "at least 2 distinct" in str(exc.value)

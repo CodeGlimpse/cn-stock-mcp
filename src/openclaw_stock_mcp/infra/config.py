@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     cache_ttl_orderbook_seconds: int = 3
     cache_ttl_pool_seconds: int = 600
 
+    stock_review_batch_max_workers: int = 4
+    sector_rotation_max_workers: int = 2
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     def _resolve_zhitu_token_config_path(self) -> Path:

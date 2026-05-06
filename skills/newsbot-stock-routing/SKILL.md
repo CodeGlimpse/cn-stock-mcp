@@ -14,7 +14,8 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 ## Quick routing
 
 - 市场整体 / 收盘简报 / 情绪温度 → `market_brief`
-- 板块 / 行业 / 概念 / 轮动 → `sector_review`
+- 单板块 / 行业 / 概念复盘 → `sector_review`
+- 多板块横向比较 / 板块轮动 → `sector_rotation_review`
 - 单股复盘 → `stock_review`
 - 股票池批量对比 → `stock_review_batch`
 - 实时价格 / 涨跌快照 → `stock_quote`
@@ -29,9 +30,11 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 ## Operating rules
 
 - 代码或名称不确定时，**先 `stock_search`，再 quote/history/review**。
-- 解释 `market_brief` 和 `sector_review` 时，**优先使用统一公共字段 `review_envelope_v1`**。
+- 解释 `market_brief`、`sector_review` 和 `sector_rotation_review` 时，**优先使用统一公共字段 `review_envelope_v1`**。
 - `sentiment.score` 是统一情绪温度分；`rotation.score` 是轮动信号分，**不能混用**。
 - 若 `requested_trade_date != trade_date`，必须明确说明“已回退到有效交易日”。
+- `sector_rotation_review` 当前优先用于 `primary` 板块的横向比较；若用户给的是单个板块，优先走 `sector_review`。
+- `sector_rotation_review` live 路径仍偏重；默认先用较小 `limit`（如 3~5），需要更大覆盖时再逐步放大。
 - `market_brief` 里的 `overview / index_ranking / highlights / pools` 是**兼容补充字段**，不要把它们当成主契约。
 - 当字段为 `null`、空数组，或 `applicable=false` 时，不要脑补结论。
 

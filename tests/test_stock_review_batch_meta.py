@@ -83,3 +83,77 @@ def test_stock_review_batch_applies_filters():
 
     assert result["count"] == 1
     assert result["items"][0]["symbol"] == "300750.SZ"
+
+
+def test_stock_review_batch_keeps_input_order_for_error_collection_with_concurrency():
+    class _SingleMaybeFail:
+        def execute(self, req):
+            if req.symbol == "000001.SZ":
+                raise Exception("boom")
+            stats = {
+                "relative_strength_pct": 1.0,
+                "return_pct": 2.0,
+                "max_drawdown_pct": 1.0,
+                "volume_ratio": 1.0,
+                "up_streak": 0,
+                "down_streak": 0,
+            }
+            return {
+                "symbol": req.symbol,
+                "mode": "trade_date_review",
+                "trade_date": req.trade_date,
+                "latest_bar": type("Bar", (), {"close": 100.0})(),
+                "benchmark": {"symbol": "000001.SH", "name": "上证指数"},
+                "stats": stats,
+                "summary": f"summary for {req.symbol}",
+                "source": "akshare",
+            }
+
+    uc = StockReviewBatchUseCase()
+    original_run_single = uc._run_single
+
+    def _fake_run_single(symbol, request):
+        req = type(
+            "Req",
+            (),
+            {
+                "symbol": symbol,
+                "trade_date": request.trade_date,
+                "start_date": request.start_date,
+                "end_date": request.end_date,
+                "adjust": request.adjust,
+                "provider": request.provider,
+            },
+        )()
+        try:
+            return _SingleMaybeFail().execute(req)
+        except Exception as exc:
+            return exc
+
+    uc._run_single = _fake_run_single
+
+    req = type(
+        "Req",
+        (),
+        {
+            "symbols": ["600519.SH", "000001.SZ", "300750.SZ"],
+            "trade_date": "2026-05-01",
+            "start_date": None,
+            "end_date": None,
+            "adjust": "none",
+            "provider": "akshare",
+            "sort_by": "return",
+            "descending": True,
+            "top_n": 5,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+        },
+    )()
+
+    result = uc.execute(req)
+
+    assert result["partial_failure"] is True
+    assert result["errors"][0]["symbol"] == "000001.SZ"
+    uc._run_single = original_run_single

@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-02
+更新时间：2026-05-06
 
 ## 已完成
 
@@ -25,6 +25,7 @@
 - `stock_orderbook`
 - `sector_lookup`
 - `provider_health`
+- `sector_rotation_review`
 
 ### sector_lookup（板块列表/成员股）当前实现
 - 输入模式：`list | children | members(兼容别名)`
@@ -101,6 +102,48 @@
   - `rankings`（收益 / 相对强弱 / 量比 / 回撤风险榜）
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`）
   - 可直接阅读的 `summary` 文本
+
+### sector_rotation_review（多板块轮动复盘 / 跨板块横向比较）
+- 新增 `sector_rotation_review` tool
+- 当前路径：
+  - 对每个 `sector_name` 复用 `sector_review`
+  - 再聚合得到跨板块 `rankings / buckets / rotation / sentiment / structure`
+- 当前支持：
+  - `trade_date`：单日轮动复盘
+  - `start_date + end_date`：区间轮动复盘
+- 当前参数：
+  - `sector_names[] / sector_type / sort_by / descending / top_n / limit / member_top_n`
+  - `min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
+- 当前排序字段：
+  - `avg_relative_strength`
+  - `avg_return`
+  - `positive_ratio`
+  - `stronger_ratio`
+  - `sentiment_score`
+  - `rotation_score`
+- 当前输出包含：
+  - 顶层 `subject_type=sector_rotation`
+  - 板块层 `breadth / stats / sentiment / benchmark_summary / continuity / rotation / structure`
+  - 跨板块 `rankings`（如 `leaders_by_avg_return / leaders_by_avg_relative_strength / leaders_by_rotation_score`）
+  - 跨板块 `buckets`（如 `mainline_sectors / broad_strength_sectors / leader_driven_sectors / watchlist_sectors / risk_sectors`）
+  - `items`（每个板块一张 card）
+  - `meta.item_schema.schema=sector_rotation_item_v1`
+- 当前限制：
+  - v1 先只支持 `sector_type=primary`
+  - live 路径仍偏重，较大 `limit` 或较多板块时耗时会明显上升
+- 当前性能优化：
+  - `stock_review` 改为日线一次取数，周/月线本地聚合
+  - `stock_review_batch` 增加受控并发
+  - `sector_rotation_review` 增加受控并发
+  - 交易日历 / 历史数据 / 基准指数结果增加线程安全共享缓存
+- 已完成真实验收：
+  - `provider_health` 正常
+  - `sector_lookup(mode=list, sector_type=primary)` 正常
+  - `sector_review(1000信息, trade_date=2026-05-06, limit=3)` 正常
+  - `sector_rotation_review([1000信息,1000工业], trade_date=2026-05-06, limit=1)` 已真实返回成功
+  - `sector_rotation_review([1000信息,1000工业], trade_date=2026-05-06, limit=5)` 已真实返回成功
+  - `sector_rotation_review([1000信息,1000工业,1000医药], trade_date=2026-05-06, limit=5)` 已真实返回成功
+  - `sector_rotation_review([1000信息,1000工业,1000医药,1000公用,1000可选], trade_date=2026-05-06, limit=5)` 已真实返回成功
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool
@@ -270,8 +313,10 @@
 4. `market_pool` 少量记录可能含上游异常值，当前已通过 `extra.data_quality / anomaly_flags` 标记可疑数据
 5. `1m` 周期当前未实现；需等可靠 provider 明确后再开放
 6. 智兔多 token 已支持 `429` 自动切换，但当前只做了最小冷却策略，尚未做更细粒度的配额统计与长期调度
+7. `sector_rotation_review` 当前虽已补充受控并发与共享缓存，但 live 请求在较大板块数或较大 `limit` 下仍会明显变慢
 
 ## 仍待处理
 1. 增强 token alias / 多 token 选择策略
 2. 继续补自动化测试与发布前验收样例
 3. 如有需要，继续增强 AKShare 股票历史字段完整度
+4. 如需继续增强 `sector_rotation_review` 的实用性，优先考虑更细粒度 benchmark 复用、轻量化个股复盘路径，以及概念板块支持边界

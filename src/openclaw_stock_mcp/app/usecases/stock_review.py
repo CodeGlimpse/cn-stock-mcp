@@ -1,18 +1,44 @@
 from __future__ import annotations
 
+from datetime import date as dt_date
 from statistics import pstdev
 
+from openclaw_stock_mcp.app.models.bar import Bar
+from openclaw_stock_mcp.app.services.cache_service import CacheService
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA, REVIEW_WINDOWS
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
+from openclaw_stock_mcp.infra.config import get_settings
 from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class StockReviewUseCase:
+    TRADE_DATE_DAILY_LIMIT = 160
+    TRADE_DATE_PRIMARY_WINDOW = 20
+    TRADE_DATE_WEEKLY_LIMIT = 8
+    TRADE_DATE_MONTHLY_LIMIT = 6
+    RANGE_DAILY_LIMIT = 1000
+    RANGE_WEEKLY_LIMIT = 200
+    RANGE_MONTHLY_LIMIT = 120
+
+    _shared_calendar_cache: CacheService | None = None
+    _shared_history_cache: CacheService | None = None
+    _shared_benchmark_cache: CacheService | None = None
+
     def __init__(self) -> None:
         self.router = ProviderRouter()
         self.resolver = SymbolResolver()
+        settings = get_settings()
+        if StockReviewUseCase._shared_calendar_cache is None:
+            StockReviewUseCase._shared_calendar_cache = CacheService(maxsize=512, ttl=max(int(settings.cache_ttl_list_seconds or 60), 60))
+        if StockReviewUseCase._shared_history_cache is None:
+            StockReviewUseCase._shared_history_cache = CacheService(maxsize=4096, ttl=max(int(settings.cache_ttl_history_seconds or 300), 60))
+        if StockReviewUseCase._shared_benchmark_cache is None:
+            StockReviewUseCase._shared_benchmark_cache = CacheService(maxsize=1024, ttl=max(int(settings.cache_ttl_history_seconds or 300), 60))
+        self.calendar_cache = StockReviewUseCase._shared_calendar_cache
+        self.history_cache = StockReviewUseCase._shared_history_cache
+        self.benchmark_cache = StockReviewUseCase._shared_benchmark_cache
 
     def execute(self, request):
         resolved = self.resolver.resolve(request.symbol, "stock")
@@ -21,20 +47,29 @@ class StockReviewUseCase:
         return self._execute_trade_date_review(resolved, request)
 
     def _execute_trade_date_review(self, resolved, request):
-        calendar_provider = self.router.get_provider("akshare")
-        calendar = calendar_provider.get_trading_calendar(market="CN", date=request.trade_date, recent_limit=20)
+        calendar = self._get_trading_calendar(market="CN", date=request.trade_date, recent_limit=20)
         requested_trade_date = request.trade_date
         effective_trade_date = requested_trade_date if calendar.get("is_trading_day") else calendar.get("previous_trading_day")
         if not effective_trade_date:
             raise ProviderError("INVALID_ARGUMENT", f"No effective trading day for {requested_trade_date}", retryable=False)
 
-        daily, daily_meta = self._fetch_history(resolved.symbol, "1d", end_date=effective_trade_date, limit=20, adjust=request.adjust)
-        weekly, weekly_meta = self._fetch_history(resolved.symbol, "1w", end_date=effective_trade_date, limit=8, adjust=request.adjust)
-        monthly, monthly_meta = self._fetch_history(resolved.symbol, "1M", end_date=effective_trade_date, limit=6, adjust=request.adjust)
+        daily, daily_meta = self._fetch_history(
+            resolved.symbol,
+            "1d",
+            end_date=effective_trade_date,
+            limit=self.TRADE_DATE_DAILY_LIMIT,
+            adjust=request.adjust,
+        )
 
         latest = daily[-1] if daily else None
         if latest is None:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"No daily history returned for {resolved.symbol}", retryable=True)
+
+        primary_daily = self._tail(daily, self.TRADE_DATE_PRIMARY_WINDOW)
+        weekly = self._tail(self._aggregate_bars(daily, "1w"), self.TRADE_DATE_WEEKLY_LIMIT)
+        monthly = self._tail(self._aggregate_bars(daily, "1M"), self.TRADE_DATE_MONTHLY_LIMIT)
+        weekly_meta = self._derived_history_meta(daily_meta, "1w", "natural_week")
+        monthly_meta = self._derived_history_meta(daily_meta, "1M", "natural_month")
 
         latest_close = latest.close
         daily_change = None
@@ -46,24 +81,25 @@ class StockReviewUseCase:
         streaks = self._streaks(daily)
         stats = {
             "return_pct_5d": self._window_return(daily, 5),
-            "return_pct": self._window_return(daily, 20),
-            "high": self._max_field(daily[-20:], "high"),
-            "low": self._min_field(daily[-20:], "low"),
+            "return_pct": self._window_return(primary_daily, len(primary_daily)),
+            "high": self._max_field(primary_daily, "high"),
+            "low": self._min_field(primary_daily, "low"),
             "return_pct_4w": self._window_return(weekly, 4),
             "return_pct_3m": self._window_return(monthly, 3),
-            "volatility_pct": self._volatility(daily[-20:]),
-            "max_drawdown_pct": self._max_drawdown(daily[-20:]),
+            "volatility_pct": self._volatility(primary_daily),
+            "max_drawdown_pct": self._max_drawdown(primary_daily),
             "up_streak": streaks["up_streak"],
             "down_streak": streaks["down_streak"],
-            "volume_ratio": self._ratio_to_prev_avg(daily, "volume", 5),
-            "turnover_ratio": self._ratio_to_prev_avg(daily, "turnover", 5),
-            "distance_to_high_pct": self._distance_to_level(latest.close, self._max_field(daily[-20:], "high")),
-            "distance_to_low_pct": self._distance_to_level(latest.close, self._min_field(daily[-20:], "low")),
+            "volume_ratio": self._ratio_to_prev_avg(primary_daily, "volume", 5),
+            "turnover_ratio": self._ratio_to_prev_avg(primary_daily, "turnover", 5),
+            "distance_to_high_pct": self._distance_to_level(latest.close, self._max_field(primary_daily, "high")),
+            "distance_to_low_pct": self._distance_to_level(latest.close, self._min_field(primary_daily, "low")),
         }
 
+        benchmark_start_date = primary_daily[0].time if primary_daily else effective_trade_date
         benchmark = self._build_benchmark_context(
             resolved,
-            start_date=daily[0].time if daily else effective_trade_date,
+            start_date=benchmark_start_date,
             end_date=effective_trade_date,
             adjust=request.adjust,
             range_mode=False,
@@ -118,21 +154,30 @@ class StockReviewUseCase:
         }
 
     def _execute_range_review(self, resolved, request):
-        calendar_provider = self.router.get_provider("akshare")
-        start_calendar = calendar_provider.get_trading_calendar(market="CN", date=request.start_date, recent_limit=5)
-        end_calendar = calendar_provider.get_trading_calendar(market="CN", date=request.end_date, recent_limit=5)
+        start_calendar = self._get_trading_calendar(market="CN", date=request.start_date, recent_limit=5)
+        end_calendar = self._get_trading_calendar(market="CN", date=request.end_date, recent_limit=5)
 
         effective_start = request.start_date if start_calendar.get("is_trading_day") else start_calendar.get("next_trading_day")
         effective_end = request.end_date if end_calendar.get("is_trading_day") else end_calendar.get("previous_trading_day")
         if not effective_start or not effective_end or effective_start > effective_end:
             raise ProviderError("INVALID_ARGUMENT", "No effective trading range after calendar adjustment", retryable=False)
 
-        daily, daily_meta = self._fetch_history(resolved.symbol, "1d", start_date=effective_start, end_date=effective_end, limit=1000, adjust=request.adjust)
-        weekly, weekly_meta = self._fetch_history(resolved.symbol, "1w", start_date=effective_start, end_date=effective_end, limit=200, adjust=request.adjust)
-        monthly, monthly_meta = self._fetch_history(resolved.symbol, "1M", start_date=effective_start, end_date=effective_end, limit=120, adjust=request.adjust)
+        daily, daily_meta = self._fetch_history(
+            resolved.symbol,
+            "1d",
+            start_date=effective_start,
+            end_date=effective_end,
+            limit=self.RANGE_DAILY_LIMIT,
+            adjust=request.adjust,
+        )
 
         if not daily:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"No daily history returned for {resolved.symbol}", retryable=True)
+
+        weekly = self._tail(self._aggregate_bars(daily, "1w"), self.RANGE_WEEKLY_LIMIT)
+        monthly = self._tail(self._aggregate_bars(daily, "1M"), self.RANGE_MONTHLY_LIMIT)
+        weekly_meta = self._derived_history_meta(daily_meta, "1w", "natural_week")
+        monthly_meta = self._derived_history_meta(daily_meta, "1M", "natural_month")
 
         base = self._period_base(daily[0])
         latest = daily[-1]
@@ -213,11 +258,29 @@ class StockReviewUseCase:
             },
         }
 
+    def _cache_key(self, prefix: str, *parts) -> str:
+        return "::".join([prefix, *["" if part is None else str(part) for part in parts]])
+
+    def _get_trading_calendar(self, market: str = "CN", date: str | None = None, recent_limit: int = 5):
+        cache_key = self._cache_key("calendar", market, date, recent_limit)
+        cached = self.calendar_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        provider = self.router.get_provider("akshare")
+        result = provider.get_trading_calendar(market=market, date=date, recent_limit=recent_limit)
+        self.calendar_cache.set(cache_key, result)
+        return result
+
     def _fetch_history(self, symbol: str, interval: str, start_date=None, end_date=None, limit=None, adjust="none"):
+        cache_key = self._cache_key("stock_history", symbol, interval, start_date, end_date, limit, adjust)
+        cached = self.history_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         selection = self.router.choose_provider(
             tool_name="stock_history",
             symbol=symbol,
-            sec_type="stock" if interval in {"1d", "1w", "1M"} else "stock",
+            sec_type="stock",
             preferred="akshare",
         )
         items, fallback_meta = run_with_fallback_meta(
@@ -233,16 +296,26 @@ class StockReviewUseCase:
                 adjust=adjust,
             ),
         )
-        return items, {
-            "selected_primary": fallback_meta.selected_primary,
-            "selected_fallback": fallback_meta.selected_fallback,
-            "attempted": fallback_meta.attempted,
-            "final_provider": fallback_meta.final_provider or selection.primary,
-            "used_fallback": fallback_meta.used_fallback,
-            "interval": interval,
-        }
+        result = (
+            items,
+            {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider or selection.primary,
+                "used_fallback": fallback_meta.used_fallback,
+                "interval": interval,
+            },
+        )
+        self.history_cache.set(cache_key, result)
+        return result
 
     def _fetch_index_history(self, symbol: str, start_date: str, end_date: str):
+        cache_key = self._cache_key("index_history", symbol, start_date, end_date)
+        cached = self.history_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         selection = self.router.choose_provider(
             tool_name="stock_history",
             symbol=symbol,
@@ -262,14 +335,99 @@ class StockReviewUseCase:
                 adjust="none",
             ),
         )
-        return items, {
-            "selected_primary": fallback_meta.selected_primary,
-            "selected_fallback": fallback_meta.selected_fallback,
-            "attempted": fallback_meta.attempted,
-            "final_provider": fallback_meta.final_provider or selection.primary,
-            "used_fallback": fallback_meta.used_fallback,
-            "interval": "1d",
-        }
+        result = (
+            items,
+            {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider or selection.primary,
+                "used_fallback": fallback_meta.used_fallback,
+                "interval": "1d",
+            },
+        )
+        self.history_cache.set(cache_key, result)
+        return result
+
+    def _derived_history_meta(self, base_meta: dict, interval: str, aggregation: str) -> dict:
+        meta = dict(base_meta)
+        meta.update(
+            {
+                "interval": interval,
+                "derived_from": "1d",
+                "aggregation": aggregation,
+                "limit_applied_after_aggregation": True,
+            }
+        )
+        return meta
+
+    def _tail(self, items, limit: int | None):
+        if not limit or len(items) <= limit:
+            return items
+        return items[-limit:]
+
+    def _sum_or_none(self, values: list[float | None]) -> float | None:
+        valid = [v for v in values if v is not None]
+        return float(sum(valid)) if valid else None
+
+    def _max_or_none(self, values: list[float | None]) -> float | None:
+        valid = [v for v in values if v is not None]
+        return max(valid) if valid else None
+
+    def _min_or_none(self, values: list[float | None]) -> float | None:
+        valid = [v for v in values if v is not None]
+        return min(valid) if valid else None
+
+    def _fill_prev_close(self, bars: list[Bar]) -> list[Bar]:
+        prev_close = None
+        for bar in bars:
+            if bar.prev_close is None:
+                bar.prev_close = prev_close
+            prev_close = bar.close if bar.close is not None else prev_close
+        return bars
+
+    def _aggregate_bars(self, bars: list[Bar], interval: str) -> list[Bar]:
+        if interval not in {"1w", "1M"}:
+            raise ProviderError("UNSUPPORTED_INTERVAL", f"Unsupported aggregation interval: {interval}", retryable=False)
+        if not bars:
+            return []
+
+        groups: list[list[Bar]] = []
+        current_group: list[Bar] = []
+        current_key = None
+
+        for bar in bars:
+            d = dt_date.fromisoformat(str(bar.time)[:10])
+            key = (d.isocalendar().year, d.isocalendar().week) if interval == "1w" else (d.year, d.month)
+            if current_key is None or key == current_key:
+                current_group.append(bar)
+                current_key = key
+                continue
+            groups.append(current_group)
+            current_group = [bar]
+            current_key = key
+
+        if current_group:
+            groups.append(current_group)
+
+        aggregated: list[Bar] = []
+        for group in groups:
+            first = group[0]
+            last = group[-1]
+            aggregated.append(
+                Bar(
+                    time=last.time,
+                    open=first.open,
+                    high=self._max_or_none([b.high for b in group]),
+                    low=self._min_or_none([b.low for b in group]),
+                    close=last.close,
+                    volume=self._sum_or_none([b.volume for b in group]),
+                    turnover=self._sum_or_none([b.turnover for b in group]),
+                    prev_close=first.prev_close,
+                )
+            )
+
+        return self._fill_prev_close(aggregated)
 
     def _period_base(self, bar):
         return bar.prev_close if bar.prev_close is not None else (bar.open if bar.open is not None else bar.close)
@@ -356,10 +514,15 @@ class StockReviewUseCase:
 
     def _build_benchmark_context(self, resolved, start_date: str, end_date: str, adjust: str, range_mode: bool):
         benchmark_ref = self._benchmark_for(resolved)
+        cache_key = self._cache_key("benchmark", benchmark_ref["symbol"], start_date, end_date, range_mode)
+        cached = self.benchmark_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         try:
             bars, meta = self._fetch_index_history(benchmark_ref["symbol"], start_date=start_date, end_date=end_date)
             bench_return = self._window_return(bars, len(bars))
-            return {
+            result = {
                 "symbol": benchmark_ref["symbol"],
                 "name": benchmark_ref["name"],
                 "return_pct": bench_return,
@@ -369,7 +532,7 @@ class StockReviewUseCase:
                 "range_mode": range_mode,
             }
         except Exception as exc:
-            return {
+            result = {
                 "symbol": benchmark_ref["symbol"],
                 "name": benchmark_ref["name"],
                 "return_pct": None,
@@ -378,6 +541,8 @@ class StockReviewUseCase:
                 "meta": {"error": str(exc)},
                 "range_mode": range_mode,
             }
+        self.benchmark_cache.set(cache_key, result)
+        return result
 
     def _relative_strength(self, stock_return, benchmark_return):
         if stock_return is None or benchmark_return is None:

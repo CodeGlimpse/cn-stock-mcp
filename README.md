@@ -34,6 +34,7 @@
 - `trading_calendar()` 交易日历 / 复盘日期辅助可用
 - `stock_review()` 个股复盘摘要可用
 - `stock_review_batch()` 批量复盘排序可用
+- `sector_rotation_review()` 多板块横向轮动复盘可用（当前建议 primary 板块；live 验收已通过最小规模样例）
 
 ## 快速开始
 
@@ -304,6 +305,31 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates` 等分层）
 - `rotation.score` 通过 `meta.rotation_score_schema` 单独声明，不与 `sentiment.score` 混用
 
+### sector_rotation_review 板块轮动复盘样例
+
+```bash
+# 单日板块轮动复盘：横向比较多个一级板块
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_rotation_review --payload '{"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":1,"member_top_n":1,"limit":1}'
+
+# 区间板块轮动复盘：适合看一段时间的强弱切换与主线集中度
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_rotation_review --payload '{"sector_names":["1000信息","1000工业","1000医药"],"sector_type":"primary","start_date":"2026-04-01","end_date":"2026-04-30","top_n":2,"member_top_n":2,"limit":3}'
+```
+
+说明：
+- 当前 v1 定位为 **多个一级板块(primary) 的横向比较**，不替代单板块 `sector_review`
+- 内部路径：对每个板块复用 `sector_review`，再聚合得到跨板块 `rankings / buckets / rotation / sentiment / structure`
+- 顶层 `subject_type=sector_rotation`，并在 `meta.item_schema` 暴露 `sector_rotation_item_v1`
+- `items` 中每一项都是一张 **板块卡片**，而不是个股卡片
+- 建议排序字段：
+  - `avg_relative_strength`（默认）
+  - `avg_return`
+  - `positive_ratio`
+  - `stronger_ratio`
+  - `sentiment_score`
+  - `rotation_score`
+- `member_top_n` 控制每个板块返回多少个 `leaders / laggards` 摘要
+- 当前 live 路径仍相对较重，但已补充受控并发与共享缓存优化；验收已通过 `2 个 primary 板块 + limit=5`、`3 个 primary 板块 + limit=5`、`5 个 primary 板块 + limit=5` 的真实样例，较大 `limit` 仍建议按需逐步放大
+
 ### sector_lookup 本地调用样例（板块列表 / 成员股）
 
 ### 运行 smoke test
@@ -351,6 +377,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 4. `stock_history {"symbol":"600519","sec_type":"stock","interval":"1d","limit":5}`
 5. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
 6. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
+7. `sector_rotation_review {"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":2,"member_top_n":2,"limit":5}`
 
 ## OpenClaw news agent integration
 
@@ -453,6 +480,10 @@ openclaw skills info newsbot-stock-routing
 4. `market_brief`
    - 检查 `meta.review_envelope_schema.schema=review_envelope_v1`
    - 检查 `leaders / laggards / buckets` 正常生成
+5. `sector_rotation_review` 单日轮动复盘
+   - 检查 `subject_type=sector_rotation`
+   - 检查 `meta.item_schema.schema=sector_rotation_item_v1`
+   - 检查 `rotation.label_zh / rankings / buckets` 正常生成
 
 ### 6. 维护规则
 
@@ -460,6 +491,7 @@ openclaw skills info newsbot-stock-routing
 
 - `market_brief`
 - `sector_review`
+- `sector_rotation_review`
 - `review_envelope_v1`
 - `sentiment_temperature_v1`
 - `rotation_signal_v1`
