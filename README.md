@@ -162,6 +162,9 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{
 # 默认路由（stock-main）：zhitu 主，akshare 备
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["600519.SH"],"sec_type":"stock"}'
 
+# 批量行情（沪深主板自动走 /hs/public/ssjymore 批量接口，最多 20 支）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["600519.SH","000001.SZ","601318.SH"],"sec_type":"stock"}'
+
 # 显式指定 provider_preference（先 akshare，再 zhitu）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["600519.SH"],"sec_type":"stock","provider_preference":["akshare","zhitu"]}'
 ```

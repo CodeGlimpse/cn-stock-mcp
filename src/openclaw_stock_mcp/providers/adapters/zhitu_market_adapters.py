@@ -44,6 +44,44 @@ def adapt_zhitu_quote(raw: dict, symbol: str, sec_type: str, exchange: str | Non
     )
 
 
+def adapt_zhitu_batch_quote(raw: dict, code: str, exchange: str) -> Quote:
+    """Adapt a single item from /hs/public/ssjymore batch response.
+
+    Batch response fields differ slightly from single-quote endpoint:
+    - Uses 'dm' for code, 'mc' for name
+    - No 'yc' (prev_close), no 'ud' (change), no 't' (timestamp)
+    - Has 'fm' (5-min change %), 'lb' (volume ratio)
+    """
+    symbol = f"{code}.{exchange}"
+    return Quote(
+        symbol=symbol,
+        name=raw.get("mc"),
+        market="CN",
+        exchange=exchange,
+        board=detect_board(symbol, "stock"),
+        sec_type="stock",
+        price=_to_float(raw.get("p")),
+        open=_to_float(raw.get("o")),
+        high=_to_float(raw.get("h")),
+        low=_to_float(raw.get("l")),
+        prev_close=None,  # batch endpoint does not provide yc
+        change=None,  # batch endpoint does not provide ud
+        change_percent=_to_float(raw.get("pc")),
+        amplitude=_to_float(raw.get("zf")),
+        volume=_to_float(raw.get("v")),
+        turnover=_to_float(raw.get("cje")),
+        turnover_rate=_to_float(raw.get("hs")),
+        pe=_to_float(raw.get("pe")),
+        pb=_to_float(raw.get("sjl")),
+        market_cap=_to_float(raw.get("sz")),
+        float_market_cap=_to_float(raw.get("lt")),
+        currency="CNY",
+        trading_status=None,
+        timestamp=None,  # batch endpoint does not provide timestamp
+        source="zhitu",
+    )
+
+
 def adapt_zhitu_orderbook(raw: dict, symbol: str) -> OrderBook:
     bids: list[OrderBookLevel] = []
     asks: list[OrderBookLevel] = []

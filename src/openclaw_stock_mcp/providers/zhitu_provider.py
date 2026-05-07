@@ -15,7 +15,7 @@ from openclaw_stock_mcp.providers.adapters.zhitu_instrument_adapters import (
     adapt_zhitu_sector_member_item,
     adapt_zhitu_stock_list_item,
 )
-from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_orderbook, adapt_zhitu_quote
+from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_batch_quote, adapt_zhitu_orderbook, adapt_zhitu_quote
 from openclaw_stock_mcp.providers.adapters.zhitu_series_adapters import (
     adapt_zhitu_bar,
     adapt_zhitu_broken_limit_item,
@@ -337,7 +337,60 @@ class ZhituProvider:
         raise ProviderError("UNSUPPORTED_MARKET", f"Zhitu quote route not implemented for {symbol}/{sec_type}", retryable=False)
 
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
-        return [self.get_quote(symbol, sec_type or "stock") for symbol in symbols]
+        resolved_sec_type = sec_type or "stock"
+        if resolved_sec_type != "stock":
+            return [self.get_quote(symbol, resolved_sec_type) for symbol in symbols]
+
+        main_board_items = []
+        other_symbols = []
+        for sym in symbols:
+            normalized = normalize_symbol(sym)
+            code = normalized.split(".", 1)[0]
+            exchange = normalized.split(".", 1)[1] if "." in normalized else None
+            is_main_board = exchange in {"SH", "SZ"} and not code.startswith("688") and not normalized.endswith(".BJ")
+            if is_main_board:
+                main_board_items.append((sym, code, exchange))
+            else:
+                other_symbols.append(sym)
+
+        results: dict[str, Quote] = {}
+
+        if main_board_items:
+            batch_groups = [main_board_items[i : i + 20] for i in range(0, len(main_board_items), 20)]
+            for batch in batch_groups:
+                codes = [code for _, code, _ in batch]
+                code_to_orig = {code: orig for orig, code, _ in batch}
+                exchange_map = {code: ex for _, code, ex in batch}
+                try:
+                    raw_list = self._get_json("/hs/public/ssjymore", params={"stock_codes": ",".join(codes)})
+                    for raw in raw_list:
+                        dm = raw.get("dm", "")
+                        code = dm.lstrip("sh").lstrip("sz")
+                        exchange = exchange_map.get(code, "SH" if dm.startswith("sh") else "SZ")
+                        quote = adapt_zhitu_batch_quote(raw, code, exchange)
+                        orig_sym = code_to_orig.get(code, quote.symbol)
+                        results[orig_sym] = quote
+                        self._cache_instrument_name("stock", quote.symbol, quote.name)
+                except ProviderError:
+                    for orig_sym, code, exchange in batch:
+                        try:
+                            quote = self.get_quote(orig_sym, "stock")
+                            results[orig_sym] = quote
+                        except ProviderError:
+                            pass
+
+        for sym in other_symbols:
+            try:
+                quote = self.get_quote(sym, "stock")
+                results[sym] = quote
+            except ProviderError:
+                pass
+
+        ordered: list[Quote] = []
+        for sym in symbols:
+            if sym in results:
+                ordered.append(results[sym])
+        return ordered
 
     def _map_zhitu_interval(self, interval: str) -> str:
         interval_map = {"5m": "5", "15m": "15", "30m": "30", "60m": "60", "1d": "d", "1w": "w", "1M": "m", "1y": "y"}

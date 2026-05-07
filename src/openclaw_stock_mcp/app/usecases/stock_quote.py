@@ -32,67 +32,146 @@ class StockQuoteUseCase:
                 retryable=False,
             )
 
+    def _can_use_batch(self, symbols: list[str], sec_type: str | None, selection: ProviderSelection) -> bool:
+        if selection.primary != "zhitu":
+            return False
+        if sec_type and sec_type != "stock":
+            return False
+        if len(symbols) < 2:
+            return False
+        for sym in symbols:
+            resolved = self.resolver.resolve(sym, sec_type or "stock")
+            normalized = resolved.symbol.upper()
+            code = normalized.split(".", 1)[0]
+            exchange = normalized.split(".", 1)[1] if "." in normalized else None
+            if resolved.sec_type != "stock":
+                return False
+            if normalized.endswith(".BJ"):
+                return False
+            if code.startswith("688"):
+                return False
+            if exchange not in {"SH", "SZ"}:
+                return False
+        return True
+
     def execute(self, request):
         items = []
         errors = []
         meta_items = []
         forced_selection = self._selection_from_preference(getattr(request, "provider_preference", None))
 
+        resolved_symbols = []
         for raw_symbol in request.symbols:
             try:
                 self._validate_symbol_sec_type(raw_symbol, request.sec_type)
                 resolved = self.resolver.resolve(raw_symbol, request.sec_type)
-                selection = forced_selection or self.router.choose_provider(
+                resolved_symbols.append((raw_symbol, resolved))
+            except Exception as exc:
+                errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
+                meta_items.append(
+                    {
+                        "symbol": raw_symbol,
+                        "resolved_symbol": None,
+                        "sec_type": request.sec_type,
+                        "selected_primary": None,
+                        "selected_fallback": None,
+                        "attempted": [],
+                        "final_provider": None,
+                        "used_fallback": False,
+                    }
+                )
+
+        if not resolved_symbols:
+            return {
+                "items": items,
+                "partial_failure": len(errors) > 0,
+                "errors": errors,
+                "meta": {"per_symbol": meta_items},
+            }
+
+        first_resolved = resolved_symbols[0][1]
+        selection = forced_selection or self.router.choose_provider(
+            tool_name="stock_quote",
+            symbol=first_resolved.symbol,
+            sec_type=first_resolved.sec_type,
+            preferred=getattr(request, "provider", None),
+        )
+
+        if self._can_use_batch([sym for sym, _ in resolved_symbols], request.sec_type, selection):
+            try:
+                provider = self.router.get_provider(selection.primary)
+                quotes = provider.get_quotes([sym for sym, _ in resolved_symbols], request.sec_type)
+                for (raw_symbol, resolved), quote in zip(resolved_symbols, quotes):
+                    items.append(quote)
+                    meta_items.append(
+                        {
+                            "symbol": raw_symbol,
+                            "resolved_symbol": resolved.symbol,
+                            "sec_type": resolved.sec_type,
+                            "selected_primary": selection.primary,
+                            "selected_fallback": selection.fallback,
+                            "attempted": [selection.primary],
+                            "final_provider": selection.primary,
+                            "used_fallback": False,
+                        }
+                    )
+            except Exception as exc:
+                for raw_symbol, resolved in resolved_symbols:
+                    errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
+                    meta_items.append(
+                        {
+                            "symbol": raw_symbol,
+                            "resolved_symbol": resolved.symbol,
+                            "sec_type": resolved.sec_type,
+                            "selected_primary": selection.primary,
+                            "selected_fallback": selection.fallback,
+                            "attempted": [selection.primary],
+                            "final_provider": None,
+                            "used_fallback": False,
+                        }
+                    )
+        else:
+            for raw_symbol, resolved in resolved_symbols:
+                sym_selection = forced_selection or self.router.choose_provider(
                     tool_name="stock_quote",
                     symbol=resolved.symbol,
                     sec_type=resolved.sec_type,
                     preferred=getattr(request, "provider", None),
                 )
-                quote, fallback_meta = run_with_fallback_meta(
-                    self.router,
-                    selection,
-                    lambda provider: provider.get_quote(resolved.symbol, resolved.sec_type),
-                )
-                items.append(quote)
-                meta_items.append(
-                    {
-                        "symbol": raw_symbol,
-                        "resolved_symbol": resolved.symbol,
-                        "sec_type": resolved.sec_type,
-                        "selected_primary": fallback_meta.selected_primary,
-                        "selected_fallback": fallback_meta.selected_fallback,
-                        "attempted": fallback_meta.attempted,
-                        "final_provider": fallback_meta.final_provider,
-                        "used_fallback": fallback_meta.used_fallback,
-                    }
-                )
-            except Exception as exc:
                 try:
-                    resolved = self.resolver.resolve(raw_symbol, request.sec_type)
-                    resolved_symbol = resolved.symbol
-                    resolved_sec_type = resolved.sec_type
-                except Exception:
-                    resolved_symbol = raw_symbol
-                    resolved_sec_type = request.sec_type
-                selection = forced_selection or self.router.choose_provider(
-                    tool_name="stock_quote",
-                    symbol=resolved_symbol,
-                    sec_type=resolved_sec_type,
-                    preferred=getattr(request, "provider", None),
-                )
-                errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
-                meta_items.append(
-                    {
-                        "symbol": raw_symbol,
-                        "resolved_symbol": resolved_symbol,
-                        "sec_type": resolved_sec_type,
-                        "selected_primary": selection.primary,
-                        "selected_fallback": selection.fallback,
-                        "attempted": [selection.primary, *selection.fallback],
-                        "final_provider": None,
-                        "used_fallback": False,
-                    }
-                )
+                    quote, fallback_meta = run_with_fallback_meta(
+                        self.router,
+                        sym_selection,
+                        lambda provider: provider.get_quote(resolved.symbol, resolved.sec_type),
+                    )
+                    items.append(quote)
+                    meta_items.append(
+                        {
+                            "symbol": raw_symbol,
+                            "resolved_symbol": resolved.symbol,
+                            "sec_type": resolved.sec_type,
+                            "selected_primary": fallback_meta.selected_primary,
+                            "selected_fallback": fallback_meta.selected_fallback,
+                            "attempted": fallback_meta.attempted,
+                            "final_provider": fallback_meta.final_provider,
+                            "used_fallback": fallback_meta.used_fallback,
+                        }
+                    )
+                except Exception as exc:
+                    errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
+                    meta_items.append(
+                        {
+                            "symbol": raw_symbol,
+                            "resolved_symbol": resolved.symbol,
+                            "sec_type": resolved.sec_type,
+                            "selected_primary": sym_selection.primary,
+                            "selected_fallback": sym_selection.fallback,
+                            "attempted": [sym_selection.primary, *sym_selection.fallback],
+                            "final_provider": None,
+                            "used_fallback": False,
+                        }
+                    )
+
         return {
             "items": items,
             "partial_failure": len(errors) > 0,

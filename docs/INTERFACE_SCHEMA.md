@@ -119,7 +119,7 @@ Last Updated: 2026-05-07
   - fund：`zhitu`
 - market_pool / stock_orderbook：`zhitu`
 - stock_quote：
-  - stock-main：`zhitu` 主，`akshare` 备
+  - stock-main：`zhitu` 主，`akshare` 备（批量请求使用 `/hs/public/ssjymore`，最多 20 支）
   - index/fund：`zhitu` 主，`akshare` 备
   - stock-bj/star：`zhitu`
 - hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`

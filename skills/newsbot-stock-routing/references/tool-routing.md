@@ -66,7 +66,7 @@
 
 ## 3. 默认 provider 路由
 
-- `stock_quote(stock-main)`：`zhitu` 主，`akshare` 备
+- `stock_quote(stock-main)`：`zhitu` 主，`akshare` 备；**批量请求自动走 `/hs/public/ssjymore`（最多 20 支）**
 - `stock_quote(index/fund)`：`zhitu` 主，`akshare` 备
 - `stock_quote(stock-bj/star)`：`zhitu` 主
 - `stock_search`：`akshare` 主，`zhitu` 备
