@@ -81,6 +81,10 @@
 - `hot_theme_tracker`：复用 `sector_rotation_review + market_pool` 做主线聚合
 - `market_overview` / `market_pool` / `stock_orderbook` / `sector_lookup`：`zhitu`
 
+补充：
+- `stock_orderbook(stock-main)`：当前走沪深主板五档接口 `/hs/real/five/{code}`
+- `stock_orderbook(stock-bj/star)`：继续走 `bj/tech` 的 `mmwp` 路径
+
 如用户明确要求优先顺序，再传：
 - `provider_preference: ["akshare", "zhitu"]`
 - `provider_preference: ["zhitu", "akshare"]`

@@ -124,6 +124,11 @@ Last Updated: 2026-05-07
   - stock-bj/star：`zhitu`
 - hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`
 
+> `stock_orderbook` 当前已支持：
+> - 沪深主板：`/hs/real/five/{code}`
+> - 科创板：`/tech/real/mmwp/{code}`
+> - 北交所：`/bj/stock/real/mmwp/{code}`
+
 > 实际回退行为由实现与实时可用性决定。
 
 ---

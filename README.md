@@ -37,6 +37,7 @@
 - `market_pool(limit_up)`
 - `market_pool(sub_new)`
 - `market_pool(broken_limit)`
+- `stock_orderbook(main)`
 - `stock_orderbook(star)`
 
 ### AKShare

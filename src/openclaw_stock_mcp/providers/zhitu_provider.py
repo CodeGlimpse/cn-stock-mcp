@@ -403,11 +403,14 @@ class ZhituProvider:
     def get_orderbook(self, symbol: str, sec_type: str):
         normalized = normalize_symbol(symbol)
         code = normalized.split(".", 1)[0]
+        exchange = normalized.split(".", 1)[1] if "." in normalized else None
 
         if normalized.endswith(".BJ"):
             raw = self._get_json(f"/bj/stock/real/mmwp/{code}")
         elif code.startswith("688"):
             raw = self._get_json(f"/tech/real/mmwp/{code}")
+        elif sec_type == "stock" and exchange in {"SH", "SZ"}:
+            raw = self._get_json(f"/hs/real/five/{code}")
         else:
             raise ProviderError("UNSUPPORTED_MARKET", f"Zhitu orderbook route not implemented for {symbol}", retryable=False)
 
