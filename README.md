@@ -30,7 +30,9 @@
 - `stock_quote(star)`
 - `stock_quote(BJ index)`
 - `stock_history(index)`
+- `stock_history(stock)`（支持分钟级；日线以上支持复权）
 - `technical_indicator(index)`
+- `technical_indicator(stock)`
 - `market_overview()`
 - `market_pool(limit_up)`
 - `market_pool(sub_new)`
@@ -190,6 +192,24 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload 
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"000001.SH","sec_type":"index","interval":"m","limit":24}'
 ```
 
+### stock_history(stock) 分钟级 / 复权样例
+
+```bash
+# 股票 5 分钟（分钟级自动按不复权请求）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"600519.SH","sec_type":"stock","interval":"5","start_date":"2026-05-07","end_date":"2026-05-07","limit":20,"adjust":"qfq"}'
+
+# 股票日线前复权
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"600519.SH","sec_type":"stock","interval":"d","start_date":"2026-04-01","end_date":"2026-05-07","limit":30,"adjust":"qfq"}'
+
+# 股票周线后复权
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_history --payload '{"symbol":"600519.SH","sec_type":"stock","interval":"w","start_date":"2026-01-01","end_date":"2026-05-07","limit":20,"adjust":"hfq"}'
+```
+
+说明：
+- `stock_history(stock)` 当前默认优先走 **Zhitu**，`akshare` 作为 fallback。
+- 分钟级（`5/15/30/60`）在 Zhitu 上**仅支持不复权**；即使传入 `qfq/hfq`，底层也会自动按 `n` 请求。
+- 日线及以上支持：`none / qfq / hfq`，并映射到 Zhitu 的 `n / f / b`。
+
 ### technical_indicator 多指标 / 多周期调用样例
 
 ```bash
@@ -205,6 +225,21 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --pa
 # KDJ + 月线（m）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"000001.SH","sec_type":"index","indicator":"kdj","interval":"m","limit":24}'
 ```
+
+### technical_indicator(stock) 股票指标样例
+
+```bash
+# 股票日线 MACD
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"600519.SH","sec_type":"stock","indicator":"macd","interval":"d","start_date":"2026-04-01","end_date":"2026-05-07","limit":30}'
+
+# 股票 5 分钟 MA（分钟级仅请求不复权数据）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool technical_indicator --payload '{"symbol":"600519.SH","sec_type":"stock","indicator":"ma","interval":"15","start_date":"2026-05-07","end_date":"2026-05-07","limit":20}'
+```
+
+说明：
+- `technical_indicator(stock)` 当前优先走 **Zhitu**，`akshare` 作为 fallback。
+- 股票指标当前支持 `macd / ma / boll / kdj`，对应 Zhitu 股票技术指标路径。
+- 分钟级指标当前仅请求 **不复权** 数据。
 
 ### market_pool 类型扩充调用样例
 

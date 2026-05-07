@@ -70,8 +70,9 @@
 - `stock_quote(index/fund)`：`zhitu` 主，`akshare` 备
 - `stock_quote(stock-bj/star)`：`zhitu` 主
 - `stock_search`：`akshare` 主，`zhitu` 备
-- `stock_history(stock)`：`akshare`
+- `stock_history(stock)`：`zhitu` 主，`akshare` 备
 - `stock_history(index)`：`zhitu` 主，`akshare` 备
+- `technical_indicator(stock/index)`：`zhitu` 主，`akshare` 备
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
 - `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`

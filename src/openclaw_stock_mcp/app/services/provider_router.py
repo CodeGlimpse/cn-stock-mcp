@@ -33,9 +33,20 @@ class ProviderRouter:
         if tool_name == "stock_history":
             if sec_type == "index":
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])
+            if sec_type == "stock":
+                if normalized.endswith(".BJ") or normalized.startswith(("430", "83", "87", "92")):
+                    return ProviderSelection(primary="zhitu", fallback=["akshare"])
+                if normalized.startswith("688") or normalized.startswith("688."):
+                    return ProviderSelection(primary="zhitu", fallback=["akshare"])
+                return ProviderSelection(primary="zhitu", fallback=["akshare"])
             return ProviderSelection(primary="akshare", fallback=[])
 
-        if tool_name in {"technical_indicator", "market_pool", "stock_orderbook"}:
+        if tool_name == "technical_indicator":
+            if sec_type == "stock" or sec_type == "index":
+                return ProviderSelection(primary="zhitu", fallback=["akshare"])
+            return ProviderSelection(primary="zhitu", fallback=[])
+
+        if tool_name in {"market_pool", "stock_orderbook"}:
             return ProviderSelection(primary="zhitu", fallback=[])
 
         if tool_name == "stock_quote":

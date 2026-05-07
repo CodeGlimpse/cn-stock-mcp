@@ -22,6 +22,20 @@ def test_stock_history_index_route_prefers_zhitu():
     assert sel.fallback == ["akshare"]
 
 
+def test_stock_history_stock_route_now_prefers_zhitu():
+    router = ProviderRouter()
+    sel = router.choose_provider(tool_name="stock_history", symbol="600519.SH", sec_type="stock")
+    assert sel.primary == "zhitu"
+    assert sel.fallback == ["akshare"]
+
+
+def test_technical_indicator_stock_route_allows_fallback():
+    router = ProviderRouter()
+    sel = router.choose_provider(tool_name="technical_indicator", symbol="600519.SH", sec_type="stock")
+    assert sel.primary == "zhitu"
+    assert sel.fallback == ["akshare"]
+
+
 def test_hot_theme_tracker_defaults_to_akshare_primary_by_generic_rule():
     router = ProviderRouter()
     sel = router.choose_provider(tool_name="hot_theme_tracker")

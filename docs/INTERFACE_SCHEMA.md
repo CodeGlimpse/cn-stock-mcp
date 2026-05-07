@@ -111,9 +111,13 @@ Last Updated: 2026-05-07
 - market_overview：`mixed`
 - sector_lookup：`zhitu`
 - stock_history：
-  - stock：`akshare`
+  - stock：`zhitu` 主，`akshare` 备
   - index：`zhitu` 主，`akshare` 备
-- technical_indicator / market_pool / stock_orderbook：`zhitu`
+- technical_indicator：
+  - stock：`zhitu` 主，`akshare` 备
+  - index：`zhitu` 主，`akshare` 备
+  - fund：`zhitu`
+- market_pool / stock_orderbook：`zhitu`
 - stock_quote：
   - stock-main：`zhitu` 主，`akshare` 备
   - index/fund：`zhitu` 主，`akshare` 备

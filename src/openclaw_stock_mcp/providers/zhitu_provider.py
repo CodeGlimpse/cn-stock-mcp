@@ -339,26 +339,64 @@ class ZhituProvider:
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
         return [self.get_quote(symbol, sec_type or "stock") for symbol in symbols]
 
-    def get_history(self, symbol: str, sec_type: str, interval: str, start=None, end=None, limit=None, adjust=None):
-        normalized = normalize_symbol(symbol)
-        if sec_type != "index":
-            raise ProviderError("UNSUPPORTED_SEC_TYPE", "Zhitu history currently supports index route only", retryable=False)
-
+    def _map_zhitu_interval(self, interval: str) -> str:
         interval_map = {"5m": "5", "15m": "15", "30m": "30", "60m": "60", "1d": "d", "1w": "w", "1M": "m", "1y": "y"}
         mapped = interval_map.get(interval)
         if not mapped:
             raise ProviderError("UNSUPPORTED_INTERVAL", f"Unsupported interval: {interval}", retryable=False)
+        return mapped
 
+    def _map_zhitu_adjust(self, interval: str, adjust: str | None) -> str:
+        raw = (adjust or "none").strip().lower()
+        alias = {
+            "none": "n",
+            "n": "n",
+            "qfq": "f",
+            "f": "f",
+            "hfq": "b",
+            "b": "b",
+            "fr": "fr",
+            "br": "br",
+        }
+        mapped = alias.get(raw)
+        if not mapped:
+            raise ProviderError("INVALID_ARGUMENT", f"Unsupported adjust: {adjust}", retryable=False)
+        if interval in {"5m", "15m", "30m", "60m"}:
+            return "n"
+        return mapped
+
+    def _build_zhitu_history_params(self, start=None, end=None, limit=None) -> dict:
         params = {}
         if start:
-            params["st"] = start.replace("-", "")
+            params["st"] = str(start).replace("-", "")
         if end:
-            params["et"] = end.replace("-", "")
+            params["et"] = str(end).replace("-", "")
+        if limit:
+            params["lt"] = limit
+        return params
 
-        raw = self._get_json(f"/hz/history/fsjy/{normalized}/{mapped}", params=params)
+    def get_history(self, symbol: str, sec_type: str, interval: str, start=None, end=None, limit=None, adjust=None):
+        normalized = normalize_symbol(symbol)
+        mapped = self._map_zhitu_interval(interval)
+
+        if sec_type == "index":
+            params = self._build_zhitu_history_params(start=start, end=end, limit=limit)
+            raw = self._get_json(f"/hz/history/fsjy/{normalized}/{mapped}", params=params)
+            if isinstance(raw, dict) and raw.get("error"):
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu history unavailable for {symbol}: {raw.get('error')}", retryable=True)
+            if limit and isinstance(raw, list):
+                raw = raw[-limit:]
+            return [adapt_zhitu_bar(item) for item in raw]
+
+        if sec_type != "stock":
+            raise ProviderError("UNSUPPORTED_SEC_TYPE", "Zhitu history currently supports stock and index routes only", retryable=False)
+
+        adjust_code = self._map_zhitu_adjust(interval, adjust)
+        params = self._build_zhitu_history_params(start=start, end=end, limit=limit)
+        raw = self._get_json(f"/hs/history/{normalized}/{mapped}/{adjust_code}", params=params)
         if isinstance(raw, dict) and raw.get("error"):
             raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu history unavailable for {symbol}: {raw.get('error')}", retryable=True)
-        if limit:
+        if limit and isinstance(raw, list):
             raw = raw[-limit:]
         return [adapt_zhitu_bar(item) for item in raw]
 
@@ -379,20 +417,22 @@ class ZhituProvider:
 
     def get_indicator(self, symbol: str, sec_type: str, interval: str, indicator: str, start=None, end=None, limit=None):
         normalized = normalize_symbol(symbol)
-        interval_map = {"5m": "5", "15m": "15", "30m": "30", "60m": "60", "1d": "d", "1w": "w", "1M": "m", "1y": "y"}
-        mapped = interval_map.get(interval)
-        if not mapped:
-            raise ProviderError("UNSUPPORTED_INTERVAL", f"Unsupported interval: {interval}", retryable=False)
+        mapped = self._map_zhitu_interval(interval)
+        params = self._build_zhitu_history_params(start=start, end=end, limit=limit)
 
-        params = {}
-        if start:
-            params["st"] = start.replace("-", "")
-        if end:
-            params["et"] = end.replace("-", "")
-        if limit:
-            params["lt"] = limit
+        if sec_type == "index":
+            raw = self._get_json(f"/hz/history/{indicator}/{normalized}/{mapped}", params=params)
+            if isinstance(raw, dict) and raw.get("error"):
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu indicator unavailable for {symbol}: {raw.get('error')}", retryable=True)
+            return adapt_zhitu_indicator_series(normalized, sec_type, interval, indicator, raw)
 
-        raw = self._get_json(f"/hz/history/{indicator}/{normalized}/{mapped}", params=params)
+        if sec_type != "stock":
+            raise ProviderError("UNSUPPORTED_SEC_TYPE", "Zhitu indicator currently supports stock and index routes only", retryable=False)
+
+        adjust_code = self._map_zhitu_adjust(interval, "none")
+        raw = self._get_json(f"/hs/history/{indicator}/{normalized}/{mapped}/{adjust_code}", params=params)
+        if isinstance(raw, dict) and raw.get("error"):
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu indicator unavailable for {symbol}: {raw.get('error')}", retryable=True)
         return adapt_zhitu_indicator_series(normalized, sec_type, interval, indicator, raw)
 
     def get_market_overview(self, market: str = "CN"):
