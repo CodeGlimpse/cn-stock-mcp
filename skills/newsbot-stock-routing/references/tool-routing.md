@@ -12,7 +12,7 @@
 - 股票池批量对比 → `stock_review_batch`
 - 候选扫描 / 找优先级 → `stock_candidate_scan`
 - 固定观察池 / 自选池复盘 → `watchlist_review`
-- 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`
+- 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`（支持 `sector_type=primary` 一级行业 / `sector_type=concept` 概念题材）
 - 多板块横向比较 / 板块轮动 → `sector_rotation_review`
 - 热点主线跟踪 / 主线切换 → `hot_theme_tracker`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
@@ -76,7 +76,7 @@
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
 - `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
-- `sector_review`：成员股获取走 `zhitu`，成员复盘当前复用 `akshare`
+- `sector_review`：成员股获取走 `zhitu`，支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材），成员复盘复用 `akshare`
 - `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；当前建议 `primary` 板块、较小 `limit` 起步
 - `hot_theme_tracker`：复用 `sector_rotation_review + market_pool` 做主线聚合
 - `market_overview` / `market_pool` / `stock_orderbook` / `sector_lookup`：`zhitu`
@@ -126,14 +126,19 @@
 {"tool":"sector_lookup","payload":{"mode":"children","sector_name":"TFG板块趋势","limit":20}}
 ```
 
-### 板块复盘
+### 板块复盘（一级行业）
 ```json
-{"tool":"sector_review","payload":{"sector_name":"TFG板块趋势","trade_date":"2026-04-30","top_n":3,"limit":20}}
+{"tool":"sector_review","payload":{"sector_name":"1000信息","sector_type":"primary","trade_date":"2026-04-30","top_n":3,"limit":20}}
 ```
 
-### 板块区间轮动复盘
+### 板块复盘（概念题材）
 ```json
-{"tool":"sector_review","payload":{"sector_name":"TFG板块趋势","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}}
+{"tool":"sector_review","payload":{"sector_name":"人工智能","sector_type":"concept","trade_date":"2026-04-30","top_n":3,"limit":20}}
+```
+
+### 板块区间复盘
+```json
+{"tool":"sector_review","payload":{"sector_name":"1000信息","sector_type":"primary","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}}
 ```
 
 ### 板块轮动复盘（多板块）

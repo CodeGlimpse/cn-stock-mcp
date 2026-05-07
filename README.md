@@ -361,14 +361,19 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_brief --payload '
 ### sector_review 板块复盘样例
 
 ```bash
-# 单日板块复盘：查看板块成员整体强弱、情绪、龙头/跟风/掉队
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"TFG板块趋势","trade_date":"2026-04-30","top_n":3,"limit":20}'
+# 一级行业板块复盘（默认）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"1000信息","sector_type":"primary","trade_date":"2026-04-30","top_n":3,"limit":20}'
+
+# 概念题材板块复盘
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"人工智能","sector_type":"concept","trade_date":"2026-04-30","top_n":3,"limit":20}'
 
 # 区间板块复盘：适合看一段时间的行业强弱、结构分化与轮动特征
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"TFG板块趋势","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}'
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload '{"sector_name":"1000信息","sector_type":"primary","start_date":"2026-04-01","end_date":"2026-04-30","top_n":3,"limit":20}'
 ```
 
 说明：
+- `sector_type=primary`：一级行业板块（默认）
+- `sector_type=concept`：概念题材板块
 - 先通过 `sector_lookup(mode=children)` 获取板块成员股
 - 再复用 `stock_review_batch` 生成成员股复盘卡片
 - `sector_review` 现采用与 `market_brief` 相同的 `review_envelope_v1`

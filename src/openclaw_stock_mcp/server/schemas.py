@@ -277,6 +277,7 @@ class MarketPoolRequest(BaseModel):
 
 class SectorReviewRequest(BaseModel):
     sector_name: str = Field(min_length=1)
+    sector_type: SectorType = "primary"
     trade_date: str | None = None
     start_date: str | None = None
     end_date: str | None = None

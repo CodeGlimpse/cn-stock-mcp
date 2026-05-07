@@ -129,10 +129,14 @@
 - 当前路径：
   - `sector_lookup(children)` 获取板块成员股（当前 provider：`zhitu`）
   - `stock_review_batch` 对成员股做批量复盘（当前复用 `akshare` 路径）
+- **支持板块类型：**
+  - `sector_type=primary`：一级行业板块（默认）
+  - `sector_type=concept`：概念板块（题材）
 - 支持两种模式：
   - `trade_date`：单日板块复盘
   - `start_date + end_date`：区间板块复盘
 - 支持参数：
+  - `sector_type`：板块类型（`primary` / `concept`）
   - `sort_by / descending / top_n / limit`
   - `min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
 - 已与 `market_brief` 对齐到统一 `review_envelope_v1`

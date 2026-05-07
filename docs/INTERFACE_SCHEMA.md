@@ -137,7 +137,7 @@ Last Updated: 2026-05-07
 
 - `stock_review`：单股复盘摘要（latest_bar/stats/benchmark/windows/summary）
 - `stock_review_batch`：批量排序与分组（items/rankings/groups/summary）
-- `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）
+- `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）；支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材）
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
 - `stock_candidate_scan`：候选评分（candidate_score/candidate_label/reason_tags/risk_flags）
 - `watchlist_review`：观察池评分（watchlist_score/status_label/reason_tags/risk_flags）

@@ -25,7 +25,7 @@ class SectorReviewUseCase:
         members_resp = self.sector_lookup.execute(
             SimpleNamespace(
                 mode="children",
-                sector_type="primary",
+                sector_type=getattr(request, "sector_type", "primary"),
                 sector_name=request.sector_name,
                 limit=request.limit,
                 provider=request.provider,
@@ -98,6 +98,7 @@ class SectorReviewUseCase:
             "subject_type": "sector",
             "subject_name": request.sector_name,
             "sector_name": request.sector_name,
+            "sector_type": getattr(request, "sector_type", "primary"),
             "mode": batch_resp.get("mode"),
             "trade_date": batch_resp.get("requested_trade_date"),
             "requested_trade_date": batch_resp.get("requested_trade_date"),
