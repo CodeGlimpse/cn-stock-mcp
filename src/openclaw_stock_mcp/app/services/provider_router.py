@@ -46,7 +46,7 @@ class ProviderRouter:
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])
             return ProviderSelection(primary="zhitu", fallback=[])
 
-        if tool_name in {"market_pool", "stock_orderbook"}:
+        if tool_name in {"market_pool", "stock_orderbook", "stock_profile"}:
             return ProviderSelection(primary="zhitu", fallback=[])
 
         if tool_name == "stock_quote":

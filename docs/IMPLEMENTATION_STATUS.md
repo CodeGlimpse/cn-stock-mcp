@@ -104,6 +104,27 @@
   - `windows.daily / weekly / monthly`
   - 可直接阅读的 `summary` 文本
 
+### stock_profile（公司基本面）
+- 新增 `stock_profile` tool
+- 当前 provider：`zhitu`
+- 支持模块化获取（`include` 参数）：
+  - `profile`：公司简介（名称、行业、概念标签、经营范围等）
+  - `dividends`：近年分红历史
+  - `unlocks`：解禁限售计划
+  - `profits`：近一年季度利润
+- 输出包含：
+  - `profile`：公司基本信息 + 概念标签列表
+  - `dividends`：分红记录列表
+  - `unlocks`：解禁记录列表
+  - `quarter_profits`：季度利润列表
+  - `dividend_summary`：分红统计摘要
+  - `unlock_risk`：解禁风险摘要
+- Zhitu API 路径：
+  - `/hs/gs/gsjj/{code}` - 公司简介
+  - `/hs/gs/jnff/{code}` - 近年分红
+  - `/hs/gs/jjxs/{code}` - 解禁限售
+  - `/hs/gs/jdlr/{code}` - 季度利润
+
 ### stock_review_batch（批量个股复盘）
 - 新增 `stock_review_batch` tool
 - 复用 `stock_review` 的单股能力，生成批量复盘卡片

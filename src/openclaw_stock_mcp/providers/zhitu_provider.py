@@ -16,6 +16,14 @@ from openclaw_stock_mcp.providers.adapters.zhitu_instrument_adapters import (
     adapt_zhitu_stock_list_item,
 )
 from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_batch_quote, adapt_zhitu_orderbook, adapt_zhitu_quote
+from openclaw_stock_mcp.providers.adapters.zhitu_profile_adapters import (
+    adapt_zhitu_dividend,
+    adapt_zhitu_profile,
+    adapt_zhitu_quarter_profit,
+    adapt_zhitu_unlock,
+    build_dividend_summary,
+    build_unlock_risk,
+)
 from openclaw_stock_mcp.providers.adapters.zhitu_series_adapters import (
     adapt_zhitu_bar,
     adapt_zhitu_broken_limit_item,
@@ -554,3 +562,46 @@ class ZhituProvider:
             )
         rows.sort(key=lambda item: item["score"], reverse=True)
         return rows
+
+    def get_profile(self, symbol: str, include: list[str] | None = None):
+        from openclaw_stock_mcp.app.models.profile import StockProfileDetail
+
+        normalized = normalize_symbol(symbol)
+        code = normalized.split(".", 1)[0]
+        include = include or ["profile", "dividends", "unlocks", "profits"]
+
+        profile = None
+        dividends = []
+        unlocks = []
+        quarter_profits = []
+
+        if "profile" in include:
+            raw = self._get_json(f"/hs/gs/gsjj/{code}")
+            if isinstance(raw, list) and raw:
+                raw = raw[0]
+            profile = adapt_zhitu_profile(raw, normalized)
+
+        if "dividends" in include:
+            raw = self._get_json(f"/hs/gs/jnff/{code}")
+            dividends = [adapt_zhitu_dividend(item) for item in raw if isinstance(item, dict)]
+
+        if "unlocks" in include:
+            raw = self._get_json(f"/hs/gs/jjxs/{code}")
+            unlocks = [adapt_zhitu_unlock(item) for item in raw if isinstance(item, dict)]
+
+        if "profits" in include:
+            raw = self._get_json(f"/hs/gs/jdlr/{code}")
+            quarter_profits = [adapt_zhitu_quarter_profit(item) for item in raw if isinstance(item, dict)]
+
+        dividend_summary = build_dividend_summary(dividends) if dividends else None
+        unlock_risk = build_unlock_risk(unlocks) if unlocks else None
+
+        return StockProfileDetail(
+            profile=profile or StockProfile(symbol=normalized, source="zhitu"),
+            dividends=dividends,
+            unlocks=unlocks,
+            quarter_profits=quarter_profits,
+            dividend_summary=dividend_summary,
+            unlock_risk=unlock_risk,
+            source="zhitu",
+        )

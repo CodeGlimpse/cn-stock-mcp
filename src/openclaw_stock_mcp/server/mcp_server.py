@@ -15,6 +15,7 @@ from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCas
 from openclaw_stock_mcp.app.usecases.multi_timeframe_review import MultiTimeframeReviewUseCase
 from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
 from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
+from openclaw_stock_mcp.app.usecases.stock_profile import StockProfileUseCase
 from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
 from openclaw_stock_mcp.app.usecases.sector_rotation_review import SectorRotationReviewUseCase
@@ -39,6 +40,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockHistoryRequest,
     StockOrderbookRequest,
     StockCandidateScanRequest,
+    StockProfileRequest,
     StockQuoteRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
@@ -139,6 +141,7 @@ def create_server() -> MCPServerStub:
     sector_rotation_review = SectorRotationReviewUseCase()
     hot_theme_tracker = HotThemeTrackerUseCase()
     provider_health = ProviderHealthUseCase()
+    stock_profile = StockProfileUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -159,5 +162,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="sector_rotation_review", description="Compare multiple sectors and summarize cross-sector rotation signals.", input_model=SectorRotationReviewRequest, handler=sector_rotation_review.execute))
     server.register_tool(MCPTool(name="hot_theme_tracker", description="Track hot themes by combining sector rotation and pool snapshots.", input_model=HotThemeTrackerRequest, handler=hot_theme_tracker.execute))
     server.register_tool(MCPTool(name="provider_health", description="Run provider self checks for zhitu and akshare.", input_model=EmptyRequest, handler=provider_health.execute))
+    server.register_tool(MCPTool(name="stock_profile", description="Get company profile including basic info, dividends, unlocks, and quarterly profits.", input_model=StockProfileRequest, handler=stock_profile.execute))
 
     return server

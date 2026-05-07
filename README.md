@@ -39,6 +39,7 @@
 - `market_pool(broken_limit)`
 - `stock_orderbook(main)`
 - `stock_orderbook(star)`
+- `stock_profile()`（公司基本面：profile/dividends/unlocks/profits）
 
 ### AKShare
 - `stock_search()` 基本可用
@@ -391,6 +392,26 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
   - `rankings`（收益/相对强弱/量比/回撤风险榜）
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates` 等分层）
 - `rotation.score` 通过 `meta.rotation_score_schema` 单独声明，不与 `sentiment.score` 混用
+
+### stock_profile 公司基本面样例
+
+```bash
+# 获取公司完整基本面信息
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_profile --payload '{"symbol":"000001.SZ"}'
+
+# 仅获取公司简介和分红历史
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_profile --payload '{"symbol":"600519.SH","include":["profile","dividends"]}'
+```
+
+说明：
+- `include` 参数可选：`profile`（公司简介）、`dividends`（分红）、`unlocks`（解禁）、`profits`（季度利润）
+- 返回包含：
+  - `profile`：公司名称、行业、概念标签列表、经营范围、上市日期等
+  - `dividends`：近年分红记录
+  - `unlocks`：解禁限售计划
+  - `quarter_profits`：近一年季度利润
+  - `dividend_summary`：分红统计（年度、平均值）
+  - `unlock_risk`：解禁风险摘要
 
 ### sector_rotation_review 板块轮动复盘样例
 

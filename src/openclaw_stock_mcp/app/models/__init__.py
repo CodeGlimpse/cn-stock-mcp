@@ -5,6 +5,13 @@ from .bar import Bar
 from .indicator import IndicatorPoint, IndicatorSeries
 from .market_pool import MarketPoolItem
 from .orderbook import OrderBook, OrderBookLevel
+from .profile import (
+    StockProfile,
+    StockProfileDetail,
+    DividendRecord,
+    UnlockRecord,
+    QuarterProfit,
+)
 
 __all__ = [
     "ToolError",
@@ -17,4 +24,9 @@ __all__ = [
     "MarketPoolItem",
     "OrderBook",
     "OrderBookLevel",
+    "StockProfile",
+    "StockProfileDetail",
+    "DividendRecord",
+    "UnlockRecord",
+    "QuarterProfit",
 ]

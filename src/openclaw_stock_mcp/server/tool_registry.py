@@ -10,6 +10,7 @@ from .schemas import (
     StockHistoryRequest,
     StockOrderbookRequest,
     StockCandidateScanRequest,
+    StockProfileRequest,
     StockQuoteRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
@@ -38,4 +39,5 @@ __all__ = [
     "SectorReviewRequest",
     "SectorRotationReviewRequest",
     "HotThemeTrackerRequest",
+    "StockProfileRequest",
 ]

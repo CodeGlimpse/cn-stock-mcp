@@ -679,3 +679,9 @@ class HotThemeTrackerRequest(BaseModel):
         if self.watch_name is not None:
             self.watch_name = self.watch_name.strip() or None
         return self
+
+
+class StockProfileRequest(BaseModel):
+    symbol: str = Field(min_length=1)
+    include: list[Literal["profile", "dividends", "unlocks", "profits"]] | None = None
+    provider: Literal["zhitu"] | None = "zhitu"
