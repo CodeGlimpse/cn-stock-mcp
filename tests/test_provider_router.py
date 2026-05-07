@@ -20,3 +20,10 @@ def test_stock_history_index_route_prefers_zhitu():
     sel = router.choose_provider(tool_name="stock_history", symbol="000001.SH", sec_type="index")
     assert sel.primary == "zhitu"
     assert sel.fallback == ["akshare"]
+
+
+def test_hot_theme_tracker_defaults_to_akshare_primary_by_generic_rule():
+    router = ProviderRouter()
+    sel = router.choose_provider(tool_name="hot_theme_tracker")
+    assert sel.primary == "akshare"
+    assert sel.fallback == ["zhitu"]

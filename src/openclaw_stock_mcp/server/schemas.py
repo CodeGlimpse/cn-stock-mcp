@@ -10,7 +10,7 @@ ProviderName = Literal["akshare", "zhitu", "mixed"]
 Interval = Literal["5m", "15m", "30m", "60m", "1d", "1w", "1M", "1y"]
 AdjustType = Literal["none", "qfq", "hfq"]
 IndicatorType = Literal["macd", "ma", "boll", "kdj"]
-PoolType = Literal["limit_up", "limit_down", "strong"]
+PoolType = Literal["limit_up", "limit_down", "strong", "sub_new", "broken_limit"]
 SectorLookupMode = Literal["list", "members", "children"]
 SectorType = Literal["concept", "primary"]
 
@@ -258,12 +258,18 @@ class MarketPoolRequest(BaseModel):
             "strong": "strong",
             "qsgc": "strong",
             "强势": "strong",
+            "sub_new": "sub_new",
+            "cxgc": "sub_new",
+            "次新": "sub_new",
+            "broken_limit": "broken_limit",
+            "zbgc": "broken_limit",
+            "炸板": "broken_limit",
         }
         normalized = alias.get(raw)
         if not normalized:
             raise ValueError(
-                "pool_type must be one of: limit_up/limit_down/strong "
-                "(aliases: ztgc/dtgc/qsgc, up/down, 涨停/跌停/强势)"
+                "pool_type must be one of: limit_up/limit_down/strong/sub_new/broken_limit "
+                "(aliases: ztgc/dtgc/qsgc/cxgc/zbgc, up/down, 涨停/跌停/强势/次新/炸板)"
             )
         self.pool_type = normalized
         return self
@@ -435,12 +441,18 @@ class StockCandidateScanRequest(BaseModel):
                 "strong": "strong",
                 "qsgc": "strong",
                 "强势": "strong",
+                "sub_new": "sub_new",
+                "cxgc": "sub_new",
+                "次新": "sub_new",
+                "broken_limit": "broken_limit",
+                "zbgc": "broken_limit",
+                "炸板": "broken_limit",
             }
             normalized_pool = alias.get(raw)
             if not normalized_pool:
                 raise ValueError(
-                    "pool_type must be one of: limit_up/limit_down/strong "
-                    "(aliases: ztgc/dtgc/qsgc, up/down, 涨停/跌停/强势)"
+                    "pool_type must be one of: limit_up/limit_down/strong/sub_new/broken_limit "
+                    "(aliases: ztgc/dtgc/qsgc/cxgc/zbgc, up/down, 涨停/跌停/强势/次新/炸板)"
                 )
             self.pool_type = normalized_pool
 
@@ -608,4 +620,61 @@ class SectorLookupRequest(BaseModel):
         if self.mode in {"members", "children"} and not self.sector_name:
             raise ValueError("sector_name is required when mode=members/children")
 
+        return self
+
+
+class HotThemeTrackerRequest(BaseModel):
+    sector_names: list[str] | None = Field(default=None, max_length=20)
+    sector_type: Literal["primary"] = "primary"
+    watch_name: str | None = None
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    adjust: AdjustType = "none"
+    provider: Literal["zhitu"] | None = "zhitu"
+    sort_by: Literal["avg_relative_strength", "avg_return", "positive_ratio", "stronger_ratio", "sentiment_score", "rotation_score"] = "avg_relative_strength"
+    descending: bool = True
+    top_n: int = Field(default=5, ge=1, le=20)
+    sector_limit: int = Field(default=10, ge=2, le=30)
+    member_limit: int = Field(default=20, ge=1, le=200)
+    member_top_n: int = Field(default=3, ge=1, le=10)
+    pool_top_n: int = Field(default=5, ge=1, le=20)
+    include_pool_snapshot: bool = True
+    min_relative_strength: float | None = None
+    min_return: float | None = None
+    max_drawdown_limit: float | None = None
+    min_volume_ratio: float | None = None
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+        elif self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+        else:
+            self.trade_date = dt_date.today().isoformat()
+
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for name in self.sector_names or []:
+            value = (name or "").strip()
+            if not value or value in seen:
+                continue
+            seen.add(value)
+            normalized.append(value)
+        self.sector_names = normalized or None
+
+        if self.sector_names is not None and len(self.sector_names) < 2:
+            raise ValueError("sector_names must contain at least 2 distinct non-empty sector names")
+
+        if self.watch_name is not None:
+            self.watch_name = self.watch_name.strip() or None
         return self

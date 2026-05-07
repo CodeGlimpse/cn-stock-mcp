@@ -18,10 +18,12 @@ from openclaw_stock_mcp.providers.adapters.zhitu_instrument_adapters import (
 from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_orderbook, adapt_zhitu_quote
 from openclaw_stock_mcp.providers.adapters.zhitu_series_adapters import (
     adapt_zhitu_bar,
+    adapt_zhitu_broken_limit_item,
     adapt_zhitu_indicator_series,
     adapt_zhitu_limit_down_item,
     adapt_zhitu_limit_up_item,
     adapt_zhitu_strong_item,
+    adapt_zhitu_sub_new_item,
 )
 from openclaw_stock_mcp.providers.errors import ProviderAuthError, ProviderError, ProviderRateLimitError, ProviderTimeoutError
 

@@ -24,6 +24,15 @@ class _Provider:
             from openclaw_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "pool failed", retryable=True)
+        pool_type = kwargs.get("pool_type")
+        if pool_type == "sub_new":
+            return [
+                _Item("603325.SH", price=84.93, turnover=930814816.0, market_cap=5662283100.0, float_market_cap=1387300295.76),
+            ]
+        if pool_type == "broken_limit":
+            return [
+                _Item("002611.SZ", price=5.14, turnover=955617568.0, market_cap=6376778576.0, float_market_cap=5201681387.8),
+            ]
         return [
             _Item("600000.SH", price=0, turnover=0, market_cap=0, float_market_cap=0),
             _Item("600519.SH", price=1384.79, turnover=7316111748.0, market_cap=1734131271030.0, float_market_cap=1734131271030.0),
@@ -107,3 +116,19 @@ def test_market_pool_auto_resolves_effective_trade_date_when_not_provided():
     assert result["trade_date"] == "2026-04-30"
     assert result["meta"]["calendar"]["adjusted_to_previous_trading_day"] is True
     assert uc.router.providers["zhitu"].pool_calls[0]["trade_date"] == "2026-04-30"
+
+
+def test_market_pool_supports_sub_new_and_broken_limit_types():
+    uc = MarketPoolUseCase()
+    uc.router = _Router()
+
+    req_sub_new = type("Req", (), {"pool_type": "sub_new", "trade_date": "2026-05-02", "limit": 10, "provider": "zhitu"})()
+    req_broken_limit = type("Req", (), {"pool_type": "broken_limit", "trade_date": "2026-05-02", "limit": 10, "provider": "zhitu"})()
+
+    result_sub_new = uc.execute(req_sub_new)
+    result_broken_limit = uc.execute(req_broken_limit)
+
+    assert result_sub_new["pool_type"] == "sub_new"
+    assert result_sub_new["count"] == 1
+    assert result_broken_limit["pool_type"] == "broken_limit"
+    assert result_broken_limit["count"] == 1

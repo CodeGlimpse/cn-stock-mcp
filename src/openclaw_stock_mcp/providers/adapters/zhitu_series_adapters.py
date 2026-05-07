@@ -56,6 +56,7 @@ def adapt_zhitu_limit_up_item(raw: dict) -> MarketPoolItem:
         market_cap=_to_float(raw.get("zsz")),
         float_market_cap=_to_float(raw.get("lt")),
         extra={
+            "pool_type": "limit_up",
             "limit_count": raw.get("lbc"),
             "first_limit_time": raw.get("fbt"),
             "last_limit_time": raw.get("lbt"),
@@ -77,6 +78,7 @@ def adapt_zhitu_limit_down_item(raw: dict) -> MarketPoolItem:
         market_cap=_to_float(raw.get("zsz")),
         float_market_cap=_to_float(raw.get("lt")),
         extra={
+            "pool_type": "limit_down",
             "pe": _to_float(raw.get("pe")),
             "consecutive_limit_down_count": raw.get("lbc"),
             "last_limit_time": raw.get("lbt"),
@@ -98,10 +100,55 @@ def adapt_zhitu_strong_item(raw: dict) -> MarketPoolItem:
         market_cap=_to_float(raw.get("zsz")),
         float_market_cap=_to_float(raw.get("lt")),
         extra={
+            "pool_type": "strong",
             "limit_price": _to_float(raw.get("ztp")),
             "speed": _to_float(raw.get("zs")),
             "new_high": raw.get("nh"),
             "volume_ratio": _to_float(raw.get("lb")),
             "stat": raw.get("tj"),
+        },
+    )
+
+
+def adapt_zhitu_sub_new_item(raw: dict) -> MarketPoolItem:
+    return MarketPoolItem(
+        symbol=normalize_symbol(str(raw.get("dm", "")).strip()),
+        name=raw.get("mc") or "",
+        price=_to_float(raw.get("p")),
+        change_percent=_to_float(raw.get("zf")),
+        turnover=_to_float(raw.get("cje")),
+        turnover_rate=_to_float(raw.get("hs")),
+        market_cap=_to_float(raw.get("zsz")),
+        float_market_cap=_to_float(raw.get("lt")),
+        extra={
+            "pool_type": "sub_new",
+            "limit_price": _to_float(raw.get("ztp")),
+            "new_high": raw.get("nh"),
+            "stat": raw.get("tj"),
+            "open_board_days": raw.get("kb"),
+            "open_board_date": raw.get("od"),
+            "ipo_date": raw.get("ipod"),
+        },
+    )
+
+
+def adapt_zhitu_broken_limit_item(raw: dict) -> MarketPoolItem:
+    return MarketPoolItem(
+        symbol=normalize_symbol(str(raw.get("dm", "")).strip()),
+        name=raw.get("mc") or "",
+        price=_to_float(raw.get("p")),
+        change_percent=_to_float(raw.get("zdf") if raw.get("zdf") is not None else raw.get("zf")),
+        turnover=_to_float(raw.get("cje")),
+        turnover_rate=_to_float(raw.get("hs")),
+        market_cap=_to_float(raw.get("zsz")),
+        float_market_cap=_to_float(raw.get("lt")),
+        extra={
+            "pool_type": "broken_limit",
+            "limit_price": _to_float(raw.get("ztp")),
+            "amplitude": _to_float(raw.get("zf")),
+            "speed": _to_float(raw.get("zs")),
+            "stat": raw.get("tj"),
+            "first_limit_time": raw.get("fbt"),
+            "board_burst_count": raw.get("zbc"),
         },
     )

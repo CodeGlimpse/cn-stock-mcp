@@ -33,6 +33,8 @@
 - `technical_indicator(index)`
 - `market_overview()`
 - `market_pool(limit_up)`
+- `market_pool(sub_new)`
+- `market_pool(broken_limit)`
 - `stock_orderbook(star)`
 
 ### AKShare
@@ -46,6 +48,7 @@
 - `stock_candidate_scan()` 候选扫描可用（支持 symbols / primary 板块 / strong池 组合成 universe）
 - `watchlist_review()` 观察池复盘可用（适合持续跟踪固定股票池）
 - `multi_timeframe_review()` 多周期复盘可用（适合看单只标的不同周期是否共振或冲突）
+- `hot_theme_tracker()` 热点主线跟踪可用（复用板块轮动 + 股池快照）
 
 ## 快速开始
 
@@ -220,7 +223,36 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{
 
 # 类型别名：qsgc -> strong
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"qsgc","trade_date":"2026-05-01","limit":50}'
+
+# 类型别名：cxgc -> sub_new
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"cxgc","trade_date":"2026-05-01","limit":50}'
+
+# 类型别名：zbgc -> broken_limit
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool market_pool --payload '{"pool_type":"zbgc","trade_date":"2026-05-01","limit":50}'
 ```
+
+### hot_theme_tracker 热点主线跟踪样例
+
+```bash
+# 显式指定主线候选板块
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool hot_theme_tracker --payload '{"sector_names":["1000信息","1000工业","1000医药"],"sector_type":"primary","trade_date":"2026-05-06","top_n":3,"member_limit":5}'
+
+# 不指定 sector_names：自动从 primary 板块列表中截取前 N 个做热度跟踪
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool hot_theme_tracker --payload '{"sector_type":"primary","trade_date":"2026-05-06","sector_limit":8,"top_n":3}'
+```
+
+说明：
+- 当前 v1 用于 **主线热点 / 次主线 / 风险主题** 的快速跟踪
+- 内部路径：
+  - `sector_lookup(list)` 解析候选板块
+  - `sector_rotation_review` 生成跨板块轮动卡片
+  - `market_pool(limit_up/strong)` 生成股池快照
+- 输出重点：
+  - `themes`（完整主题卡列表）
+  - `leaders / laggards`
+  - `buckets.mainline_themes / watchlist_themes / risk_themes`
+  - `pool_snapshot`（涨停池 / 强势池）
+  - `theme_score_schema=theme_score_v1`
 
 ### stock_review 个股复盘摘要样例
 
@@ -471,9 +503,10 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 5. `sector_lookup {"mode":"list","sector_type":"concept","limit":10}`
 6. `stock_history {"symbol":"000001.SH","sec_type":"index","interval":"d","limit":20}`
 7. `sector_rotation_review {"sector_names":["1000信息","1000工业"],"sector_type":"primary","trade_date":"2026-05-06","top_n":2,"member_top_n":2,"limit":5}`
-8. `stock_candidate_scan {"pool_type":"strong","trade_date":"2026-05-06","limit":3,"top_n":2}`
-9. `watchlist_review {"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}`
-10. `multi_timeframe_review {"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}`
+8. `hot_theme_tracker {"sector_names":["1000信息","1000工业","1000医药"],"sector_type":"primary","trade_date":"2026-05-06","top_n":3,"member_limit":5}`
+9. `stock_candidate_scan {"pool_type":"strong","trade_date":"2026-05-06","limit":3,"top_n":2}`
+10. `watchlist_review {"symbols":["600519.SH","300750.SZ","000001.SZ"],"watchlist_name":"核心池","trade_date":"2026-05-06","top_n":2}`
+11. `multi_timeframe_review {"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}`
 
 ## OpenClaw news agent integration
 
@@ -491,7 +524,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 
 这个 skill 的职责是：
 
-- 把 CN 市场数据 / 行情 / 复盘 / 板块轮动请求路由到对应工具
+- 把 CN 市场数据 / 行情 / 复盘 / 板块轮动 / 热点主线请求路由到对应工具
 - 统一解释 `review_envelope_v1`
 - 约束 payload 安全规则
 - 明确 `sentiment.score` 与 `rotation.score` 的不同语义
@@ -537,7 +570,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 推荐由 `news` agent 处理以下请求：
 
 - 市场简报 / 收盘复盘
-- 板块强弱 / 板块轮动 / 龙头跟风拖累
+- 板块强弱 / 板块轮动 / 龙头跟风拖累 / 热点主线
 - 单股复盘 / 股票池批量对比
 - 技术指标 / 交易日 / 涨停跌停强势股池
 

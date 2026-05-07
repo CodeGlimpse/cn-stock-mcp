@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest
+from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -59,6 +59,14 @@ def test_stock_candidate_scan_normalizes_pool_and_deduplicates_inputs():
     assert req.sector_names == ["1000信息", "1000工业"]
 
 
+def test_market_pool_request_supports_new_pool_aliases():
+    sub_new = MarketPoolRequest(pool_type="次新")
+    broken_limit = MarketPoolRequest(pool_type="zbgc")
+
+    assert sub_new.pool_type == "sub_new"
+    assert broken_limit.pool_type == "broken_limit"
+
+
 def test_watchlist_review_normalizes_symbols_and_defaults_trade_date():
     req = WatchlistReviewRequest(symbols=[" 600519.SH ", "600519.SH", "000001.SZ"], watchlist_name="  核心池  ")
     assert req.symbols == ["600519.SH", "000001.SZ"]
@@ -112,3 +120,10 @@ def test_stock_candidate_scan_request_reason_tag_filters():
 
     assert req.must_have_reason_tags == ["strong_return", "high_volume"]
     assert req.exclude_reason_tags == ["slight_positive_return"]
+
+
+def test_hot_theme_tracker_request_requires_two_distinct_sector_names_when_provided():
+    with pytest.raises(ValidationError) as exc:
+        HotThemeTrackerRequest(sector_names=["1000信息", " 1000信息 "])
+
+    assert "at least 2 distinct" in str(exc.value)

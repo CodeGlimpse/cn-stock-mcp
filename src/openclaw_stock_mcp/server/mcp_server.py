@@ -6,6 +6,7 @@ from typing import Any, Callable
 from pydantic import BaseModel, Field, ValidationError
 
 from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
+from openclaw_stock_mcp.app.usecases.hot_theme_tracker import HotThemeTrackerUseCase
 from openclaw_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
 from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
@@ -27,6 +28,7 @@ from openclaw_stock_mcp.app.usecases.trading_calendar import TradingCalendarUseC
 from openclaw_stock_mcp.infra.logging import log_event
 from openclaw_stock_mcp.server.response_envelope import error_response, new_request_id, ok_response
 from openclaw_stock_mcp.server.schemas import (
+    HotThemeTrackerRequest,
     MarketBriefRequest,
     MarketOverviewRequest,
     MarketPoolRequest,
@@ -135,6 +137,7 @@ def create_server() -> MCPServerStub:
     sector_lookup = SectorLookupUseCase()
     sector_review = SectorReviewUseCase()
     sector_rotation_review = SectorRotationReviewUseCase()
+    hot_theme_tracker = HotThemeTrackerUseCase()
     provider_health = ProviderHealthUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
@@ -148,12 +151,13 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="market_brief", description="Generate a compact market brief by combining overview and pool data.", input_model=MarketBriefRequest, handler=market_brief.execute))
     server.register_tool(MCPTool(name="technical_indicator", description="Get technical indicator series such as MACD, MA, BOLL, KDJ.", input_model=TechnicalIndicatorRequest, handler=technical_indicator.execute))
     server.register_tool(MCPTool(name="multi_timeframe_review", description="Review a symbol across multiple timeframes and summarize alignment/conflicts.", input_model=MultiTimeframeReviewRequest, handler=multi_timeframe_review.execute))
-    server.register_tool(MCPTool(name="market_pool", description="Get market pools such as limit-up, limit-down, and strong stocks.", input_model=MarketPoolRequest, handler=market_pool.execute))
+    server.register_tool(MCPTool(name="market_pool", description="Get market pools such as limit-up, limit-down, strong, sub-new, and broken-limit stocks.", input_model=MarketPoolRequest, handler=market_pool.execute))
     server.register_tool(MCPTool(name="stock_orderbook", description="Get order book data for supported instruments.", input_model=StockOrderbookRequest, handler=stock_orderbook.execute))
     server.register_tool(MCPTool(name="stock_candidate_scan", description="Scan a stock universe and rank candidate setups.", input_model=StockCandidateScanRequest, handler=stock_candidate_scan.execute))
     server.register_tool(MCPTool(name="sector_lookup", description="Lookup sector lists and members.", input_model=SectorLookupRequest, handler=sector_lookup.execute))
     server.register_tool(MCPTool(name="sector_review", description="Generate a review summary for a sector by aggregating its member stocks.", input_model=SectorReviewRequest, handler=sector_review.execute))
     server.register_tool(MCPTool(name="sector_rotation_review", description="Compare multiple sectors and summarize cross-sector rotation signals.", input_model=SectorRotationReviewRequest, handler=sector_rotation_review.execute))
+    server.register_tool(MCPTool(name="hot_theme_tracker", description="Track hot themes by combining sector rotation and pool snapshots.", input_model=HotThemeTrackerRequest, handler=hot_theme_tracker.execute))
     server.register_tool(MCPTool(name="provider_health", description="Run provider self checks for zhitu and akshare.", input_model=EmptyRequest, handler=provider_health.execute))
 
     return server

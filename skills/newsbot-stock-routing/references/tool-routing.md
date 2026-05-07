@@ -14,8 +14,9 @@
 - 固定观察池 / 自选池复盘 → `watchlist_review`
 - 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`
 - 多板块横向比较 / 板块轮动 → `sector_rotation_review`
+- 热点主线跟踪 / 主线切换 → `hot_theme_tracker`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
-- 涨停 / 跌停 / 强势股池 → `market_pool`
+- 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
 - 板块列表 / 某板块有哪些股票 → `sector_lookup`
 - 代码不确定 / 名称歧义 → `stock_search`
@@ -47,7 +48,7 @@
 
 ### 2.4 股池类型
 
-优先标准值：`limit_up / limit_down / strong`
+优先标准值：`limit_up / limit_down / strong / sub_new / broken_limit`
 
 ### 2.5 `sector_lookup`
 
@@ -76,6 +77,7 @@
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `sector_review`：成员股获取走 `zhitu`，成员复盘当前复用 `akshare`
 - `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；当前建议 `primary` 板块、较小 `limit` 起步
+- `hot_theme_tracker`：复用 `sector_rotation_review + market_pool` 做主线聚合
 - `market_overview` / `market_pool` / `stock_orderbook` / `sector_lookup`：`zhitu`
 
 如用户明确要求优先顺序，再传：
@@ -107,6 +109,11 @@
 ### 股池
 ```json
 {"tool":"market_pool","payload":{"pool_type":"limit_up","limit":20}}
+```
+
+### 热点主线跟踪
+```json
+{"tool":"hot_theme_tracker","payload":{"sector_names":["1000信息","1000工业","1000医药"],"sector_type":"primary","trade_date":"2026-05-06","top_n":3,"member_limit":5}}
 ```
 
 ### 板块成员股

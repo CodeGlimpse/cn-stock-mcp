@@ -1,4 +1,5 @@
 from .schemas import (
+    HotThemeTrackerRequest,
     MarketBriefRequest,
     MarketOverviewRequest,
     MarketPoolRequest,
@@ -36,4 +37,5 @@ __all__ = [
     "SectorLookupRequest",
     "SectorReviewRequest",
     "SectorRotationReviewRequest",
+    "HotThemeTrackerRequest",
 ]

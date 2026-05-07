@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-06
+更新时间：2026-05-07
 
 ## 已完成
 
@@ -29,6 +29,51 @@
 - `stock_candidate_scan`
 - `watchlist_review`
 - `multi_timeframe_review`
+- `hot_theme_tracker`
+
+### market_pool（股池）当前实现
+- 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
+- 当前别名映射：
+  - `ztgc / up / 涨停 -> limit_up`
+  - `dtgc / down / 跌停 -> limit_down`
+  - `qsgc / 强势 -> strong`
+  - `cxgc / 次新 -> sub_new`
+  - `zbgc / 炸板 -> broken_limit`
+- 当前 Zhitu 路径：
+  - `limit_up -> /hs/pool/ztgc/{trade_date}`
+  - `limit_down -> /hs/pool/dtgc/{trade_date}`
+  - `strong -> /hs/pool/qsgc/{trade_date}`
+  - `sub_new -> /hs/pool/cxgc/{trade_date}`
+  - `broken_limit -> /hs/pool/zbgc/{trade_date}`
+- 已补充统一 adapter：
+  - `adapt_zhitu_limit_up_item`
+  - `adapt_zhitu_limit_down_item`
+  - `adapt_zhitu_strong_item`
+  - `adapt_zhitu_sub_new_item`
+  - `adapt_zhitu_broken_limit_item`
+
+### hot_theme_tracker（热点主线跟踪）
+- 已正式注册为 MCP tool：`hot_theme_tracker`
+- 当前输入契约：`HotThemeTrackerRequest`
+  - `sector_names[]` 可选
+  - `sector_type=primary`
+  - `watch_name`
+  - `trade_date` 或 `start_date + end_date`
+  - `top_n / sector_limit / member_limit / member_top_n / pool_top_n`
+  - `include_pool_snapshot`
+- 当前内部路径：
+  - `sector_lookup(list)`：解析候选板块
+  - `sector_rotation_review`：生成板块轮动卡片
+  - `market_pool(limit_up/strong)`：生成股池快照
+- 当前输出重点：
+  - `themes`（完整主题卡）
+  - `leaders / laggards`
+  - `buckets.mainline_themes / watchlist_themes / risk_themes`
+  - `pool_snapshot`
+  - `meta.theme_score_schema=schema:theme_score_v1`
+- 当前限制：
+  - v1 先聚焦 `primary` 板块
+  - pool snapshot 当前只取 `limit_up + strong`
 
 ### sector_lookup（板块列表/成员股）当前实现
 - 输入模式：`list | children | members(兼容别名)`

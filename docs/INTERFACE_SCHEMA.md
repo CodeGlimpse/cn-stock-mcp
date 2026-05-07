@@ -1,6 +1,6 @@
 # Interface Schema (`openclaw-stock-mcp`)
 
-Last Updated: 2026-05-06
+Last Updated: 2026-05-07
 
 > 本文是当前对外契约（输入/输出与关键约束）。
 > 若与历史文档冲突，以本文与代码实现为准。
@@ -26,6 +26,7 @@ Last Updated: 2026-05-06
 - sector_lookup
 - sector_review
 - sector_rotation_review
+- hot_theme_tracker
 - provider_health
 
 ---
@@ -50,7 +51,13 @@ Last Updated: 2026-05-06
 - `macd | ma | boll | kdj`
 
 ### pool_type
-- `limit_up | limit_down | strong`
+- `limit_up | limit_down | strong | sub_new | broken_limit`
+- 输入别名兼容：
+  - `ztgc | up | 涨停 -> limit_up`
+  - `dtgc | down | 跌停 -> limit_down`
+  - `qsgc | 强势 -> strong`
+  - `cxgc | 次新 -> sub_new`
+  - `zbgc | 炸板 -> broken_limit`
 
 ### symbol
 - 推荐 canonical：`000001.SZ`、`600519.SH`、`899050.BJ` 等。
@@ -111,6 +118,7 @@ Last Updated: 2026-05-06
   - stock-main：`zhitu` 主，`akshare` 备
   - index/fund：`zhitu` 主，`akshare` 备
   - stock-bj/star：`zhitu`
+- hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`
 
 > 实际回退行为由实现与实时可用性决定。
 
@@ -125,6 +133,7 @@ Last Updated: 2026-05-06
 - `stock_candidate_scan`：候选评分（candidate_score/candidate_label/reason_tags/risk_flags）
 - `watchlist_review`：观察池评分（watchlist_score/status_label/reason_tags/risk_flags）
 - `multi_timeframe_review`：多周期一致性（trend_score/trend_label/signal_tags/conflict_notes）
+- `hot_theme_tracker`：热点主线跟踪（themes/theme_score/theme_label/pool_snapshot）
 
 详细字段以实现返回为准，新增字段遵循向后兼容（尽量只增不删）。
 
