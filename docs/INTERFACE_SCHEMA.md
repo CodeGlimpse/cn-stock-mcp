@@ -143,6 +143,11 @@ Last Updated: 2026-05-08
 - `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）；支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材）
 - `stock_profile`：公司基本面（profile/dividends/unlocks/quarter_profits/valuation/dividend_summary/unlock_risk）
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
+
+补充（可观测性字段，已在关键工具 meta 中统一输出）：
+- `provider_used`：本次实际使用的 provider（或集合）
+- `fallback_chain`：本次可用的主备链路
+- `latency_ms`：本次调用耗时（毫秒）
 - `stock_candidate_scan`：候选评分（candidate_score/candidate_label/reason_tags/risk_flags）
 - `watchlist_review`：观察池评分（watchlist_score/status_label/reason_tags/risk_flags）
 - `multi_timeframe_review`：多周期一致性（trend_score/trend_label/signal_tags/conflict_notes）

@@ -1,3 +1,5 @@
+import time
+
 from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
@@ -55,6 +57,7 @@ class StockQuoteUseCase:
         return True
 
     def execute(self, request):
+        started_at = time.perf_counter()
         items = []
         errors = []
         meta_items = []
@@ -78,6 +81,9 @@ class StockQuoteUseCase:
                         "attempted": [],
                         "final_provider": None,
                         "used_fallback": False,
+                        "provider_used": None,
+                        "fallback_chain": [],
+                        "latency_ms": 0,
                     }
                 )
 
@@ -113,6 +119,9 @@ class StockQuoteUseCase:
                             "attempted": [selection.primary],
                             "final_provider": selection.primary,
                             "used_fallback": False,
+                            "provider_used": selection.primary,
+                            "fallback_chain": [selection.primary, *selection.fallback],
+                            "latency_ms": 0,
                         }
                     )
             except Exception as exc:
@@ -128,6 +137,9 @@ class StockQuoteUseCase:
                             "attempted": [selection.primary],
                             "final_provider": None,
                             "used_fallback": False,
+                            "provider_used": None,
+                            "fallback_chain": [selection.primary, *selection.fallback],
+                            "latency_ms": 0,
                         }
                     )
         else:
@@ -155,6 +167,9 @@ class StockQuoteUseCase:
                             "attempted": fallback_meta.attempted,
                             "final_provider": fallback_meta.final_provider,
                             "used_fallback": fallback_meta.used_fallback,
+                            "provider_used": fallback_meta.final_provider or sym_selection.primary,
+                            "fallback_chain": [sym_selection.primary, *sym_selection.fallback],
+                            "latency_ms": 0,
                         }
                     )
                 except Exception as exc:
@@ -169,6 +184,9 @@ class StockQuoteUseCase:
                             "attempted": [sym_selection.primary, *sym_selection.fallback],
                             "final_provider": None,
                             "used_fallback": False,
+                            "provider_used": None,
+                            "fallback_chain": [sym_selection.primary, *sym_selection.fallback],
+                            "latency_ms": 0,
                         }
                     )
 
@@ -178,5 +196,8 @@ class StockQuoteUseCase:
             "errors": errors,
             "meta": {
                 "per_symbol": meta_items,
+                "provider_used": sorted({m.get("provider_used") for m in meta_items if m.get("provider_used")}),
+                "fallback_chain": sorted({tuple(m.get("fallback_chain", [])) for m in meta_items if m.get("fallback_chain")}),
+                "latency_ms": int((time.perf_counter() - started_at) * 1000),
             },
         }

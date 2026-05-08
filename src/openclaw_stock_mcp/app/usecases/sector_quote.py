@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
@@ -27,6 +29,7 @@ class SectorQuoteUseCase:
         meta_items = []
 
         for raw_symbol in request.symbols:
+            symbol_started_at = time.perf_counter()
             try:
                 resolved = self.resolver.resolve(raw_symbol, "sector")
                 selection = self.router.choose_provider(
@@ -50,6 +53,9 @@ class SectorQuoteUseCase:
                         "attempted": fallback_meta.attempted,
                         "final_provider": fallback_meta.final_provider,
                         "used_fallback": fallback_meta.used_fallback,
+                        "provider_used": fallback_meta.final_provider or selection.primary,
+                        "fallback_chain": [selection.primary, *selection.fallback],
+                        "latency_ms": int((time.perf_counter() - symbol_started_at) * 1000),
                     }
                 )
             except Exception as exc:
@@ -65,6 +71,9 @@ class SectorQuoteUseCase:
                         "attempted": [],
                         "final_provider": None,
                         "used_fallback": False,
+                        "provider_used": None,
+                        "fallback_chain": [],
+                        "latency_ms": int((time.perf_counter() - symbol_started_at) * 1000),
                     }
                 )
 
@@ -85,5 +94,8 @@ class SectorQuoteUseCase:
                 "sort_by": sort_by,
                 "descending": descending,
                 "top_n": top_n,
+                "provider_used": sorted({m.get("provider_used") for m in meta_items if m.get("provider_used")}),
+                "fallback_chain": sorted({tuple(m.get("fallback_chain", [])) for m in meta_items if m.get("fallback_chain")}),
+                "latency_ms": sum(int(m.get("latency_ms") or 0) for m in meta_items),
             },
         }

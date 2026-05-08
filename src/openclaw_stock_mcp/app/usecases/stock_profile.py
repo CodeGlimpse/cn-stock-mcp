@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
@@ -11,6 +13,7 @@ class StockProfileUseCase:
         self.resolver = SymbolResolver()
 
     def execute(self, request):
+        started_at = time.perf_counter()
         resolved = self.resolver.resolve(request.symbol, "stock")
         selection = self.router.choose_provider(
             tool_name="stock_profile",
@@ -43,6 +46,9 @@ class StockProfileUseCase:
                 "attempted": fallback_meta.attempted,
                 "final_provider": fallback_meta.final_provider,
                 "used_fallback": fallback_meta.used_fallback,
+                "provider_used": fallback_meta.final_provider or selection.primary,
+                "fallback_chain": [selection.primary, *selection.fallback],
+                "latency_ms": int((time.perf_counter() - started_at) * 1000),
                 "include": include,
             },
         }
