@@ -681,6 +681,35 @@ class HotThemeTrackerRequest(BaseModel):
         return self
 
 
+class EventCalendarRequest(BaseModel):
+    symbols: list[str] = Field(min_length=1, max_length=100)
+    event_types: list[Literal["dividend", "unlock", "profit"]] | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    provider: Literal["zhitu"] | None = "zhitu"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.start_date:
+            dt_date.fromisoformat(self.start_date)
+        if self.end_date:
+            dt_date.fromisoformat(self.end_date)
+        if self.start_date and self.end_date and dt_date.fromisoformat(self.start_date) > dt_date.fromisoformat(self.end_date):
+            raise ValueError("start_date must be <= end_date")
+
+        if self.event_types is not None:
+            normalized = []
+            seen = set()
+            for item in self.event_types:
+                value = (item or "").strip().lower()
+                if not value or value in seen:
+                    continue
+                seen.add(value)
+                normalized.append(value)
+            self.event_types = normalized or None
+        return self
+
+
 class StockProfileRequest(BaseModel):
     symbol: str = Field(min_length=1)
     include: list[Literal["profile", "dividends", "unlocks", "profits", "valuation"]] | None = None

@@ -5,6 +5,7 @@ from mcp.server.fastmcp import FastMCP
 from openclaw_stock_mcp.server.mcp_server import create_server
 from openclaw_stock_mcp.server.schemas import (
     HotThemeTrackerRequest,
+    EventCalendarRequest,
     MarketBriefRequest,
     MarketOverviewRequest,
     MarketPoolRequest,
@@ -497,6 +498,25 @@ def build_fastmcp_server() -> FastMCP:
             min_volume_ratio=min_volume_ratio,
         )
         return registry.call_tool("hot_theme_tracker", req.model_dump(exclude_none=True))
+
+
+
+    @mcp.tool(name="event_calendar", description="Build event timeline (dividend/unlock/profit) for one or more stocks.")
+    async def event_calendar(
+        symbols: list[str],
+        event_types: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        provider: str | None = "zhitu",
+    ):
+        req = EventCalendarRequest(
+            symbols=symbols,
+            event_types=event_types,
+            start_date=start_date,
+            end_date=end_date,
+            provider=provider,
+        )
+        return registry.call_tool("event_calendar", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="provider_health", description="Run provider self checks for zhitu and akshare.")
     async def provider_health():

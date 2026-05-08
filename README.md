@@ -41,6 +41,7 @@
 - `stock_orderbook(star)`
 - `stock_profile()`（公司基本面：profile/dividends/unlocks/profits/valuation）
 - `sector_quote()`（板块指数行情：primary/concept）
+- `event_calendar()`（事件时间轴：dividend/unlock/profit）
 
 ### AKShare
 - `stock_search()` 基本可用
@@ -763,3 +764,11 @@ openclaw skills info newsbot-stock-routing
 ### Transport 状态
 当前已切换为 **MCP Python SDK（FastMCP）stdio transport**。
 本地 `--tool` / `--list-tools` 路径仍保留，供调试与 smoke test 使用。
+
+
+### event_calendar 事件时间轴样例
+
+```bash
+# 查询单只股票的分红/解禁/业绩事件（区间）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload '{"symbols":["600519.SH"],"event_types":["dividend","unlock","profit"],"start_date":"2026-01-01","end_date":"2026-12-31"}'
+```

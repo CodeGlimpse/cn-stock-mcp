@@ -30,6 +30,7 @@ Last Updated: 2026-05-08
 - sector_rotation_review
 - hot_theme_tracker
 - provider_health
+- event_calendar
 
 ---
 
