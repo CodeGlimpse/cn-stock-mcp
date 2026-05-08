@@ -35,6 +35,7 @@ from openclaw_stock_mcp.providers.adapters.zhitu_series_adapters import (
     adapt_zhitu_sub_new_item,
 )
 from openclaw_stock_mcp.providers.errors import ProviderAuthError, ProviderError, ProviderRateLimitError, ProviderTimeoutError
+from openclaw_stock_mcp.app.models.profile import ValuationSnapshot
 
 
 class ZhituProvider:
@@ -565,16 +566,17 @@ class ZhituProvider:
         return rows
 
     def get_profile(self, symbol: str, include: list[str] | None = None):
-        from openclaw_stock_mcp.app.models.profile import StockProfileDetail
+        from openclaw_stock_mcp.app.models.profile import StockProfile, StockProfileDetail
 
         normalized = normalize_symbol(symbol)
         code = normalized.split(".", 1)[0]
-        include = include or ["profile", "dividends", "unlocks", "profits"]
+        include = include or ["profile", "dividends", "unlocks", "profits", "valuation"]
 
         profile = None
         dividends = []
         unlocks = []
         quarter_profits = []
+        valuation = None
 
         if "profile" in include:
             raw = self._get_json(f"/hs/gs/gsjj/{code}")
@@ -594,6 +596,17 @@ class ZhituProvider:
             raw = self._get_json(f"/hs/gs/jdlr/{code}")
             quarter_profits = [adapt_zhitu_quarter_profit(item) for item in raw if isinstance(item, dict)]
 
+        if "valuation" in include:
+            quote = self.get_quote(normalized, "stock")
+            valuation = ValuationSnapshot(
+                price=quote.price,
+                pe=quote.pe,
+                pb=quote.pb,
+                market_cap=quote.market_cap,
+                float_market_cap=quote.float_market_cap,
+                source=quote.source,
+            )
+
         dividend_summary = build_dividend_summary(dividends) if dividends else None
         unlock_risk = build_unlock_risk(unlocks) if unlocks else None
 
@@ -602,6 +615,7 @@ class ZhituProvider:
             dividends=dividends,
             unlocks=unlocks,
             quarter_profits=quarter_profits,
+            valuation=valuation,
             dividend_summary=dividend_summary,
             unlock_risk=unlock_risk,
             source="zhitu",

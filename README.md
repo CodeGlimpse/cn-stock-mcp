@@ -39,7 +39,7 @@
 - `market_pool(broken_limit)`
 - `stock_orderbook(main)`
 - `stock_orderbook(star)`
-- `stock_profile()`（公司基本面：profile/dividends/unlocks/profits）
+- `stock_profile()`（公司基本面：profile/dividends/unlocks/profits/valuation）
 - `sector_quote()`（板块指数行情：primary/concept）
 
 ### AKShare
@@ -424,7 +424,7 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_profile --payload '{"symbol":"000001.SZ"}'
 
 # 仅获取公司简介和分红历史
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_profile --payload '{"symbol":"600519.SH","include":["profile","dividends"]}'
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_profile --payload '{"symbol":"600519.SH","include":["profile","dividends","valuation"]}'
 ```
 
 说明：

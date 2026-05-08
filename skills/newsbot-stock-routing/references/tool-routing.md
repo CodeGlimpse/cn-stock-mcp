@@ -11,7 +11,7 @@
 - 单只标的多周期共振 / 周期冲突 → `multi_timeframe_review`
 - 单股复盘 → `stock_review`
 - 股票池批量对比 → `stock_review_batch`
-- 公司基本面 / 概念标签 / 分红 / 解禁 → `stock_profile`
+- 公司基本面 / 概念标签 / 分红 / 解禁 / 估值快照 → `stock_profile`
 - 候选扫描 / 找优先级 → `stock_candidate_scan`
 - 固定观察池 / 自选池复盘 → `watchlist_review`
 - 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`（支持 `sector_type=primary` 一级行业 / `sector_type=concept` 概念题材）
@@ -79,7 +79,7 @@
 - `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
-- `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits）
+- `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
 - `sector_review`：成员股获取走 `zhitu`，支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材），成员复盘复用 `akshare`
 - `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；当前建议 `primary` 板块、较小 `limit` 起步
 - `hot_theme_tracker`：复用 `sector_rotation_review + market_pool` 做主线聚合

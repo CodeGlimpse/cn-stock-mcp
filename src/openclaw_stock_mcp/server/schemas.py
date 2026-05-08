@@ -683,7 +683,7 @@ class HotThemeTrackerRequest(BaseModel):
 
 class StockProfileRequest(BaseModel):
     symbol: str = Field(min_length=1)
-    include: list[Literal["profile", "dividends", "unlocks", "profits"]] | None = None
+    include: list[Literal["profile", "dividends", "unlocks", "profits", "valuation"]] | None = None
     provider: Literal["zhitu"] | None = "zhitu"
 
 

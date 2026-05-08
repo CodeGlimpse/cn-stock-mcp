@@ -11,6 +11,7 @@ from .profile import (
     DividendRecord,
     UnlockRecord,
     QuarterProfit,
+    ValuationSnapshot,
 )
 from .sector_quote import SectorQuote
 
@@ -30,5 +31,6 @@ __all__ = [
     "DividendRecord",
     "UnlockRecord",
     "QuarterProfit",
+    "ValuationSnapshot",
     "SectorQuote",
 ]

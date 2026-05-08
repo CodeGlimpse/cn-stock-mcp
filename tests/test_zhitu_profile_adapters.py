@@ -151,3 +151,20 @@ def test_build_unlock_risk_empty():
 
     assert risk["has_future_unlock"] is False
     assert risk["total_unlock_value"] is None
+
+
+def test_stock_profile_valuation_snapshot_fields():
+    from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
+
+    provider = ZhituProvider.__new__(ZhituProvider)
+    # monkeypatch minimal internals for deterministic valuation mapping
+    def fake_get_quote(symbol, sec_type):
+        from types import SimpleNamespace
+        return SimpleNamespace(price=12.3, pe=15.6, pb=2.1, market_cap=123456.0, float_market_cap=65432.0, source='zhitu')
+    provider.get_quote = fake_get_quote
+    provider._get_json = lambda path, params=None: [{'name': '测试公司'}] if 'gsjj' in path else []
+    profile = provider.get_profile('000001.SZ', include=['valuation'])
+    assert profile.valuation is not None
+    assert profile.valuation.price == 12.3
+    assert profile.valuation.pe == 15.6
+    assert profile.valuation.source == 'zhitu'

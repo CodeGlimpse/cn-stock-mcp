@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest
+from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -127,3 +127,8 @@ def test_hot_theme_tracker_request_requires_two_distinct_sector_names_when_provi
         HotThemeTrackerRequest(sector_names=["1000信息", " 1000信息 "])
 
     assert "at least 2 distinct" in str(exc.value)
+
+
+def test_stock_profile_request_supports_valuation_include():
+    req = StockProfileRequest(symbol='000001.SZ', include=['profile', 'valuation'])
+    assert req.include == ['profile', 'valuation']

@@ -52,11 +52,22 @@ class QuarterProfit(BaseModel):
     eps: float | None = None
 
 
+class ValuationSnapshot(BaseModel):
+    price: float | None = None
+    pe: float | None = None
+    pb: float | None = None
+    market_cap: float | None = None
+    float_market_cap: float | None = None
+    currency: Literal["CNY"] = "CNY"
+    source: str
+
+
 class StockProfileDetail(BaseModel):
     profile: StockProfile
     dividends: list[DividendRecord] = []
     unlocks: list[UnlockRecord] = []
     quarter_profits: list[QuarterProfit] = []
+    valuation: ValuationSnapshot | None = None
     dividend_summary: dict | None = None
     unlock_risk: dict | None = None
     source: str
