@@ -723,6 +723,7 @@ class EventCalendarRequest(BaseModel):
     start_date: str | None = None
     end_date: str | None = None
     next_event_only: bool = False
+    event_priority: list[Literal["dividend", "unlock", "profit"]] | None = None
     provider: Literal["zhitu"] | None = "zhitu"
 
     @model_validator(mode="after")
@@ -744,6 +745,17 @@ class EventCalendarRequest(BaseModel):
                 seen.add(value)
                 normalized.append(value)
             self.event_types = normalized or None
+
+        if self.event_priority is not None:
+            normalized_priority = []
+            seen_priority = set()
+            for item in self.event_priority:
+                value = (item or "").strip().lower()
+                if not value or value in seen_priority:
+                    continue
+                seen_priority.add(value)
+                normalized_priority.append(value)
+            self.event_priority = normalized_priority or None
         return self
 
 

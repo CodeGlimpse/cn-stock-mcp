@@ -555,6 +555,8 @@ def build_fastmcp_server() -> FastMCP:
         event_types: list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        next_event_only: bool = False,
+        event_priority: list[str] | None = None,
         provider: str | None = "zhitu",
     ):
         req = EventCalendarRequest(
@@ -562,6 +564,8 @@ def build_fastmcp_server() -> FastMCP:
             event_types=event_types,
             start_date=start_date,
             end_date=end_date,
+            next_event_only=next_event_only,
+            event_priority=event_priority,
             provider=provider,
         )
         return registry.call_tool("event_calendar", req.model_dump(exclude_none=True))

@@ -782,6 +782,9 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload
 
 # 只看每只股票最近未来事件（盘前提醒）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload '{"symbols":["600519.SH"],"next_event_only":true}'
+
+# 指定事件优先级（同日冲突时生效）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload '{"symbols":["600519.SH"],"next_event_only":true,"event_priority":["dividend","unlock","profit"]}'
 ```
 
 

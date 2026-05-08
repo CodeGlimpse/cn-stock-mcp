@@ -14,6 +14,13 @@ class EventCalendarUseCase:
         self.resolver = SymbolResolver()
 
     @staticmethod
+    def _priority_rank(event_type: str, event_priority: list[str]) -> int:
+        try:
+            return event_priority.index(event_type)
+        except ValueError:
+            return len(event_priority) + 99
+
+    @staticmethod
     def _in_range(value: str | None, start_date: str | None, end_date: str | None) -> bool:
         if not value:
             return False
@@ -32,6 +39,7 @@ class EventCalendarUseCase:
     def execute(self, request):
         event_types = set(getattr(request, "event_types", None) or ["dividend", "unlock", "profit"])
         next_event_only = bool(getattr(request, "next_event_only", False))
+        event_priority = list(getattr(request, "event_priority", None) or ["unlock", "dividend", "profit"])
         today_iso = dt_date.today().isoformat()
         errors = []
         items = []
@@ -113,7 +121,13 @@ class EventCalendarUseCase:
                 symbol_events.sort(key=lambda x: x.get("event_date") or "")
                 if next_event_only:
                     future_events = [e for e in symbol_events if (e.get("event_date") or "") >= today_iso]
-                    symbol_events = future_events[:1]
+                    if future_events:
+                        nearest_date = min((e.get("event_date") or "") for e in future_events)
+                        nearest_same_day = [e for e in future_events if (e.get("event_date") or "") == nearest_date]
+                        nearest_same_day.sort(key=lambda e: self._priority_rank(e.get("event_type") or "", event_priority))
+                        symbol_events = nearest_same_day[:1]
+                    else:
+                        symbol_events = []
                 items.extend(symbol_events)
                 per_symbol.append(
                     {
@@ -156,6 +170,7 @@ class EventCalendarUseCase:
                 "end_date": request.end_date,
                 "provider_used": sorted({m.get("provider_used") for m in per_symbol if m.get("provider_used")}),
                 "next_event_only": next_event_only,
+                "event_priority": event_priority,
                 "as_of_date": today_iso,
             },
         }
