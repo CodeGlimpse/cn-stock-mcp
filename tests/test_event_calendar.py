@@ -69,3 +69,27 @@ def test_event_calendar_generates_timeline_items():
     assert result["partial_failure"] is False
     assert result["count"] == 3
     assert {i["event_type"] for i in result["items"]} == {"dividend", "unlock", "profit"}
+
+
+def test_event_calendar_next_event_only_returns_one_future_item():
+    uc = EventCalendarUseCase()
+    uc.router = _Router()
+    uc.resolver = _Resolver()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "symbols": ["600519.SH"],
+            "event_types": ["dividend", "unlock", "profit"],
+            "start_date": None,
+            "end_date": None,
+            "next_event_only": True,
+            "provider": None,
+        },
+    )()
+
+    result = uc.execute(req)
+    assert result["partial_failure"] is False
+    assert result["count"] == 1
+    assert result["meta"]["next_event_only"] is True

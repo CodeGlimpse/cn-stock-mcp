@@ -722,6 +722,7 @@ class EventCalendarRequest(BaseModel):
     event_types: list[Literal["dividend", "unlock", "profit"]] | None = None
     start_date: str | None = None
     end_date: str | None = None
+    next_event_only: bool = False
     provider: Literal["zhitu"] | None = "zhitu"
 
     @model_validator(mode="after")

@@ -143,3 +143,8 @@ def test_sector_leaders_request_defaults():
     req = SectorLeadersRequest(sector_name="1000信息")
     assert req.top_n == 3
     assert req.trade_date is not None
+
+
+def test_event_calendar_request_next_event_only():
+    req = EventCalendarRequest(symbols=["600519.SH"], next_event_only=True)
+    assert req.next_event_only is True

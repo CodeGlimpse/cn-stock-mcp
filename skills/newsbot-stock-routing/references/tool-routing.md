@@ -12,7 +12,7 @@
 - 单股复盘 → `stock_review`
 - 股票池批量对比 → `stock_review_batch`
 - 公司基本面 / 概念标签 / 分红 / 解禁 / 估值快照 → `stock_profile`
-- 事件时间轴（分红/解禁/业绩）→ `event_calendar`
+- 事件时间轴（分红/解禁/业绩）→ `event_calendar`（可用 `next_event_only=true` 做盘前提醒）
 - 候选扫描 / 找优先级 → `stock_candidate_scan`
 - 固定观察池 / 自选池复盘 → `watchlist_review`
 - 单板块复盘 / 行业强弱 / 龙头跟风拖累 → `sector_review`（支持 `sector_type=primary` 一级行业 / `sector_type=concept` 概念题材）

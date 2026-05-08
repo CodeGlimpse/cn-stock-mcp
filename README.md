@@ -42,7 +42,7 @@
 - `stock_profile()`（公司基本面：profile/dividends/unlocks/profits/valuation）
 - `sector_quote()`（板块指数行情：primary/concept）
 - `sector_leaders()`（板块龙头/跟风/拖累快照）
-- `event_calendar()`（事件时间轴：dividend/unlock/profit）
+- `event_calendar()`（事件时间轴：dividend/unlock/profit，支持 next_event_only 盘前提醒）
 
 ### AKShare
 - `stock_search()` 基本可用
@@ -772,6 +772,9 @@ openclaw skills info newsbot-stock-routing
 ```bash
 # 查询单只股票的分红/解禁/业绩事件（区间）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload '{"symbols":["600519.SH"],"event_types":["dividend","unlock","profit"],"start_date":"2026-01-01","end_date":"2026-12-31"}'
+
+# 只看每只股票最近未来事件（盘前提醒）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload '{"symbols":["600519.SH"],"next_event_only":true}'
 ```
 
 

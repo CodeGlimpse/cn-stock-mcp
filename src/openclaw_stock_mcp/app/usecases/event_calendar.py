@@ -31,6 +31,8 @@ class EventCalendarUseCase:
 
     def execute(self, request):
         event_types = set(getattr(request, "event_types", None) or ["dividend", "unlock", "profit"])
+        next_event_only = bool(getattr(request, "next_event_only", False))
+        today_iso = dt_date.today().isoformat()
         errors = []
         items = []
         per_symbol = []
@@ -109,6 +111,9 @@ class EventCalendarUseCase:
                             )
 
                 symbol_events.sort(key=lambda x: x.get("event_date") or "")
+                if next_event_only:
+                    future_events = [e for e in symbol_events if (e.get("event_date") or "") >= today_iso]
+                    symbol_events = future_events[:1]
                 items.extend(symbol_events)
                 per_symbol.append(
                     {
@@ -150,5 +155,7 @@ class EventCalendarUseCase:
                 "start_date": request.start_date,
                 "end_date": request.end_date,
                 "provider_used": sorted({m.get("provider_used") for m in per_symbol if m.get("provider_used")}),
+                "next_event_only": next_event_only,
+                "as_of_date": today_iso,
             },
         }
