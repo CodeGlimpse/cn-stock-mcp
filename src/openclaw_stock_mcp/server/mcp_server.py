@@ -21,6 +21,7 @@ from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from openclaw_stock_mcp.app.usecases.sector_quote import SectorQuoteUseCase
 from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
 from openclaw_stock_mcp.app.usecases.sector_rotation_review import SectorRotationReviewUseCase
+from openclaw_stock_mcp.app.usecases.sector_leaders import SectorLeadersUseCase
 from openclaw_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
 from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
 from openclaw_stock_mcp.app.usecases.stock_review import StockReviewUseCase
@@ -40,6 +41,7 @@ from openclaw_stock_mcp.server.schemas import (
     SectorQuoteRequest,
     SectorReviewRequest,
     SectorRotationReviewRequest,
+    SectorLeadersRequest,
     EventCalendarRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
@@ -144,6 +146,7 @@ def create_server() -> MCPServerStub:
     sector_quote = SectorQuoteUseCase()
     sector_review = SectorReviewUseCase()
     sector_rotation_review = SectorRotationReviewUseCase()
+    sector_leaders = SectorLeadersUseCase()
     hot_theme_tracker = HotThemeTrackerUseCase()
     provider_health = ProviderHealthUseCase()
     stock_profile = StockProfileUseCase()
@@ -167,6 +170,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="sector_quote", description="Get real-time quotes for sector indices.", input_model=SectorQuoteRequest, handler=sector_quote.execute))
     server.register_tool(MCPTool(name="sector_review", description="Generate a review summary for a sector by aggregating its member stocks.", input_model=SectorReviewRequest, handler=sector_review.execute))
     server.register_tool(MCPTool(name="sector_rotation_review", description="Compare multiple sectors and summarize cross-sector rotation signals.", input_model=SectorRotationReviewRequest, handler=sector_rotation_review.execute))
+    server.register_tool(MCPTool(name="sector_leaders", description="Get leaders/followers/draggers snapshot for a sector.", input_model=SectorLeadersRequest, handler=sector_leaders.execute))
     server.register_tool(MCPTool(name="hot_theme_tracker", description="Track hot themes by combining sector rotation and pool snapshots.", input_model=HotThemeTrackerRequest, handler=hot_theme_tracker.execute))
     server.register_tool(MCPTool(name="provider_health", description="Run provider self checks for zhitu and akshare.", input_model=EmptyRequest, handler=provider_health.execute))
     server.register_tool(MCPTool(name="event_calendar", description="Build event timeline (dividend/unlock/profit) for one or more stocks.", input_model=EventCalendarRequest, handler=event_calendar.execute))

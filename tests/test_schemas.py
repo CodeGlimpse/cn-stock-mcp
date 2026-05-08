@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest, EventCalendarRequest
+from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest, EventCalendarRequest, SectorLeadersRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -137,3 +137,9 @@ def test_stock_profile_request_supports_valuation_include():
 def test_event_calendar_request_validation():
     req = EventCalendarRequest(symbols=["600519.SH"], event_types=["dividend", "dividend", "unlock"], start_date="2026-05-01", end_date="2026-05-31")
     assert req.event_types == ["dividend", "unlock"]
+
+
+def test_sector_leaders_request_defaults():
+    req = SectorLeadersRequest(sector_name="1000信息")
+    assert req.top_n == 3
+    assert req.trade_date is not None

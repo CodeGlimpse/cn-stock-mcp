@@ -681,6 +681,42 @@ class HotThemeTrackerRequest(BaseModel):
         return self
 
 
+class SectorLeadersRequest(BaseModel):
+    sector_name: str = Field(min_length=1)
+    sector_type: Literal["primary", "concept"] = "primary"
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    adjust: AdjustType = "none"
+    provider: Literal["zhitu"] | None = "zhitu"
+    sort_by: Literal["relative_strength", "return", "volume_ratio", "max_drawdown"] = "relative_strength"
+    descending: bool = True
+    top_n: int = Field(default=3, ge=1, le=20)
+    limit: int = Field(default=100, ge=1, le=500)
+    min_relative_strength: float | None = None
+    min_return: float | None = None
+    max_drawdown_limit: float | None = None
+    min_volume_ratio: float | None = None
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+            return self
+        if self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+            return self
+        self.trade_date = dt_date.today().isoformat()
+        return self
+
+
 class EventCalendarRequest(BaseModel):
     symbols: list[str] = Field(min_length=1, max_length=100)
     event_types: list[Literal["dividend", "unlock", "profit"]] | None = None

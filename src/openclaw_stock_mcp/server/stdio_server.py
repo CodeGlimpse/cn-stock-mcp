@@ -13,6 +13,7 @@ from openclaw_stock_mcp.server.schemas import (
     SectorLookupRequest,
     SectorReviewRequest,
     SectorRotationReviewRequest,
+    SectorLeadersRequest,
     SectorQuoteRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
@@ -412,6 +413,45 @@ def build_fastmcp_server() -> FastMCP:
             min_volume_ratio=min_volume_ratio,
         )
         return registry.call_tool("sector_review", req.model_dump(exclude_none=True))
+
+
+
+    @mcp.tool(name="sector_leaders", description="Get leaders/followers/draggers snapshot for a sector.")
+    async def sector_leaders(
+        sector_name: str,
+        sector_type: str = "primary",
+        trade_date: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        adjust: str = "none",
+        provider: str | None = "zhitu",
+        sort_by: str = "relative_strength",
+        descending: bool = True,
+        top_n: int = 3,
+        limit: int = 100,
+        min_relative_strength: float | None = None,
+        min_return: float | None = None,
+        max_drawdown_limit: float | None = None,
+        min_volume_ratio: float | None = None,
+    ):
+        req = SectorLeadersRequest(
+            sector_name=sector_name,
+            sector_type=sector_type,
+            trade_date=trade_date,
+            start_date=start_date,
+            end_date=end_date,
+            adjust=adjust,
+            provider=provider,
+            sort_by=sort_by,
+            descending=descending,
+            top_n=top_n,
+            limit=limit,
+            min_relative_strength=min_relative_strength,
+            min_return=min_return,
+            max_drawdown_limit=max_drawdown_limit,
+            min_volume_ratio=min_volume_ratio,
+        )
+        return registry.call_tool("sector_leaders", req.model_dump(exclude_none=True))
 
     @mcp.tool(name="sector_rotation_review", description="Compare multiple sectors and summarize cross-sector rotation signals.")
     async def sector_rotation_review(

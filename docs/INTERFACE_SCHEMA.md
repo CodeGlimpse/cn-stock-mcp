@@ -28,6 +28,7 @@ Last Updated: 2026-05-08
 - sector_lookup
 - sector_review
 - sector_rotation_review
+- sector_leaders
 - hot_theme_tracker
 - provider_health
 - event_calendar
