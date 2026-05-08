@@ -2,6 +2,7 @@
 
 ## 1. 意图 → tool
 
+- 板块指数行情 → `sector_quote`
 - 系统异常 / 上游挂了 → `provider_health`
 - 是否交易日 / 上下个交易日 → `trading_calendar`
 - 市场简报 / 收盘复盘 → `market_brief`
@@ -76,6 +77,7 @@
 - `technical_indicator(stock/index)`：`zhitu` 主，`akshare` 备
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
 - `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
+- `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits）
 - `sector_review`：成员股获取走 `zhitu`，支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材），成员复盘复用 `akshare`

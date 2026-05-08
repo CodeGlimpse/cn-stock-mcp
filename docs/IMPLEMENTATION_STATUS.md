@@ -104,26 +104,18 @@
   - `windows.daily / weekly / monthly`
   - 可直接阅读的 `summary` 文本
 
-### stock_profile（公司基本面）
-- 新增 `stock_profile` tool
+### sector_quote（板块指数行情）
+- 新增 `sector_quote` tool
 - 当前 provider：`zhitu`
-- 支持模块化获取（`include` 参数）：
-  - `profile`：公司简介（名称、行业、概念标签、经营范围等）
-  - `dividends`：近年分红历史
-  - `unlocks`：解禁限售计划
-  - `profits`：近一年季度利润
+- 支持板块指数实时行情
 - 输出包含：
-  - `profile`：公司基本信息 + 概念标签列表
-  - `dividends`：分红记录列表
-  - `unlocks`：解禁记录列表
-  - `quarter_profits`：季度利润列表
-  - `dividend_summary`：分红统计摘要
-  - `unlock_risk`：解禁风险摘要
-- Zhitu API 路径：
-  - `/hs/gs/gsjj/{code}` - 公司简介
-  - `/hs/gs/jnff/{code}` - 近年分红
-  - `/hs/gs/jjxs/{code}` - 解禁限售
-  - `/hs/gs/jdlr/{code}` - 季度利润
+  - `symbol`：板块指数代码（如 `101076.BKZS`）
+  - `name`：板块名称
+  - `sector_type`：`primary`（一级行业）或 `concept`（概念题材）
+  - 价格字段：`price`、`open`、`high`、`low`、`prev_close`、`change`、`change_percent`
+  - 量能字段：`volume`、`turnover`、`turnover_rate`、`amplitude`
+  - 时间戳：`timestamp`
+- Zhitu API 路径：`/hz/real/ssjy/{symbol}`（复用指数行情接口）
 
 ### stock_review_batch（批量个股复盘）
 - 新增 `stock_review_batch` tool

@@ -24,6 +24,7 @@ from openclaw_stock_mcp.providers.adapters.zhitu_profile_adapters import (
     build_dividend_summary,
     build_unlock_risk,
 )
+from openclaw_stock_mcp.providers.adapters.zhitu_sector_adapters import adapt_zhitu_sector_quote
 from openclaw_stock_mcp.providers.adapters.zhitu_series_adapters import (
     adapt_zhitu_bar,
     adapt_zhitu_broken_limit_item,
@@ -605,3 +606,13 @@ class ZhituProvider:
             unlock_risk=unlock_risk,
             source="zhitu",
         )
+
+    def get_sector_quote(self, symbol: str, sector_type: str | None = None):
+        normalized = normalize_symbol(symbol)
+        raw = self._get_json(f"/hz/real/ssjy/{normalized}")
+        if isinstance(raw, list):
+            raw = raw[0]
+        return adapt_zhitu_sector_quote(raw, normalized, sector_type)
+
+    def get_sector_quotes(self, symbols: list[str], sector_type: str | None = None):
+        return [self.get_sector_quote(symbol, sector_type) for symbol in symbols]

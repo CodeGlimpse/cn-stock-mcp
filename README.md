@@ -40,6 +40,7 @@
 - `stock_orderbook(main)`
 - `stock_orderbook(star)`
 - `stock_profile()`（公司基本面：profile/dividends/unlocks/profits）
+- `sector_quote()`（板块指数行情：primary/concept）
 
 ### AKShare
 - `stock_search()` 基本可用
@@ -392,6 +393,26 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
   - `rankings`（收益/相对强弱/量比/回撤风险榜）
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates` 等分层）
 - `rotation.score` 通过 `meta.rotation_score_schema` 单独声明，不与 `sentiment.score` 混用
+
+### sector_quote 板块指数行情样例
+
+```bash
+# 获取概念板块指数行情（如人工智能概念）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS"],"sector_type":"concept"}'
+
+# 获取多个板块指数行情
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sector_type":"concept"}'
+```
+
+说明：
+- `symbols`：板块指数代码（如 `101076.BKZS`）
+- `sector_type`：可选 `primary`（一级行业）或 `concept`（概念题材）
+- `provider`：仅支持 `zhitu`
+- 返回包含：
+  - `symbol`、`name`、`sector_type`
+  - 价格字段：`price`、`open`、`high`、`low`、`prev_close`、`change`、`change_percent`
+  - 量能字段：`volume`、`turnover`、`turnover_rate`、`amplitude`
+  - 时间戳：`timestamp`
 
 ### stock_profile 公司基本面样例
 

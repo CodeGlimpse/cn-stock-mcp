@@ -685,3 +685,9 @@ class StockProfileRequest(BaseModel):
     symbol: str = Field(min_length=1)
     include: list[Literal["profile", "dividends", "unlocks", "profits"]] | None = None
     provider: Literal["zhitu"] | None = "zhitu"
+
+
+class SectorQuoteRequest(BaseModel):
+    symbols: list[str] = Field(min_length=1, max_length=20)
+    sector_type: Literal["primary", "concept"] | None = None
+    provider: Literal["zhitu"] | None = "zhitu"

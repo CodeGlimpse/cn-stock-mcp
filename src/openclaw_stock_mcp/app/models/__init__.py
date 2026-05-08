@@ -12,6 +12,7 @@ from .profile import (
     UnlockRecord,
     QuarterProfit,
 )
+from .sector_quote import SectorQuote
 
 __all__ = [
     "ToolError",
@@ -29,4 +30,5 @@ __all__ = [
     "DividendRecord",
     "UnlockRecord",
     "QuarterProfit",
+    "SectorQuote",
 ]
