@@ -403,13 +403,16 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
 # 获取概念板块指数行情（如人工智能概念）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS"],"sector_type":"concept"}'
 
-# 获取多个板块指数行情
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sector_type":"concept"}'
+# 获取多个板块指数行情（按涨跌幅排序，取前 5）
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sector_type":"concept","sort_by":"change_percent","top_n":5}'
 ```
 
 说明：
 - `symbols`：板块指数代码（如 `101076.BKZS`）
 - `sector_type`：可选 `primary`（一级行业）或 `concept`（概念题材）
+- `sort_by`：可选 `change_percent`（涨跌幅）或 `turnover`（成交额）
+- `descending`：是否降序，默认 `true`
+- `top_n`：可选，截取前 N 条（1~50）
 - `provider`：仅支持 `zhitu`
 - 返回包含：
   - `symbol`、`name`、`sector_type`

@@ -2,7 +2,7 @@
 
 ## 1. 意图 → tool
 
-- 板块指数行情 → `sector_quote`
+- 板块指数行情 / 快速榜单（涨跌幅/成交额）→ `sector_quote`
 - 系统异常 / 上游挂了 → `provider_health`
 - 是否交易日 / 上下个交易日 → `trading_calendar`
 - 市场简报 / 收盘复盘 → `market_brief`

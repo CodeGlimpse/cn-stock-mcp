@@ -688,6 +688,9 @@ class StockProfileRequest(BaseModel):
 
 
 class SectorQuoteRequest(BaseModel):
-    symbols: list[str] = Field(min_length=1, max_length=20)
+    symbols: list[str] = Field(min_length=1, max_length=50)
     sector_type: Literal["primary", "concept"] | None = None
+    sort_by: Literal["change_percent", "turnover"] | None = None
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=50)
     provider: Literal["zhitu"] | None = "zhitu"
