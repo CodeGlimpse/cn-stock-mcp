@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-07
+更新时间：2026-05-08
 
 ## 已完成
 
@@ -30,6 +30,8 @@
 - `watchlist_review`
 - `multi_timeframe_review`
 - `hot_theme_tracker`
+- `stock_profile`
+- `sector_quote`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`

@@ -76,6 +76,9 @@ pip install -r requirements-dev.txt
 ### 运行测试
 
 ```bash
+# 推荐：使用项目虚拟环境，避免系统 Python 依赖缺失
+.venv/bin/python -m pytest -q -m "not live"
+
 # 默认：仅跑稳定回归（不含 live 网络测试）
 make test
 
