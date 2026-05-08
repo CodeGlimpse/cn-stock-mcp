@@ -367,6 +367,10 @@ def build_fastmcp_server() -> FastMCP:
         sort_by: str | None = None,
         descending: bool = True,
         top_n: int | None = None,
+        min_turnover: float | None = None,
+        min_change_percent: float | None = None,
+        exclude_null_fields: bool = False,
+        return_mode: str = "full",
         provider: str | None = "zhitu",
     ):
         req = SectorQuoteRequest(
@@ -375,6 +379,10 @@ def build_fastmcp_server() -> FastMCP:
             sort_by=sort_by,
             descending=descending,
             top_n=top_n,
+            min_turnover=min_turnover,
+            min_change_percent=min_change_percent,
+            exclude_null_fields=exclude_null_fields,
+            return_mode=return_mode,
             provider=provider,
         )
         return registry.call_tool("sector_quote", req.model_dump(exclude_none=True))

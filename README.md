@@ -407,6 +407,9 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '
 
 # 获取多个板块指数行情（按涨跌幅排序，取前 5）
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sector_type":"concept","sort_by":"change_percent","top_n":5}'
+
+# 榜单筛选：成交额>=2e8，按涨跌幅排序，仅返回 top_n
+PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sort_by":"change_percent","top_n":3,"min_turnover":200000000,"return_mode":"ranked_only"}'
 ```
 
 说明：
@@ -415,6 +418,10 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '
 - `sort_by`：可选 `change_percent`（涨跌幅）或 `turnover`（成交额）
 - `descending`：是否降序，默认 `true`
 - `top_n`：可选，截取前 N 条（1~50）
+- `min_turnover`：可选，按最小成交额过滤
+- `min_change_percent`：可选，按最小涨跌幅过滤
+- `exclude_null_fields`：可选，剔除排序字段为空的项
+- `return_mode`：`full`（默认，返回过滤+排序后全量）或 `ranked_only`（只返回 top_n）
 - `provider`：仅支持 `zhitu`
 - 返回包含：
   - `symbol`、`name`、`sector_type`

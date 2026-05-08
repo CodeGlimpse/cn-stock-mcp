@@ -759,4 +759,8 @@ class SectorQuoteRequest(BaseModel):
     sort_by: Literal["change_percent", "turnover"] | None = None
     descending: bool = True
     top_n: int | None = Field(default=None, ge=1, le=50)
+    min_turnover: float | None = Field(default=None, ge=0)
+    min_change_percent: float | None = None
+    exclude_null_fields: bool = False
+    return_mode: Literal["full", "ranked_only"] = "full"
     provider: Literal["zhitu"] | None = "zhitu"

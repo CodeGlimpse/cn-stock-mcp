@@ -61,6 +61,10 @@ def _req(**kwargs):
         "sort_by": None,
         "descending": True,
         "top_n": None,
+        "min_turnover": None,
+        "min_change_percent": None,
+        "exclude_null_fields": False,
+        "return_mode": "full",
         "provider": None,
     }
     base.update(kwargs)
@@ -85,7 +89,7 @@ def test_sector_quote_sort_by_change_percent_and_top_n():
     uc.router = _Router()
     uc.resolver = _Resolver()
 
-    result = uc.execute(_req(sort_by="change_percent", top_n=1))
+    result = uc.execute(_req(sort_by="change_percent", top_n=1, return_mode="ranked_only"))
 
     assert len(result["items"]) == 1
     assert result["items"][0].symbol == "A.BKZS"
@@ -101,3 +105,26 @@ def test_sector_quote_sort_by_turnover_descending():
     result = uc.execute(_req(sort_by="turnover", top_n=2, descending=True))
 
     assert [i.symbol for i in result["items"]] == ["B.BKZS", "A.BKZS"]
+
+
+def test_sector_quote_filter_min_turnover():
+    uc = SectorQuoteUseCase()
+    uc.router = _Router()
+    uc.resolver = _Resolver()
+
+    result = uc.execute(_req(min_turnover=200, sort_by="turnover"))
+
+    assert [i.symbol for i in result["items"]] == ["B.BKZS"]
+    assert result["meta"]["filtered_count"] == 1
+
+
+def test_sector_quote_filter_min_change_percent_and_ranked_only():
+    uc = SectorQuoteUseCase()
+    uc.router = _Router()
+    uc.resolver = _Resolver()
+
+    result = uc.execute(_req(min_change_percent=2.0, sort_by="change_percent", top_n=1, return_mode="ranked_only"))
+
+    assert len(result["items"]) == 1
+    assert result["items"][0].symbol == "A.BKZS"
+    assert result["meta"]["return_mode"] == "ranked_only"
