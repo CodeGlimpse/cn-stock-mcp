@@ -21,6 +21,12 @@ from .financial import (
     FinancialHistoryPoint,
     StockFinancialResult,
 )
+from .limit_stat import (
+    LimitUpItem,
+    BrokenLimitItem,
+    PreviousDayLimitItem,
+    LimitStatSummary,
+)
 from .sector_quote import SectorQuote
 
 __all__ = [
@@ -42,6 +48,10 @@ __all__ = [
     "FinancialDetailItem",
     "FinancialHistoryPoint",
     "StockFinancialResult",
+    "LimitUpItem",
+    "BrokenLimitItem",
+    "PreviousDayLimitItem",
+    "LimitStatSummary",
     "StockProfile",
     "StockProfileDetail",
     "DividendRecord",

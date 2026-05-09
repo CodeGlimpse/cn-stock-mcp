@@ -31,8 +31,14 @@ from openclaw_stock_mcp.providers.adapters.akshare_financial_adapters import (
     build_financial_history_from_abstract,
     build_financial_snapshot_from_abstract,
 )
+from openclaw_stock_mcp.providers.adapters.akshare_limit_stat_adapters import (
+    adapt_em_broken_limit_item,
+    adapt_em_limit_up_item,
+    adapt_em_previous_limit_item,
+)
 from openclaw_stock_mcp.app.models.capital_flow import CapitalFlowRecord, MarketFundFlowSummary, SectorFundFlowItem
 from openclaw_stock_mcp.app.models.financial import FinancialDetailItem, FinancialSnapshot, FinancialHistoryPoint
+from openclaw_stock_mcp.app.models.limit_stat import BrokenLimitItem, LimitUpItem, PreviousDayLimitItem
 from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 
 
@@ -499,3 +505,36 @@ class AKShareProvider:
             return float(value)
         except (TypeError, ValueError):
             return None
+
+    def get_limit_up_pool(self, trade_date: str) -> list[LimitUpItem]:
+        """Fetch limit-up pool from ak.stock_zt_pool_em()."""
+        lib = self._require_ak()
+        date_str = trade_date.replace("-", "")
+        try:
+            df = self._call_ak_quietly(lib.stock_zt_pool_em, date=date_str)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare limit-up pool failed for {trade_date}: {exc}", retryable=True) from exc
+        rows = df.to_dict(orient="records")
+        return [adapt_em_limit_up_item(row) for row in rows]
+
+    def get_broken_limit_pool(self, trade_date: str) -> list[BrokenLimitItem]:
+        """Fetch broken limit pool from ak.stock_zt_pool_zbgc_em()."""
+        lib = self._require_ak()
+        date_str = trade_date.replace("-", "")
+        try:
+            df = self._call_ak_quietly(lib.stock_zt_pool_zbgc_em, date=date_str)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare broken limit pool failed for {trade_date}: {exc}", retryable=True) from exc
+        rows = df.to_dict(orient="records")
+        return [adapt_em_broken_limit_item(row) for row in rows]
+
+    def get_previous_day_limit_pool(self, trade_date: str) -> list[PreviousDayLimitItem]:
+        """Fetch yesterday's limit-up stocks' today performance from ak.stock_zt_pool_previous_em()."""
+        lib = self._require_ak()
+        date_str = trade_date.replace("-", "")
+        try:
+            df = self._call_ak_quietly(lib.stock_zt_pool_previous_em, date=date_str)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare previous limit pool failed for {trade_date}: {exc}", retryable=True) from exc
+        rows = df.to_dict(orient="records")
+        return [adapt_em_previous_limit_item(row) for row in rows]

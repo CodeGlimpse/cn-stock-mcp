@@ -826,3 +826,26 @@ class StockFinancialRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class LimitStatRequest(BaseModel):
+    trade_date: str | None = None
+    include: list[Literal["summary", "limit_up", "broken_limit", "previous_day", "limit_down"]] = Field(default=["summary", "limit_up", "broken_limit", "previous_day"])
+    min_consecutive_boards: int | None = Field(default=None, ge=1, le=50)
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+        if not self.include:
+            raise ValueError("include must contain at least one of: summary, limit_up, broken_limit, previous_day, limit_down")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self
