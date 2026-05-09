@@ -62,6 +62,7 @@
 - `northbound()` 北向资金可用（当日流向/历史/持股排行）
 - `valuation_rank()` 估值排名可用（市场估值温度 + 个股PE/PB排名）
 - `index_compose()` 指数组成可用（成分股/权重/集中度统计）
+- `industry_valuation_rank()` 行业估值分位可用（一级行业成员股 PE/PB 聚合与分位排序）
 
 ## 快速开始
 
