@@ -1,6 +1,6 @@
 # Interface Schema (`openclaw-stock-mcp`)
 
-Last Updated: 2026-05-08
+Last Updated: 2026-05-09
 
 > 本文是当前对外契约（输入/输出与关键约束）。
 > 若与历史文档冲突，以本文与代码实现为准。
@@ -32,6 +32,12 @@ Last Updated: 2026-05-08
 - hot_theme_tracker
 - provider_health
 - event_calendar
+- capital_flow
+- stock_financial
+- limit_stat
+- northbound
+- valuation_rank
+- index_compose
 
 ---
 
@@ -122,6 +128,8 @@ Last Updated: 2026-05-08
   - index：`zhitu` 主，`akshare` 备
   - fund：`zhitu`
 - market_pool / stock_orderbook / stock_profile：`zhitu`
+- capital_flow / stock_financial / limit_stat / northbound / index_compose：`akshare`
+- valuation_rank：市场估值快照使用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - stock_quote：
   - stock-main：`zhitu` 主，`akshare` 备（批量请求使用 `/hs/public/ssjymore`，最多 20 支）
   - index/fund：`zhitu` 主，`akshare` 备
@@ -145,6 +153,12 @@ Last Updated: 2026-05-08
 - `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）；支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材）
 - `stock_profile`：公司基本面（profile/dividends/unlocks/quarter_profits/valuation/dividend_summary/unlock_risk）
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
+- `capital_flow`：资金流向（market/individual/industry/concept）
+- `stock_financial`：财务数据三层视图（snapshot/history/details）
+- `limit_stat`：短线情绪统计（封板率/连板分布/炸板/昨涨停今继续率）
+- `northbound`：北向资金（当日流向/历史/持股排行）
+- `valuation_rank`：估值排名（市场估值温度 + 个股 PE/PB 排名）
+- `index_compose`：指数成分与权重（支持集中度统计）
 
 补充（可观测性字段，已在关键工具 meta 中统一输出）：
 - `provider_used`：本次实际使用的 provider（或集合）
