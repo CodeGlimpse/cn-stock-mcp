@@ -870,3 +870,27 @@ class NorthboundRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class ValuationRankRequest(BaseModel):
+    symbols: list[str] = Field(min_length=1, max_length=200)
+    sec_type: Literal["stock"] = "stock"
+    sort_by: Literal["pe", "pb", "market_cap"] = "pe"
+    descending: bool = False
+    top_n: int | None = Field(default=None, ge=1, le=200)
+    provider: Literal["zhitu", "akshare"] | None = "zhitu"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        normalized = []
+        seen = set()
+        for s in self.symbols:
+            v = (s or "").strip()
+            if not v or v in seen:
+                continue
+            seen.add(v)
+            normalized.append(v)
+        if not normalized:
+            raise ValueError("symbols must contain at least 1 non-empty symbol")
+        self.symbols = normalized
+        return self
