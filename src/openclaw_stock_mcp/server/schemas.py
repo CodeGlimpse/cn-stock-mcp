@@ -894,3 +894,19 @@ class ValuationRankRequest(BaseModel):
             raise ValueError("symbols must contain at least 1 non-empty symbol")
         self.symbols = normalized
         return self
+
+
+class IndexComposeRequest(BaseModel):
+    index_code: str = Field(min_length=1)
+    top_n: int | None = Field(default=None, ge=1, le=1000)
+    include_weight: bool = True
+    sort_by: Literal["weight", "symbol"] = "weight"
+    descending: bool = True
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        self.index_code = (self.index_code or "").strip()
+        if not self.index_code:
+            raise ValueError("index_code is required")
+        return self
