@@ -158,3 +158,29 @@ def test_watchlist_review_applies_filters():
     assert len(result["items"]) == 2
     assert result["items"][0]["symbol"] == "300750.SZ"
     assert result["items"][1]["symbol"] == "002594.SZ"
+
+
+def test_watchlist_return_mode_ranked_only():
+    from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
+
+    class _Batch:
+        def execute(self, req):
+            return {
+                "mode": "trade_date_review",
+                "requested_trade_date": "2026-05-08",
+                "requested_start_date": None,
+                "requested_end_date": None,
+                "items": [
+                    {"symbol": "A", "relative_strength": 2, "return": 3, "max_drawdown": 1, "volume_ratio": 1.1, "tags": [], "stats": {}},
+                    {"symbol": "B", "relative_strength": 1, "return": 2, "max_drawdown": 2, "volume_ratio": 1.0, "tags": [], "stats": {}},
+                ],
+                "partial_failure": False,
+                "errors": [],
+            }
+
+    uc = WatchlistReviewUseCase()
+    uc.batch_review = _Batch()
+    req = type("Req", (), {"symbols":["A","B"],"watchlist_name":None,"trade_date":"2026-05-08","start_date":None,"end_date":None,"adjust":"none","provider":"akshare","sort_by":"watchlist_score","descending":True,"top_n":1,"min_watchlist_score":None,"min_relative_strength":None,"min_return":None,"max_drawdown_limit":None,"min_volume_ratio":None,"return_mode":"ranked_only"})()
+    result = uc.execute(req)
+    assert len(result["items"]) == 1
+    assert result["meta"]["filters"]["return_mode"] == "ranked_only"

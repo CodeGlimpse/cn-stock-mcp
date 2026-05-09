@@ -170,3 +170,9 @@ Last Updated: 2026-05-08
 - 北交所：https://www.zhituapi.com/bjdataapi.html
 - 科创板：https://www.zhituapi.com/kcdataapi.html
 - 基金：https://www.zhituapi.com/fundmarketapi.html
+
+
+## 榜单语义统一（v1）
+适用工具：`sector_quote`、`stock_candidate_scan`、`watchlist_review`、`sector_leaders`
+- 输入：`sort_by/descending/top_n/return_mode`
+- 输出 meta：`filtered_from/filtered_count/ranked_count`

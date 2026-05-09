@@ -57,8 +57,10 @@ class StockCandidateScanUseCase:
         scored_items = [self._to_candidate_card(item, source_tags.get(item.get("symbol"), [])) for item in batch_resp.get("items", [])]
         filtered_items = self._apply_filters(scored_items, request)
         sorted_items = self._sort_items(filtered_items, request.sort_by, request.descending)
+        return_mode = getattr(request, "return_mode", "full")
+        output_items = sorted_items[: request.top_n] if return_mode == "ranked_only" else sorted_items
 
-        analysis_items = sorted_items
+        analysis_items = output_items
         breadth = self._build_breadth(analysis_items)
         stats = self._build_stats(analysis_items)
         sentiment = self._build_sentiment(stats, breadth)
@@ -104,7 +106,7 @@ class StockCandidateScanUseCase:
             "laggards": rankings["risk_by_drawdown"],
             "rankings": rankings,
             "buckets": buckets,
-            "items": sorted_items,
+            "items": output_items,
             "summary": summary,
             "partial_failure": bool(errors) or batch_resp.get("partial_failure", False),
             "errors": errors,
@@ -149,7 +151,11 @@ class StockCandidateScanUseCase:
                     "exclude_risk_flags": getattr(request, "exclude_risk_flags", None),
                     "must_have_reason_tags": getattr(request, "must_have_reason_tags", None),
                     "exclude_reason_tags": getattr(request, "exclude_reason_tags", None),
+                    "return_mode": return_mode,
                 },
+                "filtered_from": len(scored_items),
+                "filtered_count": len(filtered_items),
+                "ranked_count": min(len(sorted_items), request.top_n),
                 "batch_review": {
                     "sort_by": batch_resp.get("sort_by"),
                     "descending": batch_resp.get("descending"),

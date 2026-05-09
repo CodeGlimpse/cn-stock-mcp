@@ -38,21 +38,23 @@ class WatchlistReviewUseCase:
         scored_items = [self._to_watchlist_card(item) for item in batch_resp.get("items", [])]
         filtered_items = self._apply_filters(scored_items, request)
         sorted_items = self._sort_items(filtered_items, request.sort_by, request.descending)
+        return_mode = getattr(request, "return_mode", "full")
+        output_items = sorted_items[: request.top_n] if return_mode == "ranked_only" else sorted_items
 
-        breadth = self._build_breadth(sorted_items)
-        stats = self._build_stats(sorted_items)
+        breadth = self._build_breadth(output_items)
+        stats = self._build_stats(output_items)
         sentiment = self._build_sentiment(stats, breadth)
-        benchmark_summary = self._build_benchmark_summary(sorted_items)
-        continuity = self._build_continuity(sorted_items)
-        structure = self._build_structure(sorted_items, len(request.symbols), breadth, stats, sentiment)
-        rankings = self._build_rankings(sorted_items, request.top_n)
-        buckets = self._build_buckets(sorted_items, request.top_n)
+        benchmark_summary = self._build_benchmark_summary(output_items)
+        continuity = self._build_continuity(output_items)
+        structure = self._build_structure(output_items, len(request.symbols), breadth, stats, sentiment)
+        rankings = self._build_rankings(output_items, request.top_n)
+        buckets = self._build_buckets(output_items, request.top_n)
         summary = self._build_summary(
             watchlist_name=request.watchlist_name or "custom_watchlist",
             mode=batch_resp.get("mode"),
             member_count=len(request.symbols),
             reviewed_count=len(scored_items),
-            selected_count=len(sorted_items),
+            selected_count=len(output_items),
             stats=stats,
             breadth=breadth,
             sentiment=sentiment,
@@ -81,7 +83,7 @@ class WatchlistReviewUseCase:
             "laggards": rankings["risk_by_watchlist_score"],
             "rankings": rankings,
             "buckets": buckets,
-            "items": sorted_items,
+            "items": output_items,
             "summary": summary,
             "partial_failure": batch_resp.get("partial_failure", False),
             "errors": batch_resp.get("errors", []),
@@ -113,7 +115,11 @@ class WatchlistReviewUseCase:
                     "min_return": request.min_return,
                     "max_drawdown_limit": request.max_drawdown_limit,
                     "min_volume_ratio": request.min_volume_ratio,
+                    "return_mode": return_mode,
                 },
+                "filtered_from": len(scored_items),
+                "filtered_count": len(filtered_items),
+                "ranked_count": min(len(sorted_items), request.top_n),
                 "batch_review": {
                     "sort_by": batch_resp.get("sort_by"),
                     "descending": batch_resp.get("descending"),

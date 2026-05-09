@@ -793,3 +793,9 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool event_calendar --payload
 ```bash
 PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_leaders --payload '{"sector_name":"1000信息","sector_type":"primary","trade_date":"2026-05-08","top_n":3}'
 ```
+
+
+### 榜单工具统一语义（v1）
+- `return_mode=full`：返回过滤+排序后全量
+- `return_mode=ranked_only`：仅返回 `top_n`
+- 统一 `meta`：`filtered_from / filtered_count / ranked_count`

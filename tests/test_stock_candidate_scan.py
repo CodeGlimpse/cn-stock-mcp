@@ -303,3 +303,35 @@ def test_stock_candidate_scan_reason_tag_filters():
     assert result["items"][0]["symbol"] == "300750.SZ"
     assert "strong_return" in result["items"][0]["reason_tags"]
     assert "active_volume" in result["items"][0]["reason_tags"]
+
+
+def test_candidate_scan_return_mode_ranked_only():
+    from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
+
+    class _Batch:
+        def execute(self, req):
+            return {
+                "mode": "trade_date_review",
+                "requested_trade_date": "2026-05-08",
+                "requested_start_date": None,
+                "requested_end_date": None,
+                "items": [
+                    {"symbol": "A", "relative_strength": 8, "return": 9, "max_drawdown": 2, "volume_ratio": 1.3, "tags": [], "stats": {}, "benchmark": {}},
+                    {"symbol": "B", "relative_strength": 2, "return": 2, "max_drawdown": 3, "volume_ratio": 1.0, "tags": [], "stats": {}, "benchmark": {}},
+                ],
+                "partial_failure": False,
+                "errors": [],
+                "sort_by": "relative_strength",
+                "descending": True,
+                "filtered_from": 2,
+                "total_symbols": 2,
+            }
+
+    uc = StockCandidateScanUseCase()
+    uc.batch_review = _Batch()
+    uc._build_universe = lambda req: {"symbols": ["A","B"], "errors": [], "source_tags": {"A":[],"B":[]}, "source_breakdown": {}, "sector_details": [], "pool": None, "truncated": False}
+
+    req = type("Req", (), {"symbols":["A","B"],"sector_names":None,"sector_type":"primary","pool_type":None,"trade_date":"2026-05-08","start_date":None,"end_date":None,"adjust":"none","provider":"mixed","sort_by":"candidate_score","descending":True,"top_n":1,"limit":20,"min_candidate_score":None,"min_relative_strength":None,"min_return":None,"max_drawdown_limit":None,"min_volume_ratio":None,"min_up_streak":None,"max_down_streak":None,"require_source_tags":None,"exclude_risk_flags":None,"must_have_reason_tags":None,"exclude_reason_tags":None,"return_mode":"ranked_only"})()
+    result = uc.execute(req)
+    assert len(result["items"]) == 1
+    assert result["meta"]["filters"]["return_mode"] == "ranked_only"

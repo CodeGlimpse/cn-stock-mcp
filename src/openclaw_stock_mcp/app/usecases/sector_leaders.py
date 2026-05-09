@@ -83,13 +83,17 @@ class SectorLeadersUseCase:
             "leaders": leaders,
             "followers": followers,
             "draggers": draggers,
-            "items": items,
+            "items": items[: request.top_n] if getattr(request, "return_mode", "full") == "ranked_only" else items,
             "partial_failure": batch_resp.get("partial_failure", False),
             "errors": batch_resp.get("errors", []),
             "meta": {
                 "sort_by": request.sort_by,
                 "descending": request.descending,
                 "top_n": request.top_n,
+                "return_mode": getattr(request, "return_mode", "full"),
+                "filtered_from": len(items),
+                "filtered_count": len(items),
+                "ranked_count": min(len(items), request.top_n),
                 "lookup_meta": members_resp.get("meta", {}),
             },
             "summary": (

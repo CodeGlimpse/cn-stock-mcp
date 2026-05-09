@@ -172,3 +172,8 @@
 ```json
 {"tool":"multi_timeframe_review","payload":{"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}}
 ```
+
+
+## 5. 榜单工具 return_mode 约定
+- `full`：过滤+排序后全量返回
+- `ranked_only`：只返回 top_n（用于榜单卡片）

@@ -152,6 +152,7 @@ def build_fastmcp_server() -> FastMCP:
         min_return: float | None = None,
         max_drawdown_limit: float | None = None,
         min_volume_ratio: float | None = None,
+        return_mode: str = "full",
     ):
         req = WatchlistReviewRequest(
             symbols=symbols,
@@ -169,6 +170,7 @@ def build_fastmcp_server() -> FastMCP:
             min_return=min_return,
             max_drawdown_limit=max_drawdown_limit,
             min_volume_ratio=min_volume_ratio,
+            return_mode=return_mode,
         )
         return registry.call_tool("watchlist_review", req.model_dump(exclude_none=True))
 
@@ -403,6 +405,7 @@ def build_fastmcp_server() -> FastMCP:
         min_return: float | None = None,
         max_drawdown_limit: float | None = None,
         min_volume_ratio: float | None = None,
+        return_mode: str = "full",
     ):
         req = SectorReviewRequest(
             sector_name=sector_name,
@@ -458,6 +461,7 @@ def build_fastmcp_server() -> FastMCP:
             min_return=min_return,
             max_drawdown_limit=max_drawdown_limit,
             min_volume_ratio=min_volume_ratio,
+            return_mode=return_mode,
         )
         return registry.call_tool("sector_leaders", req.model_dump(exclude_none=True))
 
@@ -479,6 +483,7 @@ def build_fastmcp_server() -> FastMCP:
         min_return: float | None = None,
         max_drawdown_limit: float | None = None,
         min_volume_ratio: float | None = None,
+        return_mode: str = "full",
     ):
         req = SectorRotationReviewRequest(
             sector_names=sector_names,

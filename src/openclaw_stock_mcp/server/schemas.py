@@ -693,6 +693,7 @@ class SectorLeadersRequest(BaseModel):
     descending: bool = True
     top_n: int = Field(default=3, ge=1, le=20)
     limit: int = Field(default=100, ge=1, le=500)
+    return_mode: Literal["full", "ranked_only"] = "full"
     min_relative_strength: float | None = None
     min_return: float | None = None
     max_drawdown_limit: float | None = None

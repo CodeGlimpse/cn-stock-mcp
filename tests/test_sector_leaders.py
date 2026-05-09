@@ -59,3 +59,14 @@ def test_sector_leaders_snapshot_groups():
     assert len(result["leaders"]) == 2
     assert len(result["draggers"]) == 2
     assert result["leaders"][0]["symbol"] == "A.SH"
+
+
+def test_sector_leaders_return_mode_ranked_only_items_trimmed():
+    uc = SectorLeadersUseCase()
+    uc.sector_lookup = _Lookup()
+    uc.batch_review = _Batch()
+
+    req = type("Req", (), {"sector_name":"1000信息","sector_type":"primary","trade_date":"2026-05-08","start_date":None,"end_date":None,"adjust":"none","provider":"zhitu","sort_by":"relative_strength","descending":True,"top_n":1,"limit":100,"min_relative_strength":None,"min_return":None,"max_drawdown_limit":None,"min_volume_ratio":None,"return_mode":"ranked_only"})()
+    result = uc.execute(req)
+    assert len(result["items"]) == 1
+    assert result["meta"]["return_mode"] == "ranked_only"
