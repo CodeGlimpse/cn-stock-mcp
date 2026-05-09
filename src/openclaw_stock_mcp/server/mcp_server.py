@@ -11,6 +11,7 @@ from openclaw_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
 from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
 from openclaw_stock_mcp.app.usecases.event_calendar import EventCalendarUseCase
 from openclaw_stock_mcp.app.usecases.capital_flow import CapitalFlowUseCase
+from openclaw_stock_mcp.app.usecases.stock_financial import StockFinancialUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -39,6 +40,7 @@ from openclaw_stock_mcp.server.schemas import (
     MarketPoolRequest,
     MultiTimeframeReviewRequest,
     CapitalFlowRequest,
+    StockFinancialRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -154,6 +156,7 @@ def create_server() -> MCPServerStub:
     stock_profile = StockProfileUseCase()
     event_calendar = EventCalendarUseCase()
     capital_flow = CapitalFlowUseCase()
+    stock_financial = StockFinancialUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -179,5 +182,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="event_calendar", description="Build event timeline (dividend/unlock/profit) for one or more stocks.", input_model=EventCalendarRequest, handler=event_calendar.execute))
     server.register_tool(MCPTool(name="stock_profile", description="Get company profile including basic info, dividends, unlocks, and quarterly profits.", input_model=StockProfileRequest, handler=stock_profile.execute))
     server.register_tool(MCPTool(name="capital_flow", description="Get capital flow data: market-level, individual stock, or sector (industry/concept) fund flow ranking.", input_model=CapitalFlowRequest, handler=capital_flow.execute))
+    server.register_tool(MCPTool(name="stock_financial", description="Get financial statement data for a stock: core metrics snapshot, history trend, and detailed income/balance/cashflow statements.", input_model=StockFinancialRequest, handler=stock_financial.execute))
 
     return server

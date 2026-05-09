@@ -801,3 +801,28 @@ class CapitalFlowRequest(BaseModel):
         if self.start_date and self.end_date and dt_date.fromisoformat(self.start_date) > dt_date.fromisoformat(self.end_date):
             raise ValueError("start_date must be <= end_date")
         return self
+
+
+class StockFinancialRequest(BaseModel):
+    symbol: str = Field(min_length=1)
+    include: list[Literal["snapshot", "history", "details"]] = Field(default=["snapshot", "history"])
+    statement: Literal["income", "balance", "cashflow"] = "income"
+    report_date: str | None = None
+    history_n: int = Field(default=8, ge=1, le=30)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.report_date:
+            dt_date.fromisoformat(self.report_date)
+        # Deduplicate and validate include
+        if not self.include:
+            raise ValueError("include must contain at least one of: snapshot, history, details")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

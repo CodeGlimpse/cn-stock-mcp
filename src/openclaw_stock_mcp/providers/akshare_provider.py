@@ -26,7 +26,13 @@ from openclaw_stock_mcp.providers.adapters.akshare_capital_flow_adapters import 
     adapt_akshare_sector_fund_flow,
     build_market_fund_flow_summary,
 )
+from openclaw_stock_mcp.providers.adapters.akshare_financial_adapters import (
+    adapt_akshare_financial_detail_row,
+    build_financial_history_from_abstract,
+    build_financial_snapshot_from_abstract,
+)
 from openclaw_stock_mcp.app.models.capital_flow import CapitalFlowRecord, MarketFundFlowSummary, SectorFundFlowItem
+from openclaw_stock_mcp.app.models.financial import FinancialDetailItem, FinancialSnapshot, FinancialHistoryPoint
 from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 
 
@@ -418,3 +424,78 @@ class AKShareProvider:
 
         rows = df.to_dict(orient="records")
         return [adapt_akshare_sector_fund_flow(row) for row in rows]
+
+    def _resolve_symbol_code(self, symbol: str) -> str:
+        """Resolve the 6-digit code from a normalized symbol like 000001.SZ."""
+        return normalize_symbol(symbol).split(".", 1)[0]
+
+    def get_financial_abstract(self, symbol: str) -> tuple[list[dict], FinancialSnapshot, list[FinancialHistoryPoint]]:
+        """Fetch abstract financial metrics (core indicators) via stock_financial_abstract_new_ths.
+
+        Returns (raw_rows, snapshot, history).
+        """
+        lib = self._require_ak()
+        code = self._resolve_symbol_code(symbol)
+        try:
+            df = self._call_ak_quietly(lib.stock_financial_abstract_new_ths, symbol=code)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare financial abstract failed for {symbol}: {exc}", retryable=True) from exc
+
+        rows = df.to_dict(orient="records")
+        snapshot = build_financial_snapshot_from_abstract(symbol, rows)
+        history = build_financial_history_from_abstract(rows)
+        return rows, snapshot, history
+
+    def get_financial_detail(self, symbol: str, statement: str = "income") -> list[FinancialDetailItem]:
+        """Fetch detailed financial statement data.
+
+        statement: "income" (利润表), "balance" (资产负债表), "cashflow" (现金流量表)
+        """
+        lib = self._require_ak()
+        code = self._resolve_symbol_code(symbol)
+
+        fn_map = {
+            "income": lib.stock_financial_benefit_ths,
+            "balance": lib.stock_financial_debt_new_ths,
+            "cashflow": lib.stock_financial_cash_new_ths,
+        }
+        fn = fn_map.get(statement)
+        if not fn:
+            raise ProviderError("INVALID_ARGUMENT", f"Unsupported statement type: {statement}", retryable=False)
+
+        try:
+            df = self._call_ak_quietly(fn, symbol=code)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare financial detail ({statement}) failed for {symbol}: {exc}", retryable=True) from exc
+
+        if statement == "income":
+            # benefit_ths is wide format; convert to long format
+            rows = df.to_dict(orient="records")
+            items: list[FinancialDetailItem] = []
+            for row in rows:
+                report_date_raw = str(row.get("报告期", ""))[:10]
+                if not report_date_raw:
+                    continue
+                for col_name, cell_value in row.items():
+                    if col_name in ("报告期", "报表核心指标"):
+                        continue
+                    items.append(FinancialDetailItem(
+                        report_date=report_date_raw,
+                        report_name=row.get("报表核心指标", ""),
+                        quarter_name="",
+                        metric_name=col_name,
+                        value=self._to_detail_float(cell_value),
+                    ))
+            return items
+        else:
+            # debt_new_ths / cash_new_ths are already long format
+            rows = df.to_dict(orient="records")
+            return [adapt_akshare_financial_detail_row(row) for row in rows]
+
+    def _to_detail_float(self, value) -> float | None:
+        if value is None or value == "" or value is False:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None

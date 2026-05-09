@@ -14,6 +14,13 @@ from .profile import (
     ValuationSnapshot,
 )
 from .capital_flow import CapitalFlowRecord, SectorFundFlowItem, MarketFundFlowSummary
+from .financial import (
+    FinancialMetric,
+    FinancialSnapshot,
+    FinancialDetailItem,
+    FinancialHistoryPoint,
+    StockFinancialResult,
+)
 from .sector_quote import SectorQuote
 
 __all__ = [
@@ -30,6 +37,11 @@ __all__ = [
     "CapitalFlowRecord",
     "SectorFundFlowItem",
     "MarketFundFlowSummary",
+    "FinancialMetric",
+    "FinancialSnapshot",
+    "FinancialDetailItem",
+    "FinancialHistoryPoint",
+    "StockFinancialResult",
     "StockProfile",
     "StockProfileDetail",
     "DividendRecord",
