@@ -849,3 +849,24 @@ class LimitStatRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class NorthboundRequest(BaseModel):
+    include: list[Literal["daily_summary", "history", "holdings"]] = Field(default=["daily_summary", "history", "holdings"])
+    history_n: int = Field(default=30, ge=1, le=500)
+    hold_indicator: Literal["今日排行", "5日排行", "10日排行", "1月排行", "1季排行", "1年排行"] = "今日排行"
+    hold_top_n: int = Field(default=20, ge=1, le=200)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if not self.include:
+            raise ValueError("include must contain at least one of: daily_summary, history, holdings")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

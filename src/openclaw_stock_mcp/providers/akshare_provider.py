@@ -36,9 +36,15 @@ from openclaw_stock_mcp.providers.adapters.akshare_limit_stat_adapters import (
     adapt_em_limit_up_item,
     adapt_em_previous_limit_item,
 )
+from openclaw_stock_mcp.providers.adapters.akshare_northbound_adapters import (
+    adapt_em_hist_row,
+    adapt_em_hold_item,
+    build_daily_summary_from_flow_summary,
+)
 from openclaw_stock_mcp.app.models.capital_flow import CapitalFlowRecord, MarketFundFlowSummary, SectorFundFlowItem
 from openclaw_stock_mcp.app.models.financial import FinancialDetailItem, FinancialSnapshot, FinancialHistoryPoint
 from openclaw_stock_mcp.app.models.limit_stat import BrokenLimitItem, LimitUpItem, PreviousDayLimitItem
+from openclaw_stock_mcp.app.models.northbound import NorthboundFlowRecord, NorthboundDailySummary, NorthboundHoldItem
 from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 
 
@@ -538,3 +544,39 @@ class AKShareProvider:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare previous limit pool failed for {trade_date}: {exc}", retryable=True) from exc
         rows = df.to_dict(orient="records")
         return [adapt_em_previous_limit_item(row) for row in rows]
+
+    def get_northbound_history(self, symbol: str = "北向资金", limit: int | None = None) -> list[NorthboundFlowRecord]:
+        """Fetch northbound historical flow from ak.stock_hsgt_hist_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_hsgt_hist_em, symbol=symbol)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare northbound history failed: {exc}", retryable=True) from exc
+        rows = df.to_dict(orient="records")
+        records = [adapt_em_hist_row(row) for row in rows]
+        if limit:
+            records = records[-limit:]
+        return records
+
+    def get_northbound_daily_summary(self) -> NorthboundDailySummary:
+        """Fetch today's northbound flow summary from ak.stock_hsgt_fund_flow_summary_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_hsgt_fund_flow_summary_em)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare northbound daily summary failed: {exc}", retryable=True) from exc
+        rows = df.to_dict(orient="records")
+        return build_daily_summary_from_flow_summary(rows)
+
+    def get_northbound_holdings(self, indicator: str = "今日排行", top_n: int | None = None) -> list[NorthboundHoldItem]:
+        """Fetch northbound top holdings from ak.stock_hsgt_hold_stock_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_hsgt_hold_stock_em, market="北向", indicator=indicator)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare northbound holdings failed: {exc}", retryable=True) from exc
+        rows = df.to_dict(orient="records")
+        items = [adapt_em_hold_item(row) for row in rows]
+        if top_n:
+            items = items[:top_n]
+        return items
