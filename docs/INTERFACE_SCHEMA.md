@@ -39,6 +39,7 @@ Last Updated: 2026-05-09
 - valuation_rank
 - index_compose
 - industry_valuation_rank
+- earnings_quality
 
 ---
 
@@ -130,6 +131,7 @@ Last Updated: 2026-05-09
   - fund：`zhitu`
 - market_pool / stock_orderbook / stock_profile：`zhitu`
 - capital_flow / stock_financial / limit_stat / northbound / index_compose：`akshare`
+- earnings_quality：`akshare`（复用 `stock_financial` 快照）
 - valuation_rank：市场估值快照使用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - industry_valuation_rank：行业成员股来自 `sector_lookup(children, primary)`（`zhitu`），成员估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - stock_quote：
@@ -162,6 +164,7 @@ Last Updated: 2026-05-09
 - `valuation_rank`：估值排名（市场估值温度 + 个股 PE/PB 排名）
 - `index_compose`：指数成分与权重（支持集中度统计）
 - `industry_valuation_rank`：一级行业估值分位（成员股 PE/PB 聚合后横向排序）
+- `earnings_quality`：盈利质量评估（扣非占比/增速一致性/现金转化/ROE/杠杆综合评分）
 
 补充（可观测性字段，已在关键工具 meta 中统一输出）：
 - `provider_used`：本次实际使用的 provider（或集合）

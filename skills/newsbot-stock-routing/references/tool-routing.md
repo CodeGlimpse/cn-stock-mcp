@@ -26,6 +26,7 @@
 - 估值排名（PE/PB + 市场估值温度）→ `valuation_rank`
 - 指数成分与权重分析 → `index_compose`
 - 行业估值分位（一级行业横向估值）→ `industry_valuation_rank`
+- 盈利质量评估（财报质量打分）→ `earnings_quality`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -93,6 +94,7 @@
 - `valuation_rank`：市场估值快照用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - `index_compose`：`akshare`
 - `industry_valuation_rank`：成员股获取走 `sector_lookup(children, primary)`（`zhitu`），估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
+- `earnings_quality`：`akshare`（复用 `stock_financial` 抽象快照）
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）

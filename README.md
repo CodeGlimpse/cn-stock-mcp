@@ -63,6 +63,7 @@
 - `valuation_rank()` 估值排名可用（市场估值温度 + 个股PE/PB排名）
 - `index_compose()` 指数组成可用（成分股/权重/集中度统计）
 - `industry_valuation_rank()` 行业估值分位可用（一级行业成员股 PE/PB 聚合与分位排序）
+- `earnings_quality()` 盈利质量评估可用（含金量/现金转化/一致性/杠杆约束综合评分）
 
 ## 快速开始
 
