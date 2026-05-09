@@ -49,6 +49,10 @@ from .industry_valuation_rank import (
     IndustryValuationSummary,
     IndustryValuationRankResult,
 )
+from .earnings_quality import (
+    EarningsQualityMetrics,
+    EarningsQualityResult,
+)
 from .sector_quote import SectorQuote
 
 __all__ = [
@@ -88,6 +92,8 @@ __all__ = [
     "IndustryValuationItem",
     "IndustryValuationSummary",
     "IndustryValuationRankResult",
+    "EarningsQualityMetrics",
+    "EarningsQualityResult",
     "StockProfile",
     "StockProfileDetail",
     "DividendRecord",

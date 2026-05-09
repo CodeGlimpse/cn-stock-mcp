@@ -935,3 +935,8 @@ class IndustryValuationRankRequest(BaseModel):
             raise ValueError("sector_names must contain at least 1 non-empty name")
         self.sector_names = normalized
         return self
+
+
+class EarningsQualityRequest(BaseModel):
+    symbol: str = Field(min_length=1)
+    provider: Literal["akshare"] | None = "akshare"
