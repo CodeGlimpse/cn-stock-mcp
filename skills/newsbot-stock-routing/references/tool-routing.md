@@ -19,6 +19,12 @@
 - 板块龙头/跟风/拖累快照（轻量）→ `sector_leaders`
 - 多板块横向比较 / 板块轮动 → `sector_rotation_review`
 - 热点主线跟踪 / 主线切换 → `hot_theme_tracker`
+- 资金流向（大盘/个股/行业/概念）→ `capital_flow`
+- 财报核心面板 / 三表明细 → `stock_financial`
+- 短线情绪（封板率/连板/炸板）→ `limit_stat`
+- 北向资金流向 / 持股排行 → `northbound`
+- 估值排名（PE/PB + 市场估值温度）→ `valuation_rank`
+- 指数成分与权重分析 → `index_compose`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -79,6 +85,12 @@
 - `technical_indicator(stock/index)`：`zhitu` 主，`akshare` 备
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
 - `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
+- `capital_flow`：`akshare`
+- `stock_financial`：`akshare`
+- `limit_stat`：`akshare`（跌停数补充来自 zhitu market_pool）
+- `northbound`：`akshare`
+- `valuation_rank`：市场估值快照用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
+- `index_compose`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）

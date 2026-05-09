@@ -56,6 +56,12 @@
 - `watchlist_review()` 观察池复盘可用（适合持续跟踪固定股票池）
 - `multi_timeframe_review()` 多周期复盘可用（适合看单只标的不同周期是否共振或冲突）
 - `hot_theme_tracker()` 热点主线跟踪可用（复用板块轮动 + 股池快照）
+- `capital_flow()` 资金流向可用（market/individual/industry/concept）
+- `stock_financial()` 财务三层数据可用（snapshot/history/details）
+- `limit_stat()` 短线情绪统计可用（封板率/连板分布/炸板/昨涨停今继续率）
+- `northbound()` 北向资金可用（当日流向/历史/持股排行）
+- `valuation_rank()` 估值排名可用（市场估值温度 + 个股PE/PB排名）
+- `index_compose()` 指数组成可用（成分股/权重/集中度统计）
 
 ## 快速开始
 
