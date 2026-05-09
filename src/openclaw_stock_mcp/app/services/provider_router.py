@@ -49,6 +49,9 @@ class ProviderRouter:
         if tool_name in {"market_pool", "stock_orderbook", "stock_profile", "sector_quote", "event_calendar"}:
             return ProviderSelection(primary="zhitu", fallback=[])
 
+        if tool_name == "capital_flow":
+            return ProviderSelection(primary="akshare", fallback=[])
+
         if tool_name == "stock_quote":
             if sec_type == "index" or sec_type == "fund":
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])

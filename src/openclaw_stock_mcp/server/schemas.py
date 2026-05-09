@@ -777,3 +777,27 @@ class SectorQuoteRequest(BaseModel):
     exclude_null_fields: bool = False
     return_mode: Literal["full", "ranked_only"] = "full"
     provider: Literal["zhitu"] | None = "zhitu"
+
+
+class CapitalFlowRequest(BaseModel):
+    flow_type: Literal["market", "individual", "industry", "concept"] = "market"
+    symbol: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    limit: int = Field(default=60, ge=1, le=500)
+    sort_by: Literal["net_amount", "inflow", "outflow", "sector_change_percent", "company_count"] = "net_amount"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=200)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.flow_type == "individual" and not self.symbol:
+            raise ValueError("symbol is required when flow_type=individual")
+        if self.start_date:
+            dt_date.fromisoformat(self.start_date)
+        if self.end_date:
+            dt_date.fromisoformat(self.end_date)
+        if self.start_date and self.end_date and dt_date.fromisoformat(self.start_date) > dt_date.fromisoformat(self.end_date):
+            raise ValueError("start_date must be <= end_date")
+        return self

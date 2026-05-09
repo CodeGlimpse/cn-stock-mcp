@@ -20,6 +20,13 @@ from openclaw_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_stock_list_row,
 )
 from openclaw_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_bar_row, adapt_akshare_tx_bar_row
+from openclaw_stock_mcp.providers.adapters.akshare_capital_flow_adapters import (
+    adapt_akshare_individual_fund_flow,
+    adapt_akshare_market_fund_flow,
+    adapt_akshare_sector_fund_flow,
+    build_market_fund_flow_summary,
+)
+from openclaw_stock_mcp.app.models.capital_flow import CapitalFlowRecord, MarketFundFlowSummary, SectorFundFlowItem
 from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 
 
@@ -359,3 +366,55 @@ class AKShareProvider:
             "recent_trading_days": recent_trading_days,
             "source": self.name,
         }
+
+    def _resolve_market_code(self, normalized: str) -> tuple[str, str]:
+        """Resolve (code, market) for ak.stock_individual_fund_flow()."""
+        code = normalized.split(".", 1)[0]
+        exchange = normalized.split(".", 1)[1] if "." in normalized else "SZ"
+        if exchange == "SH":
+            return code, "sh"
+        return code, "sz"
+
+    def get_market_capital_flow(self, limit: int | None = None) -> tuple[list[CapitalFlowRecord], MarketFundFlowSummary]:
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_market_fund_flow)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare market fund flow failed: {exc}", retryable=True) from exc
+
+        rows = df.to_dict(orient="records")
+        records = [adapt_akshare_market_fund_flow(row) for row in rows]
+        if limit:
+            records = records[-limit:]
+        summary = build_market_fund_flow_summary(records)
+        return records, summary
+
+    def get_individual_capital_flow(self, symbol: str, limit: int | None = None) -> list[CapitalFlowRecord]:
+        lib = self._require_ak()
+        normalized = normalize_symbol(symbol)
+        code, market = self._resolve_market_code(normalized)
+        try:
+            df = self._call_ak_quietly(lib.stock_individual_fund_flow, stock=code, market=market)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare individual fund flow failed for {symbol}: {exc}", retryable=True) from exc
+
+        rows = df.to_dict(orient="records")
+        records = [adapt_akshare_individual_fund_flow(row) for row in rows]
+        if limit:
+            records = records[-limit:]
+        return records
+
+    def get_sector_capital_flow(self, flow_type: str = "industry") -> list[SectorFundFlowItem]:
+        lib = self._require_ak()
+        if flow_type == "concept":
+            fn = lib.stock_fund_flow_concept
+        else:
+            fn = lib.stock_fund_flow_industry
+
+        try:
+            df = self._call_ak_quietly(fn)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare sector fund flow ({flow_type}) failed: {exc}", retryable=True) from exc
+
+        rows = df.to_dict(orient="records")
+        return [adapt_akshare_sector_fund_flow(row) for row in rows]

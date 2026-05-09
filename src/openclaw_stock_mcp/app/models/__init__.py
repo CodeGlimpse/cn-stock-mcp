@@ -13,6 +13,7 @@ from .profile import (
     QuarterProfit,
     ValuationSnapshot,
 )
+from .capital_flow import CapitalFlowRecord, SectorFundFlowItem, MarketFundFlowSummary
 from .sector_quote import SectorQuote
 
 __all__ = [
@@ -26,6 +27,9 @@ __all__ = [
     "MarketPoolItem",
     "OrderBook",
     "OrderBookLevel",
+    "CapitalFlowRecord",
+    "SectorFundFlowItem",
+    "MarketFundFlowSummary",
     "StockProfile",
     "StockProfileDetail",
     "DividendRecord",
