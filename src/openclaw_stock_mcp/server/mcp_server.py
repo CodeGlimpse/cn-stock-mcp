@@ -16,6 +16,7 @@ from openclaw_stock_mcp.app.usecases.limit_stat import LimitStatUseCase
 from openclaw_stock_mcp.app.usecases.northbound import NorthboundUseCase
 from openclaw_stock_mcp.app.usecases.valuation_rank import ValuationRankUseCase
 from openclaw_stock_mcp.app.usecases.index_compose import IndexComposeUseCase
+from openclaw_stock_mcp.app.usecases.industry_valuation_rank import IndustryValuationRankUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -49,6 +50,7 @@ from openclaw_stock_mcp.server.schemas import (
     NorthboundRequest,
     ValuationRankRequest,
     IndexComposeRequest,
+    IndustryValuationRankRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -169,6 +171,7 @@ def create_server() -> MCPServerStub:
     northbound = NorthboundUseCase()
     valuation_rank = ValuationRankUseCase()
     index_compose = IndexComposeUseCase()
+    industry_valuation_rank = IndustryValuationRankUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -199,5 +202,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="northbound", description="Get northbound capital data: daily flow summary, historical trend, and top holdings ranking.", input_model=NorthboundRequest, handler=northbound.execute))
     server.register_tool(MCPTool(name="valuation_rank", description="Rank stock valuation using PE/PB and combine with market valuation temperature (PE/PB quantiles, dividend yield).", input_model=ValuationRankRequest, handler=valuation_rank.execute))
     server.register_tool(MCPTool(name="index_compose", description="Get index constituents and weights for index benchmarking/enhanced strategy construction.", input_model=IndexComposeRequest, handler=index_compose.execute))
+    server.register_tool(MCPTool(name="industry_valuation_rank", description="Rank primary sectors by valuation percentile using member stock PE/PB aggregation.", input_model=IndustryValuationRankRequest, handler=industry_valuation_rank.execute))
 
     return server

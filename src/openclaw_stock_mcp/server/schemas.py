@@ -910,3 +910,28 @@ class IndexComposeRequest(BaseModel):
         if not self.index_code:
             raise ValueError("index_code is required")
         return self
+
+
+class IndustryValuationRankRequest(BaseModel):
+    sector_names: list[str] = Field(min_length=1, max_length=30)
+    sector_type: Literal["primary"] = "primary"
+    sort_by: Literal["pe_median", "pb_median", "valuation_percentile", "quote_coverage_count"] = "pe_median"
+    descending: bool = False
+    top_n: int | None = Field(default=None, ge=1, le=30)
+    member_limit: int = Field(default=200, ge=10, le=500)
+    provider: Literal["zhitu", "akshare"] | None = "zhitu"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        normalized = []
+        seen = set()
+        for x in self.sector_names:
+            v = (x or "").strip()
+            if not v or v in seen:
+                continue
+            seen.add(v)
+            normalized.append(v)
+        if not normalized:
+            raise ValueError("sector_names must contain at least 1 non-empty name")
+        self.sector_names = normalized
+        return self

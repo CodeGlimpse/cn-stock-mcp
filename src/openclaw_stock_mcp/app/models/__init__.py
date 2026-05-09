@@ -44,6 +44,11 @@ from .index_compose import (
     IndexComposeSummary,
     IndexComposeResult,
 )
+from .industry_valuation_rank import (
+    IndustryValuationItem,
+    IndustryValuationSummary,
+    IndustryValuationRankResult,
+)
 from .sector_quote import SectorQuote
 
 __all__ = [
@@ -80,6 +85,9 @@ __all__ = [
     "IndexConstituentItem",
     "IndexComposeSummary",
     "IndexComposeResult",
+    "IndustryValuationItem",
+    "IndustryValuationSummary",
+    "IndustryValuationRankResult",
     "StockProfile",
     "StockProfileDetail",
     "DividendRecord",

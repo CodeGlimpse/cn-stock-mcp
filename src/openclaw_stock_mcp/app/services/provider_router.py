@@ -67,6 +67,9 @@ class ProviderRouter:
         if tool_name == "index_compose":
             return ProviderSelection(primary="akshare", fallback=[])
 
+        if tool_name == "industry_valuation_rank":
+            return ProviderSelection(primary="zhitu", fallback=["akshare"])
+
         if tool_name == "stock_quote":
             if sec_type == "index" or sec_type == "fund":
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])
