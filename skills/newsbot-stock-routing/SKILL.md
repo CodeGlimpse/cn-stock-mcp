@@ -35,6 +35,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - ETF行情快照（IOPV折溢价/资金流/份额/净值）→ `etf_snapshot`
 - 可转债（双低/溢价率/YTM/强赎监控）→ `convertible_bond`
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
+- 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
 
 ## Operating rules
 

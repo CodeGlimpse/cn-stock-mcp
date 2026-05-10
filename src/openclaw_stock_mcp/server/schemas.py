@@ -1088,3 +1088,41 @@ class DerivativesDataRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class MarginTradingRequest(BaseModel):
+    include: list[Literal["summary", "detail"]] = Field(default=["summary", "detail"])
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    exchange: Literal["SSE", "SZSE", "both"] = Field(default="both", description="交易所选择")
+    sort_by: Literal["financing_buy", "financing_balance", "securities_sell", "securities_volume"] = "financing_buy"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+        elif self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+        else:
+            self.trade_date = dt_date.today().isoformat()
+        if not self.include:
+            raise ValueError("include must contain at least one of: summary, detail")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

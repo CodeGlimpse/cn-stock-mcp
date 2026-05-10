@@ -49,6 +49,7 @@
 - `etf_snapshot`
 - `convertible_bond`
 - `derivatives_data`
+- `margin_trading`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
@@ -665,3 +666,33 @@
 - added `derivatives_data` to provider router → akshare
 - added MCP tool registration
 - added tests: `test_akshare_derivatives_data_adapters.py` (10 tests)
+
+### margin_trading（融资融券）
+- 新增 `margin_trading` tool
+- 当前 provider：`akshare`
+- 支持 2 种 include 模式：
+  - `summary`：两市融资融券汇总（融资余额/融资买入额/融券余量/融券卖出量/两融余额）
+  - `detail`：个股融资融券明细（融资余额/买入额/偿还额/融券余量/卖出量）
+- 输入契约：`MarginTradingRequest`
+  - `include`：summary/detail
+  - `trade_date` / `start_date + end_date`：日期范围（SSE 汇总支持区间，SZSE/明细为单日）
+  - `exchange`：SSE/SZSE/both
+  - `sort_by`：financing_buy/financing_balance/securities_sell/securities_volume
+  - `descending` / `top_n`
+- 输出包含：
+  - `summary`：list[MarginSummaryItem]（按日期+交易所）
+  - `detail`：list[MarginDetailItem]（个股明细，支持排序截断）
+  - `summary_text`：可读文本摘要
+- AKShare 接口：
+  - `stock_margin_sse` → SSE 汇总（支持日期区间）
+  - `stock_margin_szse` → SZSE 汇总（单日）
+  - `stock_margin_detail_sse` → SSE 个股明细（单日）
+  - `stock_margin_detail_szse` → SZSE 个股明细（单日）
+- 注意：SZSE 汇总单位为亿元，SSE 为元；SSE 明细含融资偿还额/融券偿还额，SZSE 含融券余额/两融余额
+- added models: MarginSummaryItem, MarginDetailItem, MarginTradingResult
+- added `akshare_margin_trading_adapters` with 4 adapt functions + summary builder
+- added `AKShareProvider` methods: get_margin_sse/szse_summary/detail
+- added `MarginTradingUseCase` with SSE/SZSE dual-exchange + sort/top_n
+- added `margin_trading` to provider router → akshare
+- added MCP tool registration
+- added tests: `test_akshare_margin_trading_adapters.py` (9 tests)

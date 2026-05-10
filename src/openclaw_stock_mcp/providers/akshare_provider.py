@@ -766,3 +766,44 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare qvix({underlying}) failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Margin Trading (融资融券) ────────────────────────
+
+    def get_margin_sse_summary(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch SSE margin summary from ak.stock_margin_sse()."""
+        lib = self._require_ak()
+        kwargs = {"start_date": start_date}
+        if end_date:
+            kwargs["end_date"] = end_date
+        try:
+            df = self._call_ak_quietly(lib.stock_margin_sse, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare margin_sse_summary failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_margin_szse_summary(self, date: str) -> list[dict]:
+        """Fetch SZSE margin summary from ak.stock_margin_szse()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_margin_szse, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare margin_szse_summary failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_margin_sse_detail(self, date: str) -> list[dict]:
+        """Fetch SSE margin detail from ak.stock_margin_detail_sse()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_margin_detail_sse, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare margin_sse_detail failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_margin_szse_detail(self, date: str) -> list[dict]:
+        """Fetch SZSE margin detail from ak.stock_margin_detail_szse()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_margin_detail_szse, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare margin_szse_detail failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

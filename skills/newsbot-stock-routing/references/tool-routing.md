@@ -32,6 +32,7 @@
 - ETF行情快照（全市场实时+IOPV折溢价+资金流+份额+净值）→ `etf_snapshot`
 - 可转债（双低/溢价率/YTM/强赎监控/等权指数）→ `convertible_bond`
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
+- 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -105,6 +106,7 @@
 - `etf_snapshot`：`akshare`
 - `convertible_bond`：`akshare`
 - `derivatives_data`：`akshare`
+- `margin_trading`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -262,6 +264,11 @@
 ### 期权合约列表
 ```json
 {"tool":"derivatives_data","payload":{"include":["option_list"],"option_exchange":"both","option_type_filter":"call"}}
+```
+
+### 融资融券汇总+明细
+```json
+{"tool":"margin_trading","payload":{"include":["summary","detail"],"trade_date":"2026-05-08","exchange":"both","sort_by":"financing_buy","top_n":20}}
 ```
 
 

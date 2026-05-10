@@ -45,6 +45,7 @@ Last Updated: 2026-05-09
 - etf_snapshot
 - convertible_bond
 - derivatives_data
+- margin_trading
 
 ---
 
@@ -142,6 +143,7 @@ Last Updated: 2026-05-09
 - etf_snapshot：`akshare`
 - convertible_bond：`akshare`
 - derivatives_data：`akshare`
+- margin_trading：`akshare`
 - valuation_rank：市场估值快照使用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - industry_valuation_rank：行业成员股来自 `sector_lookup(children, primary)`（`zhitu`），成员估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - stock_quote：
@@ -180,6 +182,7 @@ Last Updated: 2026-05-09
 - `etf_snapshot`：ETF行情快照（全市场实时行情+IOPV折溢价+资金流+份额+净值）
 - `convertible_bond`：可转债数据（集思录快照/双低/溢价率/YTM/强赎监控/等权指数）
 - `derivatives_data`：期货/期权数据（期货实时+历史/期权合约列表/QVIX隐含波动率）
+- `margin_trading`：融资融券数据（两市汇总+个股明细，支持融资买入/融券卖出排序）
 
 补充（可观测性字段，已在关键工具 meta 中统一输出）：
 - `provider_used`：本次实际使用的 provider（或集合）

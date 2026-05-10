@@ -47,5 +47,6 @@ __all__ = [
     "ETFSnapshotRequest",
     "ConvertibleBondRequest",
     "DerivativesDataRequest",
+    "MarginTradingRequest",
     "StockProfileRequest",
 ]

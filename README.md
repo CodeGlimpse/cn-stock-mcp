@@ -69,6 +69,7 @@
 - `etf_snapshot()` ETF行情快照可用（全市场实时行情+IOPV折溢价+资金流+份额+净值）
 - `convertible_bond()` 可转债数据可用（双低/溢价率/YTM/强赎监控/等权指数）
 - `derivatives_data()` 期货/期权数据可用（期货实时+历史/期权合约/QVIX隐含波动率）
+- `margin_trading()` 融资融券数据可用（两市汇总+个股明细/融资买入排序）
 
 ## 快速开始
 
