@@ -76,6 +76,9 @@ class ProviderRouter:
         if tool_name == "macro_indicator":
             return ProviderSelection(primary="akshare", fallback=[])
 
+        if tool_name == "dragon_tiger":
+            return ProviderSelection(primary="akshare", fallback=[])
+
         if tool_name == "stock_quote":
             if sec_type == "index" or sec_type == "fund":
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])

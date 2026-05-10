@@ -43,5 +43,6 @@ __all__ = [
     "SectorRotationReviewRequest",
     "HotThemeTrackerRequest",
     "MacroIndicatorRequest",
+    "DragonTigerRequest",
     "StockProfileRequest",
 ]

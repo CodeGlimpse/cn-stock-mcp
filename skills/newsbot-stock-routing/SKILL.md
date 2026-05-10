@@ -31,6 +31,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 代码不确定 / 名称歧义 → `stock_search`
 - 上游健康检查 → `provider_health`
 - 宏观经济指标（CPI/PMI/GDP/LPR/M2等）→ `macro_indicator`
+- 龙虎榜明细（游资/机构/营业部胜率）→ `dragon_tiger`
 
 ## Operating rules
 

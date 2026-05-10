@@ -969,3 +969,41 @@ class MacroIndicatorRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class DragonTigerRequest(BaseModel):
+    include: list[Literal["daily_detail", "institution", "active_broker", "broker_rank", "stock_stat"]] = Field(default=["daily_detail", "institution"])
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    period: Literal["近一月", "近三月", "近六月", "近一年"] = "近一月"
+    sort_by: Literal["net_buy_amount", "turnover_amount", "buy_amount", "inst_net_buy", "listed_count"] = "net_buy_amount"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.trade_date and (self.start_date or self.end_date):
+            raise ValueError("trade_date cannot be combined with start_date/end_date")
+        if self.start_date or self.end_date:
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date must be provided together")
+            start = dt_date.fromisoformat(self.start_date)
+            end = dt_date.fromisoformat(self.end_date)
+            if start > end:
+                raise ValueError("start_date must be <= end_date")
+        elif self.trade_date:
+            dt_date.fromisoformat(self.trade_date)
+        else:
+            self.trade_date = dt_date.today().isoformat()
+        if not self.include:
+            raise ValueError("include must contain at least one of: daily_detail, institution, active_broker, broker_rank, stock_stat")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

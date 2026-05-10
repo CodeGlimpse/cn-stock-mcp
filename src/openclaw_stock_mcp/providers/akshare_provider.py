@@ -592,3 +592,57 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare macro {func_name} failed: {exc}", retryable=True) from exc
         return df
+
+    # ── Dragon Tiger (龙虎榜) ──────────────────────────────
+
+    def get_dragon_tiger_daily(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch daily dragon-tiger board detail from ak.stock_lhb_detail_em()."""
+        from openclaw_stock_mcp.providers.adapters.akshare_dragon_tiger_adapters import adapt_daily_detail_row
+        lib = self._require_ak()
+        if end_date is None:
+            end_date = start_date
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_detail_em, start_date=start_date, end_date=end_date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dragon_tiger_daily failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_dragon_tiger_institution(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch institution buy/sell stats from ak.stock_lhb_jgmmtj_em()."""
+        lib = self._require_ak()
+        if end_date is None:
+            end_date = start_date
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_jgmmtj_em, start_date=start_date, end_date=end_date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dragon_tiger_institution failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_dragon_tiger_active_broker(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch active broker data from ak.stock_lhb_hyyyb_em()."""
+        lib = self._require_ak()
+        if end_date is None:
+            end_date = start_date
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_hyyyb_em, start_date=start_date, end_date=end_date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dragon_tiger_active_broker failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_dragon_tiger_broker_rank(self, period: str = "近一月") -> list[dict]:
+        """Fetch broker success-rate ranking from ak.stock_lhb_yybph_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_yybph_em, symbol=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dragon_tiger_broker_rank failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_dragon_tiger_stock_stat(self, period: str = "近一月") -> list[dict]:
+        """Fetch stock board statistics from ak.stock_lhb_stock_statistic_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_stock_statistic_em, symbol=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dragon_tiger_stock_stat failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

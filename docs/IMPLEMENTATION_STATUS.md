@@ -45,6 +45,7 @@
 - `industry_valuation_rank`
 - `earnings_quality`
 - `macro_indicator`
+- `dragon_tiger`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
@@ -526,3 +527,39 @@
 - added `macro_indicator` to provider router → akshare
 - added MCP tool registration
 - added tests: `test_akshare_macro_adapters.py` (27 tests)
+
+### dragon_tiger（龙虎榜明细）
+- 新增 `dragon_tiger` tool
+- 当前 provider：`akshare`
+- 支持 5 种 include 模式：
+  - `daily_detail`：日龙虎榜明细（上榜股+买卖额+上榜原因+解读+上榜后1/2/5/10日涨跌）
+  - `institution`：机构买卖统计（买方/卖方机构数/机构净买额/占比）
+  - `active_broker`：活跃营业部（席位名/买卖金额/买入股票列表）
+  - `broker_rank`：营业部胜率排行（上榜后1/2/5/10天平均涨幅+上涨概率，按时间段聚合）
+  - `stock_stat`：个股上榜统计（上榜次数/净买额/后市统计，按时间段聚合）
+- 输入契约：`DragonTigerRequest`
+  - `include`：daily_detail/institution/active_broker/broker_rank/stock_stat
+  - `trade_date` / `start_date + end_date`：A 类接口日期范围
+  - `period`：近一月/近三月/近六月/近一年（B 类接口时间段）
+  - `sort_by`：net_buy_amount/turnover_amount/buy_amount/inst_net_buy/listed_count
+  - `descending` / `top_n`
+- 输出包含：
+  - `daily_detail`：list[DailyDetailItem]（symbol/name/买卖额/上榜原因/解读/后市涨跌）
+  - `institution`：list[InstitutionItem]（机构参与明细）
+  - `active_broker`：list[ActiveBrokerItem]（席位动向）
+  - `broker_rank`：list[BrokerRankItem]（胜率排行）
+  - `stock_stat`：list[StockStatItem]（个股上榜统计）
+  - `summary`：可读文本摘要
+- AKShare 接口：
+  - `stock_lhb_detail_em` → daily_detail
+  - `stock_lhb_jgmmtj_em` → institution
+  - `stock_lhb_hyyyb_em` → active_broker
+  - `stock_lhb_yybph_em` → broker_rank
+  - `stock_lhb_stock_statistic_em` → stock_stat
+- added models: DailyDetailItem, InstitutionItem, ActiveBrokerItem, BrokerRankItem, StockStatItem, DragonTigerResult
+- added `akshare_dragon_tiger_adapters` with 5 adapt functions + summary builder
+- added `AKShareProvider` methods: get_dragon_tiger_daily/institution/active_broker/broker_rank/stock_stat
+- added `DragonTigerUseCase` with sort/top_n support
+- added `dragon_tiger` to provider router → akshare
+- added MCP tool registration
+- added tests: `test_akshare_dragon_tiger_adapters.py` (12 tests)
