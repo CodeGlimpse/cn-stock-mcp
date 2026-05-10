@@ -31,6 +31,7 @@
 - 龙虎榜（日榜明细/机构买卖/活跃营业部/营业部胜率/个股上榜统计）→ `dragon_tiger`
 - ETF行情快照（全市场实时+IOPV折溢价+资金流+份额+净值）→ `etf_snapshot`
 - 可转债（双低/溢价率/YTM/强赎监控/等权指数）→ `convertible_bond`
+- 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -103,6 +104,7 @@
 - `dragon_tiger`：`akshare`
 - `etf_snapshot`：`akshare`
 - `convertible_bond`：`akshare`
+- `derivatives_data`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -245,6 +247,21 @@
 ### 可转债强赎监控
 ```json
 {"tool":"convertible_bond","payload":{"include":["redeem"],"call_status_filter":"called","top_n":10}}
+```
+
+### 期货实时+QVIX
+```json
+{"tool":"derivatives_data","payload":{"include":["futures_spot","qvix"],"qvix_underlying":"50etf"}}
+```
+
+### 期货历史（螺纹钢主力）
+```json
+{"tool":"derivatives_data","payload":{"include":["futures_hist"],"futures_symbol":"RB0","history_n":60}}
+```
+
+### 期权合约列表
+```json
+{"tool":"derivatives_data","payload":{"include":["option_list"],"option_exchange":"both","option_type_filter":"call"}}
 ```
 
 

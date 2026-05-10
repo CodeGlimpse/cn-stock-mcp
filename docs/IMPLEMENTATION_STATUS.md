@@ -48,6 +48,7 @@
 - `dragon_tiger`
 - `etf_snapshot`
 - `convertible_bond`
+- `derivatives_data`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
@@ -629,3 +630,38 @@
 - added `convertible_bond` to provider router → akshare
 - added MCP tool registration
 - added tests: `test_akshare_convertible_bond_adapters.py` (9 tests)
+
+### derivatives_data（期货/期权）
+- 新增 `derivatives_data` tool
+- 当前 provider：`akshare`
+- 支持 4 种 include 模式：
+  - `futures_spot`：期货主力合约实时快照（价格/持仓/涨跌幅）
+  - `futures_hist`：期货合约历史日线（含持仓量/结算价）
+  - `option_list`：期权合约列表（SSE/SZSE，含行权价/合约单位/到期日/持仓）
+  - `qvix`：期权隐含波动率指数（支持 50ETF/300ETF/500ETF/50指数/300指数/1000指数/科创板/创业板）
+- 输入契约：`DerivativesDataRequest`
+  - `include`：futures_spot/futures_hist/option_list/qvix
+  - `futures_symbol`：期货合约代码（默认 RB0=螺纹钢主力）
+  - `option_exchange`：SSE/SZSE/both
+  - `qvix_underlying`：50etf/300etf/500etf/100etf/50index/300index/1000index/kcb/cyb
+  - `option_type_filter`：all/call/put
+  - `history_n`：历史期数（默认 60）
+- 输出包含：
+  - `futures_spot`：list[FuturesSpotItem]
+  - `futures_hist`：list[FuturesHistItem]（含持仓量/结算价）
+  - `option_list`：list[OptionContractItem]（SSE+SZSE）
+  - `qvix`：list[QVIXItem]
+  - `summary`：可读文本摘要
+- AKShare 接口：
+  - `futures_zh_realtime` → futures_spot
+  - `futures_zh_daily_sina` → futures_hist
+  - `option_current_day_sse/szse` → option_list
+  - `index_option_*_qvix` → qvix（9 个标的）
+- 注意：EM 期权接口(option_current_em)当前代理不稳定，使用 SSE/SZSE 官方接口替代
+- added models: FuturesSpotItem, FuturesHistItem, OptionContractItem, QVIXItem, DerivativesDataResult
+- added `akshare_derivatives_data_adapters` with 5 adapt functions + summary builder
+- added `AKShareProvider` methods: get_futures_spot/get_futures_hist/get_option_list_sse/szse/get_qvix
+- added `DerivativesDataUseCase`
+- added `derivatives_data` to provider router → akshare
+- added MCP tool registration
+- added tests: `test_akshare_derivatives_data_adapters.py` (10 tests)

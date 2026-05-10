@@ -1065,3 +1065,26 @@ class ConvertibleBondRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class DerivativesDataRequest(BaseModel):
+    include: list[Literal["futures_spot", "futures_hist", "option_list", "qvix"]] = Field(default=["futures_spot", "qvix"])
+    futures_symbol: str = Field(default="RB0", description="期货合约代码，如 RB0=螺纹钢主力, I0=铁矿石主力, AU0=黄金主力")
+    option_exchange: Literal["SSE", "SZSE", "both"] = Field(default="both", description="期权交易所选择")
+    qvix_underlying: Literal["50etf", "300etf", "500etf", "100etf", "50index", "300index", "1000index", "kcb", "cyb"] = Field(default="50etf")
+    history_n: int = Field(default=60, ge=1, le=500)
+    option_type_filter: Literal["all", "call", "put"] = Field(default="all", description="认购/认沽筛选")
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if not self.include:
+            raise ValueError("include must contain at least one of: futures_spot, futures_hist, option_list, qvix")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

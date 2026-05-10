@@ -704,3 +704,65 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare cb_index failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Derivatives (期货/期权) ───────────────────────────
+
+    def get_futures_spot(self) -> list[dict]:
+        """Fetch futures real-time quotes from ak.futures_zh_realtime()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.futures_zh_realtime)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare futures_spot failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_futures_hist(self, symbol: str) -> list[dict]:
+        """Fetch futures daily history from ak.futures_zh_daily_sina()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.futures_zh_daily_sina, symbol=symbol)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare futures_hist failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_option_list_sse(self) -> list[dict]:
+        """Fetch SSE option contracts from ak.option_current_day_sse()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.option_current_day_sse)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare option_list_sse failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_option_list_szse(self) -> list[dict]:
+        """Fetch SZSE option contracts from ak.option_current_day_szse()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.option_current_day_szse)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare option_list_szse failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_qvix(self, underlying: str = "50etf") -> list[dict]:
+        """Fetch QVIX implied volatility from ak.index_option_*_qvix()."""
+        lib = self._require_ak()
+        qvix_map = {
+            "50etf": lib.index_option_50etf_qvix,
+            "300etf": lib.index_option_300etf_qvix,
+            "500etf": lib.index_option_500etf_qvix,
+            "100etf": lib.index_option_100etf_qvix,
+            "50index": lib.index_option_50index_qvix,
+            "300index": lib.index_option_300index_qvix,
+            "1000index": lib.index_option_1000index_qvix,
+            "kcb": lib.index_option_kcb_qvix,
+            "cyb": lib.index_option_cyb_qvix,
+        }
+        fn = qvix_map.get(underlying)
+        if fn is None:
+            available = "/".join(qvix_map.keys())
+            raise ProviderError("INVALID_ARGUMENT", f"Unknown QVIX underlying '{underlying}'. Available: {available}", retryable=False)
+        try:
+            df = self._call_ak_quietly(fn)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare qvix({underlying}) failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

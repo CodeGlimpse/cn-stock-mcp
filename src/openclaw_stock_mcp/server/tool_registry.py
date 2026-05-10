@@ -46,5 +46,6 @@ __all__ = [
     "DragonTigerRequest",
     "ETFSnapshotRequest",
     "ConvertibleBondRequest",
+    "DerivativesDataRequest",
     "StockProfileRequest",
 ]
