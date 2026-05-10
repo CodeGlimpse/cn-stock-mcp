@@ -27,6 +27,7 @@
 - 指数成分与权重分析 → `index_compose`
 - 行业估值分位（一级行业横向估值）→ `industry_valuation_rank`
 - 盈利质量评估（财报质量打分）→ `earnings_quality`
+- 宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/非农/BDI/黄金等）→ `macro_indicator`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -95,6 +96,7 @@
 - `index_compose`：`akshare`
 - `industry_valuation_rank`：成员股获取走 `sector_lookup(children, primary)`（`zhitu`），估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - `earnings_quality`：`akshare`（复用 `stock_financial` 抽象快照）
+- `macro_indicator`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -187,6 +189,21 @@
 ### 多周期复盘
 ```json
 {"tool":"multi_timeframe_review","payload":{"symbol":"000001.SH","sec_type":"index","intervals":["15","d","w"],"indicators":["macd","ma","kdj"],"limit":60}}
+```
+
+### 宏观指标（最新值）
+```json
+{"tool":"macro_indicator","payload":{"indicator":"cpi","region":"cn","include":["latest"]}}
+```
+
+### 宏观指标（历史序列）
+```json
+{"tool":"macro_indicator","payload":{"indicator":"m2","region":"cn","include":["history"],"history_n":24}}
+```
+
+### 宏观概览（一地区核心指标快照）
+```json
+{"tool":"macro_indicator","payload":{"indicator":"overview","region":"cn","include":["overview"]}}
 ```
 
 
