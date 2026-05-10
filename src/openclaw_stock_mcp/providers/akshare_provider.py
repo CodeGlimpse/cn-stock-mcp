@@ -675,3 +675,32 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare etf_nav failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Convertible Bond (可转债) ────────────────────────
+
+    def get_cb_spot(self) -> list[dict]:
+        """Fetch convertible bond snapshot from ak.bond_cb_jsl()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.bond_cb_jsl)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare cb_spot failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_cb_redeem(self) -> list[dict]:
+        """Fetch convertible bond call/redeem data from ak.bond_cb_redeem_jsl()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.bond_cb_redeem_jsl)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare cb_redeem failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_cb_index(self) -> list[dict]:
+        """Fetch convertible bond index from ak.bond_cb_index_jsl()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.bond_cb_index_jsl)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare cb_index failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

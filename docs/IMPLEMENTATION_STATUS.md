@@ -47,6 +47,7 @@
 - `macro_indicator`
 - `dragon_tiger`
 - `etf_snapshot`
+- `convertible_bond`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
@@ -595,3 +596,36 @@
 - added `etf_snapshot` to provider router → akshare
 - added MCP tool registration
 - added tests: `test_akshare_etf_snapshot_adapters.py` (8 tests)
+
+### convertible_bond（可转债）
+- 新增 `convertible_bond` tool
+- 当前 provider：`akshare`
+- 支持 3 种 include 模式：
+  - `spot`：集思录可转债实时快照（现价/涨跌幅/正股/转股价/转股价值/转股溢价率/债券评级/双低/到期税前收益/剩余年限/剩余规模）
+  - `redeem`：强赎监控（强赎天计数/强赎触发价/强赎状态/最后交易日）
+  - `index`：可转债等权指数历史
+- 输入契约：`ConvertibleBondRequest`
+  - `include`：spot/redeem/index
+  - `sort_by`：double_low/conv_premium/ytm/change_percent/turnover/remaining_years（默认 double_low 升序）
+  - `descending` / `top_n`
+  - `min_double_low` / `max_double_low`：双低区间筛选
+  - `max_conv_premium`：溢价率上限筛选
+  - `min_ytm`：到期收益率下限筛选
+  - `call_status_filter`：all/called/near_call/safe（强赎状态筛选）
+  - `history_n`：index 模式取最近 N 期（默认 60）
+- 输出包含：
+  - `spot`：list[CBSpotItem]（双低/溢价率/YTM/评级/转股价值等）
+  - `redeem`：list[CBRedeemItem]（强赎天计数/强赎状态/最后交易日）
+  - `index`：list[CBIndexPoint]（等权指数历史）
+  - `summary`：可读文本摘要
+- AKShare 接口：
+  - `bond_cb_jsl` → spot（集思录快照）
+  - `bond_cb_redeem_jsl` → redeem（强赎监控）
+  - `bond_cb_index_jsl` → index（等权指数）
+- added models: CBSpotItem, CBRedeemItem, CBIndexPoint, ConvertibleBondResult
+- added `akshare_convertible_bond_adapters` with 3 adapt functions + summary builder
+- added `AKShareProvider` methods: get_cb_spot/get_cb_redeem/get_cb_index
+- added `ConvertibleBondUseCase` with double-low sort/filter + call-status screening
+- added `convertible_bond` to provider router → akshare
+- added MCP tool registration
+- added tests: `test_akshare_convertible_bond_adapters.py` (9 tests)

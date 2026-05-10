@@ -1038,3 +1038,30 @@ class ETFSnapshotRequest(BaseModel):
             raw = self.symbol.strip()
             self._raw_code = raw.split(".")[0] if "." in raw else raw
         return self
+
+
+class ConvertibleBondRequest(BaseModel):
+    include: list[Literal["spot", "redeem", "index"]] = Field(default=["spot"])
+    sort_by: Literal["double_low", "conv_premium", "ytm", "change_percent", "turnover", "remaining_years"] = "double_low"
+    descending: bool = False
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    min_double_low: float | None = Field(default=None, description="双低下限")
+    max_double_low: float | None = Field(default=None, description="双低上限")
+    max_conv_premium: float | None = Field(default=None, description="溢价率上限筛选")
+    min_ytm: float | None = Field(default=None, description="到期收益率下限筛选")
+    call_status_filter: Literal["all", "called", "near_call", "safe"] | None = Field(default=None, description="强赎状态筛选")
+    history_n: int = Field(default=60, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if not self.include:
+            raise ValueError("include must contain at least one of: spot, redeem, index")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

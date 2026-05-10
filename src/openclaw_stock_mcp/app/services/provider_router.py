@@ -82,6 +82,9 @@ class ProviderRouter:
         if tool_name == "etf_snapshot":
             return ProviderSelection(primary="akshare", fallback=[])
 
+        if tool_name == "convertible_bond":
+            return ProviderSelection(primary="akshare", fallback=[])
+
         if tool_name == "stock_quote":
             if sec_type == "index" or sec_type == "fund":
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])

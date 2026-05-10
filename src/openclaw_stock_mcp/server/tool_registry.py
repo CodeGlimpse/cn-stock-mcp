@@ -45,5 +45,6 @@ __all__ = [
     "MacroIndicatorRequest",
     "DragonTigerRequest",
     "ETFSnapshotRequest",
+    "ConvertibleBondRequest",
     "StockProfileRequest",
 ]
