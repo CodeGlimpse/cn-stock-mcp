@@ -29,6 +29,7 @@
 - 盈利质量评估（财报质量打分）→ `earnings_quality`
 - 宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/非农/BDI/黄金等）→ `macro_indicator`
 - 龙虎榜（日榜明细/机构买卖/活跃营业部/营业部胜率/个股上榜统计）→ `dragon_tiger`
+- ETF行情快照（全市场实时+IOPV折溢价+资金流+份额+净值）→ `etf_snapshot`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -99,6 +100,7 @@
 - `earnings_quality`：`akshare`（复用 `stock_financial` 抽象快照）
 - `macro_indicator`：`akshare`
 - `dragon_tiger`：`akshare`
+- `etf_snapshot`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -216,6 +218,21 @@
 ### 龙虎榜营业部胜率
 ```json
 {"tool":"dragon_tiger","payload":{"include":["broker_rank"],"period":"近一月","top_n":10}}
+```
+
+### ETF全市场行情快照（按成交额排序）
+```json
+{"tool":"etf_snapshot","payload":{"include":["spot"],"sort_by":"turnover","top_n":20}}
+```
+
+### ETF折溢价筛选
+```json
+{"tool":"etf_snapshot","payload":{"include":["spot"],"min_discount":0.1,"sort_by":"discount_rate","top_n":10}}
+```
+
+### ETF净值序列
+```json
+{"tool":"etf_snapshot","payload":{"include":["nav"],"symbol":"510300","history_n":30}}
 ```
 
 

@@ -42,6 +42,7 @@ Last Updated: 2026-05-09
 - earnings_quality
 - macro_indicator
 - dragon_tiger
+- etf_snapshot
 
 ---
 
@@ -136,6 +137,7 @@ Last Updated: 2026-05-09
 - earnings_quality：`akshare`（复用 `stock_financial` 快照）
 - macro_indicator：`akshare`
 - dragon_tiger：`akshare`
+- etf_snapshot：`akshare`
 - valuation_rank：市场估值快照使用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - industry_valuation_rank：行业成员股来自 `sector_lookup(children, primary)`（`zhitu`），成员估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - stock_quote：
@@ -171,6 +173,7 @@ Last Updated: 2026-05-09
 - `earnings_quality`：盈利质量评估（扣非占比/增速一致性/现金转化/ROE/杠杆综合评分）
 - `macro_indicator`：宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2等，支持cn/usa/euro/global，latest/history/calendar/overview四种模式）
 - `dragon_tiger`：龙虎榜明细（日榜明细/机构买卖/活跃营业部/营业部胜率排行/个股上榜统计）
+- `etf_snapshot`：ETF行情快照（全市场实时行情+IOPV折溢价+资金流+份额+净值）
 
 补充（可观测性字段，已在关键工具 meta 中统一输出）：
 - `provider_used`：本次实际使用的 provider（或集合）

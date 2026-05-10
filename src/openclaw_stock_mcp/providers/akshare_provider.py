@@ -646,3 +646,32 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dragon_tiger_stock_stat failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── ETF Snapshot ──────────────────────────────────────
+
+    def get_etf_spot_em(self) -> list[dict]:
+        """Fetch full-market ETF real-time snapshot from ak.fund_etf_spot_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.fund_etf_spot_em)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare etf_spot failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_etf_scale_sse(self) -> list[dict]:
+        """Fetch SSE ETF share/scale from ak.fund_etf_scale_sse()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.fund_etf_scale_sse)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare etf_scale failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_etf_nav(self, fund: str, start_date: str = "20000101", end_date: str = "20500101") -> list[dict]:
+        """Fetch ETF NAV series from ak.fund_etf_fund_info_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.fund_etf_fund_info_em, fund=fund, start_date=start_date, end_date=end_date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare etf_nav failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

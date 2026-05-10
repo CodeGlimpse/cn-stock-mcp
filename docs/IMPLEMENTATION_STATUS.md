@@ -46,6 +46,7 @@
 - `earnings_quality`
 - `macro_indicator`
 - `dragon_tiger`
+- `etf_snapshot`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
@@ -563,3 +564,34 @@
 - added `dragon_tiger` to provider router → akshare
 - added MCP tool registration
 - added tests: `test_akshare_dragon_tiger_adapters.py` (12 tests)
+
+### etf_snapshot（ETF 行情快照）
+- 新增 `etf_snapshot` tool
+- 当前 provider：`akshare`
+- 支持 3 种 include 模式：
+  - `spot`：全市场 ETF 实时行情快照（IOPV/基金折价率/主力净流入/份额/市值）
+  - `scale`：上交所 ETF 份额规模
+  - `nav`：ETF 净值序列（单位净值/累计净值/日增长率）
+- 输入契约：`ETFSnapshotRequest`
+  - `include`：spot/scale/nav
+  - `symbol`：单只 ETF 代码（nav 模式必填）
+  - `sort_by`：turnover/change_percent/discount_rate/main_net_inflow/volume/total_market_cap
+  - `descending` / `top_n`（默认 20）
+  - `min_discount` / `max_discount`：折溢价率筛选
+  - `history_n`：nav 模式取最近 N 期（默认 30）
+- 输出包含：
+  - `spot`：list[ETFSpotItem]（IOPV/折价率/主力资金流/份额/市值）
+  - `scale`：list[ETFScaleItem]（份额/类型/日期）
+  - `nav`：list[ETFNAVItem]（净值/累计净值/日增长率）
+  - `summary`：可读文本摘要
+- AKShare 接口：
+  - `fund_etf_spot_em` → spot（~1400+ ETF 全市场快照）
+  - `fund_etf_scale_sse` → scale
+  - `fund_etf_fund_info_em` → nav
+- added models: ETFSpotItem, ETFScaleItem, ETFNAVItem, ETFSnapshotResult
+- added `akshare_etf_snapshot_adapters` with 3 adapt functions + summary builder
+- added `AKShareProvider` methods: get_etf_spot_em/get_etf_scale_sse/get_etf_nav
+- added `ETFSnapshotUseCase` with sort/filter/discount screening
+- added `etf_snapshot` to provider router → akshare
+- added MCP tool registration
+- added tests: `test_akshare_etf_snapshot_adapters.py` (8 tests)

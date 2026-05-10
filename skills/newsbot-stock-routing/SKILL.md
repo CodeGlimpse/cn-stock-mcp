@@ -32,6 +32,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 上游健康检查 → `provider_health`
 - 宏观经济指标（CPI/PMI/GDP/LPR/M2等）→ `macro_indicator`
 - 龙虎榜明细（游资/机构/营业部胜率）→ `dragon_tiger`
+- ETF行情快照（IOPV折溢价/资金流/份额/净值）→ `etf_snapshot`
 
 ## Operating rules
 

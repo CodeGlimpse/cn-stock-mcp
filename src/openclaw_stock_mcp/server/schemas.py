@@ -1007,3 +1007,34 @@ class DragonTigerRequest(BaseModel):
                 normalized.append(item)
         self.include = normalized
         return self
+
+
+class ETFSnapshotRequest(BaseModel):
+    include: list[Literal["spot", "scale", "nav"]] = Field(default=["spot"])
+    symbol: str | None = Field(default=None, min_length=1)
+    sort_by: Literal["turnover", "change_percent", "discount_rate", "main_net_inflow", "volume", "total_market_cap"] = "turnover"
+    descending: bool = True
+    top_n: int = Field(default=20, ge=1, le=200)
+    min_discount: float | None = Field(default=None, description="折价率下限筛选（负数=折价）")
+    max_discount: float | None = Field(default=None, description="溢价率上限筛选（正数=溢价）")
+    history_n: int = Field(default=30, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if "nav" in self.include and not self.symbol:
+            raise ValueError("symbol is required when include contains 'nav'")
+        if not self.include:
+            raise ValueError("include must contain at least one of: spot, scale, nav")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        # Normalize symbol: strip .SH/.SZ for AKShare API
+        if self.symbol:
+            raw = self.symbol.strip()
+            self._raw_code = raw.split(".")[0] if "." in raw else raw
+        return self

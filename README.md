@@ -66,6 +66,7 @@
 - `earnings_quality()` 盈利质量评估可用（含金量/现金转化/一致性/杠杆约束综合评分）
 - `macro_indicator()` 宏观经济指标可用（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/外汇/非农/BDI/黄金等，支持 cn/usa/euro/global）
 - `dragon_tiger()` 龙虎榜明细可用（日榜/机构买卖/活跃营业部/营业部胜率/个股上榜统计）
+- `etf_snapshot()` ETF行情快照可用（全市场实时行情+IOPV折溢价+资金流+份额+净值）
 
 ## 快速开始
 

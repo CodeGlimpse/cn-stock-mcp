@@ -20,6 +20,7 @@ from openclaw_stock_mcp.app.usecases.industry_valuation_rank import IndustryValu
 from openclaw_stock_mcp.app.usecases.earnings_quality import EarningsQualityUseCase
 from openclaw_stock_mcp.app.usecases.macro_indicator import MacroIndicatorUseCase
 from openclaw_stock_mcp.app.usecases.dragon_tiger import DragonTigerUseCase
+from openclaw_stock_mcp.app.usecases.etf_snapshot import ETFSnapshotUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -57,6 +58,7 @@ from openclaw_stock_mcp.server.schemas import (
     EarningsQualityRequest,
     MacroIndicatorRequest,
     DragonTigerRequest,
+    ETFSnapshotRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -181,6 +183,7 @@ def create_server() -> MCPServerStub:
     earnings_quality = EarningsQualityUseCase()
     macro_indicator = MacroIndicatorUseCase()
     dragon_tiger = DragonTigerUseCase()
+    etf_snapshot = ETFSnapshotUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -215,5 +218,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="earnings_quality", description="Evaluate earnings quality from financial snapshot (deduct ratio, growth consistency, cash conversion, ROE, leverage).", input_model=EarningsQualityRequest, handler=earnings_quality.execute))
     server.register_tool(MCPTool(name="macro_indicator", description="Get macro economic indicators (CPI/PPI/PMI/GDP/LPR/M2/etc.) for CN/USA/Euro/Global regions. Supports latest value, history, calendar, and overview modes.", input_model=MacroIndicatorRequest, handler=macro_indicator.execute))
     server.register_tool(MCPTool(name="dragon_tiger", description="Get dragon-tiger board (龙虎榜) data: daily listed stocks with buy/sell detail, institution participation, active broker tracking, broker success-rate ranking, and stock board statistics.", input_model=DragonTigerRequest, handler=dragon_tiger.execute))
+    server.register_tool(MCPTool(name="etf_snapshot", description="Get ETF market snapshot: real-time quotes with IOPV/discount rate/main net inflow, ETF share/scale, and NAV history. Supports full-market sorting and discount-rate filtering.", input_model=ETFSnapshotRequest, handler=etf_snapshot.execute))
 
     return server

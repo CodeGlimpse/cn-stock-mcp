@@ -44,5 +44,6 @@ __all__ = [
     "HotThemeTrackerRequest",
     "MacroIndicatorRequest",
     "DragonTigerRequest",
+    "ETFSnapshotRequest",
     "StockProfileRequest",
 ]
