@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-09
+更新时间：2026-05-10
 
 ## 已完成
 
@@ -44,6 +44,7 @@
 - `index_compose`
 - `industry_valuation_rank`
 - `earnings_quality`
+- `macro_indicator`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
@@ -489,3 +490,39 @@
 - 新增过滤参数：`min_up_streak`、`max_down_streak`、`require_source_tags`、`exclude_risk_flags`、`must_have_reason_tags`、`exclude_reason_tags`
 - 新增解释字段：`candidate_score_breakdown`（分项得分 + total）
 - 保持原有接口兼容（老参数全部可继续使用）
+
+### macro_indicator（宏观经济指标）
+- 新增 `macro_indicator` tool
+- 当前 provider：`akshare`
+- 支持 4 个 region：`cn` / `usa` / `euro` / `global`
+- 支持 4 种 include 模式：
+  - `latest`：最新值 + 预期差（beat/miss/in_line）
+  - `history`：最近 N 期序列
+  - `calendar`：近期待公布事件（actual=None 且有 forecast/previous）
+  - `overview`：一地区核心指标快照（cn: 10个/usa: 6个/euro: 3个）
+- 输入契约：`MacroIndicatorRequest`
+  - `indicator`：指标标识（cpi/ppi/pmi/gdp/lpr/m2/credit/exports/imports/fx_reserves/rrr/non_farm/jobless/rate/bdi/gold 等）
+  - `region`：cn/usa/euro/global
+  - `include`：latest/history/calendar/overview
+  - `history_n`：history 模式取最近 N 期（默认 12）
+  - `start_date / end_date`：可选日期范围过滤
+- AKShare 宏观接口返回结构分 4 类：
+  - format=A：标准金融日历格式 `[商品, 日期, 今值, 预测值, 前值]`
+  - format=A2：美国部分接口微调 `[时间, 发布日期, 现值, 前值]`
+  - format=B：NBS 宽表，每个接口列名不同，需配置 `b_date_col / b_value_col`
+  - format=C：特殊结构（如 LPR `[TRADE_DATE, LPR1Y, LPR5Y, ...]`），需配置 `c_col_map`
+- 通过 `INDICATOR_REGISTRY` 映射表统一管理，扩展只改映射表不改 tool 契约
+- 输出包含：
+  - `latest`：MacroDataPoint(date, actual, forecast, previous, surprise)
+  - `history`：list[MacroDataPoint]
+  - `calendar`：list[MacroCalendarItem]
+  - `overview`：dict[str, MacroOverviewItem]
+  - `summary`：可读文本摘要
+- 当前已注册指标：cn 16 个 / usa 8 个 / euro 3 个 / global 2 个 = 29 个
+- added models: `MacroDataPoint`, `MacroCalendarItem`, `MacroOverviewItem`, `MacroIndicatorResult`, `MacroEntry`, `INDICATOR_REGISTRY`, `OVERVIEW_PRESETS` in `app/models/macro.py`
+- added `akshare_macro_adapters` with 4 format normalizers + calendar/overview/summary builders
+- added `AKShareProvider.get_macro_raw()` method
+- added `MacroIndicatorUseCase` with overview preset aggregation
+- added `macro_indicator` to provider router → akshare
+- added MCP tool registration
+- added tests: `test_akshare_macro_adapters.py` (27 tests)

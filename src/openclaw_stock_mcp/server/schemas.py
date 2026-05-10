@@ -940,3 +940,32 @@ class IndustryValuationRankRequest(BaseModel):
 class EarningsQualityRequest(BaseModel):
     symbol: str = Field(min_length=1)
     provider: Literal["akshare"] | None = "akshare"
+
+
+class MacroIndicatorRequest(BaseModel):
+    indicator: str = Field(min_length=1)
+    region: Literal["cn", "usa", "euro", "global"] = "cn"
+    include: list[Literal["latest", "history", "calendar", "overview"]] = Field(default=["latest"])
+    history_n: int = Field(default=12, ge=1, le=500)
+    start_date: str | None = None
+    end_date: str | None = None
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if self.start_date:
+            dt_date.fromisoformat(self.start_date)
+        if self.end_date:
+            dt_date.fromisoformat(self.end_date)
+        if self.start_date and self.end_date and dt_date.fromisoformat(self.start_date) > dt_date.fromisoformat(self.end_date):
+            raise ValueError("start_date must be <= end_date")
+        if not self.include:
+            raise ValueError("include must contain at least one of: latest, history, calendar, overview")
+        seen = set()
+        normalized = []
+        for item in self.include:
+            if item not in seen:
+                seen.add(item)
+                normalized.append(item)
+        self.include = normalized
+        return self

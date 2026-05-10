@@ -580,3 +580,15 @@ class AKShareProvider:
         if top_n:
             items = items[:top_n]
         return items
+
+    def get_macro_raw(self, func_name: str, **kwargs) -> "pd.DataFrame":
+        """Call an AKShare macro function by name and return the raw DataFrame."""
+        lib = self._require_ak()
+        fn = getattr(lib, func_name, None)
+        if fn is None:
+            raise ProviderError("INVALID_ARGUMENT", f"AKShare has no function: {func_name}", retryable=False)
+        try:
+            df = self._call_ak_quietly(fn, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare macro {func_name} failed: {exc}", retryable=True) from exc
+        return df

@@ -18,6 +18,7 @@ from openclaw_stock_mcp.app.usecases.valuation_rank import ValuationRankUseCase
 from openclaw_stock_mcp.app.usecases.index_compose import IndexComposeUseCase
 from openclaw_stock_mcp.app.usecases.industry_valuation_rank import IndustryValuationRankUseCase
 from openclaw_stock_mcp.app.usecases.earnings_quality import EarningsQualityUseCase
+from openclaw_stock_mcp.app.usecases.macro_indicator import MacroIndicatorUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -53,6 +54,7 @@ from openclaw_stock_mcp.server.schemas import (
     IndexComposeRequest,
     IndustryValuationRankRequest,
     EarningsQualityRequest,
+    MacroIndicatorRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -175,6 +177,7 @@ def create_server() -> MCPServerStub:
     index_compose = IndexComposeUseCase()
     industry_valuation_rank = IndustryValuationRankUseCase()
     earnings_quality = EarningsQualityUseCase()
+    macro_indicator = MacroIndicatorUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -207,5 +210,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="index_compose", description="Get index constituents and weights for index benchmarking/enhanced strategy construction.", input_model=IndexComposeRequest, handler=index_compose.execute))
     server.register_tool(MCPTool(name="industry_valuation_rank", description="Rank primary sectors by valuation percentile using member stock PE/PB aggregation.", input_model=IndustryValuationRankRequest, handler=industry_valuation_rank.execute))
     server.register_tool(MCPTool(name="earnings_quality", description="Evaluate earnings quality from financial snapshot (deduct ratio, growth consistency, cash conversion, ROE, leverage).", input_model=EarningsQualityRequest, handler=earnings_quality.execute))
+    server.register_tool(MCPTool(name="macro_indicator", description="Get macro economic indicators (CPI/PPI/PMI/GDP/LPR/M2/etc.) for CN/USA/Euro/Global regions. Supports latest value, history, calendar, and overview modes.", input_model=MacroIndicatorRequest, handler=macro_indicator.execute))
 
     return server
