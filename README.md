@@ -775,7 +775,7 @@ openclaw skills info newsbot-stock-routing
   - `open/high/low/close`：腾讯历史接口（日线基础）
   - `volume`：优先由 `stock_zh_a_daily` 按日期回填；周/月按日线求和
   - `turnover`：统一为成交额口径（`stock_zh_a_daily.amount` 优先）；周/月按日线求和
-  - `prev_close`：日线按前一条 bar 的 `close` 推导；周/月使用聚合后前一根 K 线 `close` 回填
+  - `prev_close`：日线按前一条 bar 的 `close` 推导；已通过前推 start_date 10 自然日确保首条可填充（仅上市首日仍为空）；周/月使用聚合后前一根 K 线 `close` 回填
 
 ### sector_lookup 当前语义
 - `mode=list, sector_type=concept`：概念板块列表

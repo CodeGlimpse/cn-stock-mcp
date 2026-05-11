@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from io import StringIO
 
 from openclaw_stock_mcp.providers.errors import ProviderError
@@ -241,8 +241,28 @@ class AKShareProvider:
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
         return [self.get_quote(symbol, sec_type or "stock") for symbol in symbols]
 
+    @staticmethod
+    def _prepush_start(start: str | None, days: int = 10) -> str:
+        """Push start_date back by *days* calendar days to ensure at least one
+        earlier bar is fetched for prev_close derivation."""
+        if not start:
+            return "19000101"
+        d = date.fromisoformat(start.replace("-", ""))
+        earlier = d - timedelta(days=days)
+        return earlier.strftime("%Y%m%d")
+
+    @staticmethod
+    def _trim_before(bars: list[Bar], original_start: str | None) -> list[Bar]:
+        """Drop bars before *original_start* (used after pre-pushing for prev_close)."""
+        if not original_start or not bars:
+            return bars
+        cutoff = original_start.replace("-", "")
+        return [b for b in bars if str(b.time)[:10].replace("-", "") >= cutoff]
+
     def get_history(self, symbol: str, sec_type: str, interval: str, start=None, end=None, limit=None, adjust=None):
         lib = self._require_ak()
+
+        original_start = start
 
         if sec_type == "index":
             if interval not in {"1d", "1w", "1M"}:
@@ -255,7 +275,7 @@ class AKShareProvider:
                     lib.index_zh_a_hist,
                     symbol=index_symbol,
                     period=period_map[interval],
-                    start_date=(start or "19000101").replace("-", ""),
+                    start_date=self._prepush_start(start),
                     end_date=(end or "20500101").replace("-", ""),
                 )
             except Exception as exc:
@@ -263,6 +283,7 @@ class AKShareProvider:
             rows = df.to_dict(orient="records")
             bars = [adapt_akshare_bar_row(row) for row in rows]
             bars = self._fill_prev_close(bars)
+            bars = self._trim_before(bars, original_start)
             if limit:
                 bars = bars[-limit:]
             return bars
@@ -274,12 +295,13 @@ class AKShareProvider:
 
         normalized = normalize_symbol(symbol)
         tx_symbol = self._to_tx_symbol(normalized)
+        tx_start = self._prepush_start(start)
         adjust_map = {"none": "", "qfq": "qfq", "hfq": "hfq"}
         try:
             tx_df = self._call_ak_quietly(
                 lib.stock_zh_a_hist_tx,
                 symbol=tx_symbol,
-                start_date=(start or "19000101").replace("-", ""),
+                start_date=tx_start,
                 end_date=(end or "20500101").replace("-", ""),
                 adjust=adjust_map.get(adjust or "none", ""),
             )
@@ -293,7 +315,7 @@ class AKShareProvider:
             daily_df = self._call_ak_quietly(
                 lib.stock_zh_a_daily,
                 symbol=tx_symbol,
-                start_date=(start or "19000101").replace("-", ""),
+                start_date=tx_start,
                 end_date=(end or "20500101").replace("-", ""),
                 adjust=adjust_map.get(adjust or "none", ""),
             )
@@ -322,6 +344,7 @@ class AKShareProvider:
             pass
 
         bars = self._fill_prev_close(bars)
+        bars = self._trim_before(bars, original_start)
 
         if interval == "1d":
             result = bars

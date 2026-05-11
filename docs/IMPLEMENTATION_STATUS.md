@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-10
+更新时间：2026-05-11
 
 ## 已完成
 
@@ -452,7 +452,7 @@
 - 指数历史 fallback 已增强：AKShare 现支持 `index_zh_a_hist` 的 `1d/1w/1M`，用于补齐北证50等指数历史覆盖
 - 已增强字段完整度：
   - `volume`：优先通过 `stock_zh_a_daily` 按日期回填
-  - `prev_close`：按前一条 bar 的 `close` 推导（首条为空）
+  - `prev_close`：按前一条 bar 的 `close` 推导；已通过前推 start_date 10 个自然日确保首条 prev_close 可填充（仅上市首日仍为空）
   - `turnover`：统一为成交额口径（`stock_zh_a_daily.amount` 优先）
 
 ## 当前建议
@@ -477,7 +477,7 @@
 
 ## 已知限制
 1. AKShare 股票历史字段仍依赖上游可用性与口径
-2. `stock_history(stock)` 中首条 `prev_close` 可能为空（无前序数据）
+2. `stock_history(stock)` 中首条 `prev_close` 已通过前推 start_date 填充；仅上市首日仍为空
 3. `sector_lookup(children/members)` 依赖智兔一级板块名称；无效板块名会返回空列表
 4. `market_pool` 少量记录可能含上游异常值，当前已通过 `extra.data_quality / anomaly_flags` 标记可疑数据
 5. `1m` 周期当前未实现；需等可靠 provider 明确后再开放
