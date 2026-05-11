@@ -173,6 +173,7 @@ class SectorRotationReviewUseCase:
         try:
             sector_req = SimpleNamespace(
                 sector_name=sector_name,
+                sector_type=getattr(request, "sector_type", "primary"),
                 trade_date=request.trade_date,
                 start_date=request.start_date,
                 end_date=request.end_date,

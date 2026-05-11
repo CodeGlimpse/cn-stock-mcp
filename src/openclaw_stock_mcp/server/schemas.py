@@ -316,7 +316,7 @@ class SectorReviewRequest(BaseModel):
 
 class SectorRotationReviewRequest(BaseModel):
     sector_names: list[str] = Field(min_length=2, max_length=15)
-    sector_type: Literal["primary"] = "primary"
+    sector_type: SectorType = "primary"
     trade_date: str | None = None
     start_date: str | None = None
     end_date: str | None = None
@@ -368,7 +368,7 @@ class SectorRotationReviewRequest(BaseModel):
 class StockCandidateScanRequest(BaseModel):
     symbols: list[str] | None = Field(default=None, max_length=100)
     sector_names: list[str] | None = Field(default=None, max_length=10)
-    sector_type: Literal["primary"] = "primary"
+    sector_type: SectorType = "primary"
     pool_type: str | None = None
     trade_date: str | None = None
     start_date: str | None = None
@@ -626,7 +626,7 @@ class SectorLookupRequest(BaseModel):
 
 class HotThemeTrackerRequest(BaseModel):
     sector_names: list[str] | None = Field(default=None, max_length=20)
-    sector_type: Literal["primary"] = "primary"
+    sector_type: SectorType = "primary"
     watch_name: str | None = None
     trade_date: str | None = None
     start_date: str | None = None
@@ -914,7 +914,7 @@ class IndexComposeRequest(BaseModel):
 
 class IndustryValuationRankRequest(BaseModel):
     sector_names: list[str] = Field(min_length=1, max_length=30)
-    sector_type: Literal["primary"] = "primary"
+    sector_type: SectorType = "primary"
     sort_by: Literal["pe_median", "pb_median", "valuation_percentile", "quote_coverage_count"] = "pe_median"
     descending: bool = False
     top_n: int | None = Field(default=None, ge=1, le=30)

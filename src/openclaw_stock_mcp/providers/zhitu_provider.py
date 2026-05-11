@@ -48,6 +48,7 @@ class ZhituProvider:
         self.token = self.tokens[0] if self.tokens else ""
         self.client = build_http_client(self.settings.zhitu_timeout_seconds)
         self._instrument_name_cache: dict[tuple[str, str], str] = {}
+        self._concept_name_map: dict[str, str] | None = None  # display_name -> zhitu_mc
         self._token_cooldowns: dict[str, float] = {}
         self._token_stats: dict[str, dict[str, float | int | None]] = {
             token: {
@@ -256,6 +257,104 @@ class ZhituProvider:
     def _slice_items(self, items: list, limit: int) -> list:
         return items[:limit] if limit and limit > 0 else items
 
+    def _load_concept_name_map(self) -> dict[str, str]:
+        """Build a mapping from user-friendly names to zhitu mc values.
+
+        For a concept like {dm: "101798.BKZS", mc: "GN人工智能"}, the map
+        stores both "GN人工智能" -> "GN人工智能" (exact) and
+        "人工智能" -> "GN人工智能" (prefix-stripped) so users can type
+        just the concept keyword without the GN/TGN prefix.
+        """
+        if self._concept_name_map is not None:
+            return self._concept_name_map
+
+        raw = self._get_json("/hs/list/sectors")
+        name_map: dict[str, str] = {}
+        for item in raw:
+            mc = str(item.get("mc", "")).strip()
+            if not mc:
+                continue
+            # Exact mc → mc (always works)
+            name_map[mc] = mc
+            # Strip GN/TGN prefix for convenience
+            for prefix in ("GN", "TGN"):
+                if mc.startswith(prefix):
+                    stripped = mc[len(prefix):]
+                    if stripped and stripped not in name_map:
+                        name_map[stripped] = mc
+                    break
+        self._concept_name_map = name_map
+        return name_map
+
+    def _resolve_concept_name(self, sector_name: str) -> str | None:
+        """Resolve a user-supplied sector_name to the zhitu mc value.
+
+        Resolution order:
+        1. Exact match in concept name map (includes GN/TGN prefixed names)
+        2. Case-insensitive match
+        3. Substring match (user input contained in mc, or mc contained in user input)
+        Returns None if no match found.
+        """
+        name_map = self._load_concept_name_map()
+
+        # 1. Exact
+        if sector_name in name_map:
+            return name_map[sector_name]
+
+        # 2. Case-insensitive
+        lower_map = {k.lower(): v for k, v in name_map.items()}
+        lower_input = sector_name.lower()
+        if lower_input in lower_map:
+            return lower_map[lower_input]
+
+        # 3. Substring — prefer shortest mc (most specific), and prefer GN over TGN
+        candidates = []
+        for key, mc in name_map.items():
+            if lower_input in key.lower() or key.lower() in lower_input:
+                candidates.append(mc)
+        if not candidates:
+            return None
+
+        # Deduplicate and prefer GN over TGN, then shortest name
+        def _sort_key(m: str) -> tuple:
+            is_tgn = m.startswith("TGN")
+            return (is_tgn, len(m), m)
+
+        candidates.sort(key=_sort_key)
+        return candidates[0]
+
+    def _find_concept_candidates(self, sector_name: str, max_candidates: int = 5) -> list[dict]:
+        """Find multiple candidate concepts for an ambiguous name.
+
+        Returns list of {mc, dm} dicts sorted by preference (GN first, shortest first).
+        """
+        raw = self._get_json("/hs/list/sectors")
+        lower_input = sector_name.lower()
+        candidates = []
+        for item in raw:
+            mc = str(item.get("mc", "")).strip()
+            dm = str(item.get("dm", "")).strip()
+            if not mc:
+                continue
+            # Match: exact, prefix-stripped, or substring
+            stripped = mc
+            for prefix in ("GN", "TGN"):
+                if mc.startswith(prefix):
+                    stripped = mc[len(prefix):]
+                    break
+            if lower_input == mc.lower() or lower_input == stripped.lower():
+                candidates.append({"mc": mc, "dm": dm, "match": "exact"})
+            elif lower_input in mc.lower() or lower_input in stripped.lower():
+                candidates.append({"mc": mc, "dm": dm, "match": "substring"})
+
+        def _sort_key(c: dict) -> tuple:
+            is_tgn = c["mc"].startswith("TGN")
+            match_rank = 0 if c["match"] == "exact" else 1
+            return (match_rank, is_tgn, len(c["mc"]), c["mc"])
+
+        candidates.sort(key=_sort_key)
+        return candidates[:max_candidates]
+
     def _extract_sector_children_items(self, raw):
         if isinstance(raw, dict):
             stocks = raw.get("stocks")
@@ -288,6 +387,37 @@ class ZhituProvider:
         if normalized_mode == "children":
             if not sector_name:
                 raise ProviderError("INVALID_ARGUMENT", "sector_name is required when mode=children", retryable=False)
+
+            # Concept sector: resolve user-friendly name to zhitu mc value
+            if sector_type == "concept":
+                resolved_mc = self._resolve_concept_name(sector_name)
+                if resolved_mc is None:
+                    # No match — try the name as-is (might be a valid mc already)
+                    # If that also fails, return empty list with diagnostic info
+                    candidates = self._find_concept_candidates(sector_name)
+                    if candidates:
+                        candidate_names = [c["mc"] for c in candidates[:3]]
+                        raise ProviderError(
+                            "INVALID_ARGUMENT",
+                            f"Concept '{sector_name}' not found. Similar: {', '.join(candidate_names)}",
+                            retryable=False,
+                        )
+                    raise ProviderError(
+                        "INVALID_ARGUMENT",
+                        f"Concept '{sector_name}' not found in sector list",
+                        retryable=False,
+                    )
+                try:
+                    raw = self._get_json(f"/hs/sectors/{resolved_mc}")
+                    items = self._extract_sector_children_items(raw)
+                    return self._slice_items(items, limit)
+                except ProviderError as exc:
+                    if "404" in str(exc):
+                        # Concept exists in list but has no member data yet
+                        return []
+                    raise
+
+            # Primary sector: use name directly (existing behavior)
             raw = self._get_json(f"/hs/sectors/{sector_name}")
             items = self._extract_sector_children_items(raw)
             return self._slice_items(items, limit)
