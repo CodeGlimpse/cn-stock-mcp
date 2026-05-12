@@ -31,7 +31,7 @@ class IndustryValuationRankUseCase:
             members, _ = run_with_fallback_meta(
                 self.router,
                 selection,
-                lambda provider: provider.get_sector_lookup(mode="children", sector_type="primary", sector_name=name, limit=member_limit),
+                lambda provider: provider.get_sector_lookup(mode="children", sector_type=request.sector_type, sector_name=name, limit=member_limit),
             )
             symbols = [m.symbol for m in members if getattr(m, "symbol", None)]
             if not symbols:
@@ -53,7 +53,7 @@ class IndustryValuationRankUseCase:
         summary_text = build_summary_text(summary)
 
         result = IndustryValuationRankResult(
-            sector_type="primary",
+            sector_type=request.sector_type,
             items=items,
             summary=summary,
             source="zhitu+stock_quote",

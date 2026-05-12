@@ -401,3 +401,37 @@ def test_sector_rotation_review_collects_results_in_input_order_even_when_parall
     result = uc.execute(req)
     assert result["items"][0]["sector_name"] == "电力设备"
     assert result["items"][1]["sector_name"] == "通信设备"
+
+
+def test_sector_rotation_review_concept_type():
+    uc = SectorRotationReviewUseCase()
+    uc.sector_review = _SectorReview()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "sector_names": ["电力设备", "通信设备"],
+            "sector_type": "concept",
+            "trade_date": "2026-05-06",
+            "start_date": None,
+            "end_date": None,
+            "adjust": "none",
+            "provider": "zhitu",
+            "sort_by": "avg_relative_strength",
+            "descending": True,
+            "top_n": 2,
+            "limit": 100,
+            "member_top_n": 1,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+        },
+    )()
+
+    result = uc.execute(req)
+
+    assert result["subject_type"] == "sector_rotation"
+    assert result["subject_name"] == "concept_sector_set"
+    assert result["reviewed_count"] == 2

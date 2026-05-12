@@ -70,3 +70,35 @@ def test_sector_leaders_return_mode_ranked_only_items_trimmed():
     result = uc.execute(req)
     assert len(result["items"]) == 1
     assert result["meta"]["return_mode"] == "ranked_only"
+
+
+def test_sector_leaders_concept_type():
+    uc = SectorLeadersUseCase()
+    uc.sector_lookup = _Lookup()
+    uc.batch_review = _Batch()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "sector_name": "人工智能",
+            "sector_type": "concept",
+            "trade_date": "2026-05-08",
+            "start_date": None,
+            "end_date": None,
+            "adjust": "none",
+            "provider": "zhitu",
+            "sort_by": "relative_strength",
+            "descending": True,
+            "top_n": 2,
+            "limit": 100,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+        },
+    )()
+
+    result = uc.execute(req)
+    assert result["sector_type"] == "concept"
+    assert len(result["leaders"]) == 2

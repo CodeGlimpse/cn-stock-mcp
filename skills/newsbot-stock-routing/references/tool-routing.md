@@ -113,7 +113,7 @@
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
 - `sector_review`：成员股获取走 `zhitu`，支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材），成员复盘复用 `akshare`
 - `sector_leaders`：成员股获取走 `zhitu`，成员复盘复用 `akshare`，返回 leaders/followers/draggers 快照
-- `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；当前建议 `primary` 板块、较小 `limit` 起步
+- `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；支持 `sector_type=primary` 和 `sector_type=concept`；较小 `limit` 起步
 - `hot_theme_tracker`：复用 `sector_rotation_review + market_pool` 做主线聚合
 - `market_overview` / `market_pool` / `stock_orderbook` / `sector_lookup`：`zhitu`
 

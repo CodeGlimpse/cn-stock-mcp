@@ -65,3 +65,39 @@ def test_request_schema():
 
     with pytest.raises(ValueError):
         IndustryValuationRankRequest(sector_names=["", "   "])
+
+
+def test_industry_valuation_rank_uses_request_sector_type():
+    from unittest.mock import MagicMock, patch
+    from openclaw_stock_mcp.app.usecases.industry_valuation_rank import IndustryValuationRankUseCase
+    from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+
+    uc = IndustryValuationRankUseCase()
+    captured_sector_type = []
+
+    class _FakeProvider:
+        name = "zhitu"
+        def get_sector_lookup(self, mode, sector_type=None, sector_name=None, limit=100):
+            class _M:
+                symbol = "600519.SH"
+            captured_sector_type.append(sector_type)
+            return [_M()]
+        def get_quotes(self, symbols=None, sec_type=None):
+            return []
+
+    fake = _FakeProvider()
+
+    with patch.object(uc.router, "get_provider", return_value=fake):
+        with patch.object(uc.router, "choose_provider", return_value=ProviderSelection(primary="zhitu", fallback=[])):
+            req = type("Req", (), {
+                "sector_names": ["人工智能"],
+                "sector_type": "concept",
+                "sort_by": "pe_median",
+                "descending": False,
+                "top_n": None,
+                "member_limit": 50,
+            })()
+            result = uc.execute(req)
+
+    assert captured_sector_type[0] == "concept"
+    assert result["sector_type"] == "concept"

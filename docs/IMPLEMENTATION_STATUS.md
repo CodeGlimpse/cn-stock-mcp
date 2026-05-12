@@ -92,7 +92,7 @@
   - `pool_snapshot`
   - `meta.theme_score_schema=schema:theme_score_v1`
 - 当前限制：
-  - v1 先聚焦 `primary` 板块
+  - ~~v1 先聚焦 `primary` 板块~~（已移除：concept 板块路径已完整验证通过）
   - pool snapshot 当前只取 `limit_up + strong`
 
 ### sector_lookup（板块列表/成员股）当前实现
@@ -214,7 +214,7 @@
   - `items`（每个板块一张 card）
   - `meta.item_schema.schema=sector_rotation_item_v1`
 - 当前限制：
-  - v1 先只支持 `sector_type=primary`
+  - ~~v1 先只支持 `sector_type=primary`~~（已移除：concept 板块已完整验证通过）
   - live 路径仍偏重，较大 `limit` 或较多板块时耗时会明显上升
 - 当前性能优化：
   - `stock_review` 改为日线一次取数，周/月线本地聚合
@@ -495,7 +495,7 @@
 1. 增强 token alias / 多 token 选择策略
 2. 继续补自动化测试与发布前验收样例
 3. 如有需要，继续增强 AKShare 股票历史字段完整度
-4. 如需继续增强 `sector_rotation_review` 的实用性，优先考虑更细粒度 benchmark 复用、轻量化个股复盘路径，以及概念板块支持边界
+4. 如需继续增强 `sector_rotation_review` 的实用性，优先考虑更细粒度 benchmark 复用、轻量化个股复盘路径
 
 
 ### stock_candidate_scan（二轮增强）
