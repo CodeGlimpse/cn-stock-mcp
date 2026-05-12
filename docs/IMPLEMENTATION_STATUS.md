@@ -313,6 +313,7 @@
   - 判断不同周期之间的结构冲突
 - 已完成真实验收：
   - `multi_timeframe_review(symbol=000001.SH, sec_type=index, intervals=[15,d,w], indicators=[macd,ma,kdj], limit=60)` 已真实返回成功
+- 指标获取失败不再静默跳过，记录到 `errors` 列表（含 interval/indicator/error_code/message/retryable），`partial_failure` 真实反映
 
 ### trading_calendar（交易日历 / 复盘日期辅助）
 - 新增 `trading_calendar` tool
@@ -490,6 +491,10 @@
 7. `sector_rotation_review` 当前虽已补充受控并发与共享缓存，但 live 请求在较大板块数或较大 `limit` 下仍会明显变慢
 8. 科创板 `stock_quote` 当前仍为 `zhitu` 单源（AKShare `stock_kc_a_spot_em()` 当前环境不稳定，待验证后补 fallback）
 9. `stock_orderbook` / `stock_profile` / `event_calendar` 仍为 `zhitu` 单源
+10. ~~`margin_trading` 静默吞错~~ → 已修复（P0），现返回 `partial_failure` + `errors`
+11. ~~`limit_stat` 跌停数获取失败静默当 0~~ → 已修复（P1），现返回 `partial_failure` + `errors`
+12. ~~`multi_timeframe_review` 指标获取失败静默跳过~~ → 已修复（P1），现记录 indicator errors 并真实反映 `partial_failure`
+13. ~~`index_compose` 权重接口降级无标记~~ → 已修复（P1），现返回 `used_fallback_endpoint` + `endpoint_note`
 
 ## 仍待处理
 1. 增强 token alias / 多 token 选择策略

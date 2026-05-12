@@ -31,10 +31,12 @@ class IndexComposeUseCase:
 
         # Prefer weight endpoint for richer output.
         rows = []
+        used_fallback_endpoint = False
         try:
             df = ak_provider._call_ak_quietly(lib.index_stock_cons_weight_csindex, symbol=index_code)
             rows = df.to_dict(orient="records")
         except Exception:
+            used_fallback_endpoint = True
             df = ak_provider._call_ak_quietly(lib.index_stock_cons_csindex, symbol=index_code)
             rows = df.to_dict(orient="records")
 
@@ -54,4 +56,7 @@ class IndexComposeUseCase:
         result = IndexComposeResult(summary=summary, items=items, source="akshare")
         payload = result.model_dump()
         payload["summary_text"] = summary_text
+        payload["used_fallback_endpoint"] = used_fallback_endpoint
+        if used_fallback_endpoint:
+            payload["endpoint_note"] = "weight endpoint unavailable; fell back to constituents-only endpoint (no weight data)"
         return payload

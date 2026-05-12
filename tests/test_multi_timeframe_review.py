@@ -115,5 +115,6 @@ def test_multi_timeframe_review_collects_partial_failures():
     result = uc.execute(req)
 
     assert result["reviewed_count"] == 2
-    assert result["partial_failure"] is False
+    assert result["partial_failure"] is True
     assert result["items"][1]["indicator_snapshot"].get("macd") is None
+    assert any(e.get("indicator") == "macd" and e.get("interval") == "1d" for e in result["errors"])

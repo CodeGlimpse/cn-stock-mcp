@@ -172,10 +172,10 @@ Last Updated: 2026-05-09
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
 - `capital_flow`：资金流向（market/individual/industry/concept）
 - `stock_financial`：财务数据三层视图（snapshot/history/details）
-- `limit_stat`：短线情绪统计（封板率/连板分布/炸板/昨涨停今继续率）
+- `limit_stat`：短线情绪统计（封板率/连板分布/炸板/昨涨停今继续率；返回 `partial_failure` + `errors` 标记跌停数据获取失败）
 - `northbound`：北向资金（当日流向/历史/持股排行）
 - `valuation_rank`：估值排名（市场估值温度 + 个股 PE/PB 排名）
-- `index_compose`：指数成分与权重（支持集中度统计）
+- `index_compose`：指数成分与权重（支持集中度统计；返回 `used_fallback_endpoint` + `endpoint_note` 标记权重接口降级）
 - `industry_valuation_rank`：一级行业估值分位（成员股 PE/PB 聚合后横向排序）
 - `earnings_quality`：盈利质量评估（扣非占比/增速一致性/现金转化/ROE/杠杆综合评分）
 - `macro_indicator`：宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2等，支持cn/usa/euro/global，latest/history/calendar/overview四种模式）
@@ -191,7 +191,7 @@ Last Updated: 2026-05-09
 - `latency_ms`：本次调用耗时（毫秒）
 - `stock_candidate_scan`：候选评分（candidate_score/candidate_label/reason_tags/risk_flags）
 - `watchlist_review`：观察池评分（watchlist_score/status_label/reason_tags/risk_flags）
-- `multi_timeframe_review`：多周期一致性（trend_score/trend_label/signal_tags/conflict_notes）
+- `multi_timeframe_review`：多周期一致性（trend_score/trend_label/signal_tags/conflict_notes；指标获取失败时记录 `partial_failure` + errors 含 interval/indicator）
 - `hot_theme_tracker`：热点主线跟踪（themes/theme_score/theme_label/pool_snapshot）
 
 详细字段以实现返回为准，新增字段遵循向后兼容（尽量只增不删）。

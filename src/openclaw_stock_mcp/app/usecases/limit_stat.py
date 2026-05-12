@@ -12,6 +12,7 @@ from openclaw_stock_mcp.providers.errors import ProviderError
 class LimitStatUseCase:
     def __init__(self) -> None:
         self.router = ProviderRouter()
+        self._limit_down_error: dict | None = None
 
     def _resolve_effective_trade_date(self, requested_trade_date: str | None) -> tuple[str, dict]:
         from datetime import datetime
@@ -46,8 +47,16 @@ class LimitStatUseCase:
         try:
             provider = self.router.get_provider("zhitu")
             items = provider.get_market_pool(pool_type="limit_down", trade_date=trade_date)
+            self._limit_down_error = None
             return len(items)
-        except Exception:
+        except Exception as exc:
+            self._limit_down_error = {
+                "section": "limit_down",
+                "error_code": getattr(exc, "code", "PROVIDER_UNAVAILABLE"),
+                "message": str(exc),
+                "retryable": getattr(exc, "retryable", True),
+                "provider": "zhitu",
+            }
             return 0
 
     def execute(self, request) -> dict:
@@ -74,6 +83,10 @@ class LimitStatUseCase:
 
         if "limit_down" in include or "summary" in include:
             limit_down_count = self._get_limit_down_count(effective_trade_date)
+
+        errors = []
+        if self._limit_down_error is not None:
+            errors.append(self._limit_down_error)
 
         summary = build_limit_stat_summary(
             trade_date=effective_trade_date,
@@ -117,5 +130,8 @@ class LimitStatUseCase:
 
         if "limit_down" in include:
             result["limit_down_count"] = limit_down_count
+
+        result["partial_failure"] = len(errors) > 0
+        result["errors"] = errors
 
         return result

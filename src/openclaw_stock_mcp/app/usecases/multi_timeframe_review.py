@@ -27,6 +27,9 @@ class MultiTimeframeReviewUseCase:
             try:
                 card = self._build_timeframe_card(request, interval)
                 cards.append(card)
+                # Merge per-card indicator errors into top-level errors
+                for ie in card.pop("indicator_errors", []):
+                    errors.append(ie)
             except Exception as exc:
                 errors.append({"interval": interval, "error_code": getattr(exc, "code", "ERROR"), "message": str(exc), "retryable": getattr(exc, "retryable", False), "provider": getattr(exc, "provider", None)})
 
@@ -118,6 +121,7 @@ class MultiTimeframeReviewUseCase:
         slope = (((latest - prev) / prev) * 100) if latest not in (None,) and prev not in (None, 0) else None
 
         indicator_payloads = {}
+        indicator_errors = []
         for indicator in request.indicators or []:
             try:
                 series = self.technical_indicator.execute(
@@ -133,7 +137,14 @@ class MultiTimeframeReviewUseCase:
                     )
                 )
                 indicator_payloads[indicator] = series
-            except Exception:
+            except Exception as exc:
+                indicator_errors.append({
+                    "interval": interval,
+                    "indicator": indicator,
+                    "error_code": getattr(exc, "code", "PROVIDER_UNAVAILABLE"),
+                    "message": str(exc),
+                    "retryable": getattr(exc, "retryable", True),
+                })
                 continue
 
         trend_score, trend_label, signal_tags, conflict_notes = self._evaluate_timeframe(interval, items, indicator_payloads)
@@ -148,6 +159,7 @@ class MultiTimeframeReviewUseCase:
             "trend_label": trend_label,
             "signal_tags": signal_tags,
             "conflict_notes": conflict_notes,
+            "indicator_errors": indicator_errors,
             "history_meta": history_resp.get("meta", {}),
             "indicator_meta": {name: payload.get("meta", {}) for name, payload in indicator_payloads.items() if isinstance(payload, dict)},
             "indicator_snapshot": self._extract_indicator_snapshot(indicator_payloads),
