@@ -710,3 +710,64 @@
 - added `margin_trading` to provider router → akshare
 - added MCP tool registration
 - added tests: `test_akshare_margin_trading_adapters.py` (9 adapter tests + 3 partial_failure usecase tests)
+
+## 配置接线审计（P2）
+
+### Settings 字段使用状态
+
+| 字段 | 默认值 | 是否被代码消费 | 消费者 |
+|---|---|---|---|
+| `app_env` | dev | 否 | — |
+| `log_level` | INFO | 否（仅 infra/logging.py 定义） | — |
+| `mcp_server_name` | openclaw-stock-mcp | 是 | mcp_server.py |
+| `mcp_server_version` | 0.1.0 | 是 | mcp_server.py |
+| `default_market` | CN | 否 | — |
+| `default_provider_order` | akshare,zhitu | 是 | provider_router.py |
+| `enable_provider_fallback` | True | 是 | provider_router.py |
+| `akshare_enabled` | True | 否 | — |
+| `akshare_timeout_seconds` | 20 | 否 | — |
+| `zhitu_enabled` | True | 否 | — |
+| `zhitu_base_url` | https://api.zhituapi.com | 是 | zhitu_provider.py |
+| `zhitu_token` | "" | 是 | zhitu_provider.py |
+| `zhitu_token_config_path` | config/zhitu_tokens.json | 是 | zhitu_provider.py |
+| `zhitu_timeout_seconds` | 15 | 否 | — |
+| `zhitu_rate_limit_per_minute` | 300 | 否 | — |
+| `zhitu_token_cooldown_seconds` | 60 | 是 | zhitu_provider.py |
+| `cache_ttl_list_seconds` | 86400 | 是 | stock_review（calendar cache） |
+| `cache_ttl_quote_seconds` | 10 | **否** | — |
+| `cache_ttl_overview_seconds` | 10 | **否** | — |
+| `cache_ttl_history_seconds` | 3600 | 是 | stock_review（history/benchmark cache） |
+| `cache_ttl_indicator_seconds` | 300 | **否** | — |
+| `cache_ttl_orderbook_seconds` | 3 | **否** | — |
+| `cache_ttl_pool_seconds` | 600 | **否** | — |
+| `stock_review_batch_max_workers` | 4 | 是 | stock_review_batch |
+| `sector_rotation_max_workers` | 2 | 是 | sector_rotation_review |
+
+### 未接线的配置（P3 改进项）
+
+以下配置已定义但**没有任何代码消费**：
+- `app_env` — 可用于环境区分
+- `log_level` — logging.py 定义了但未真正接入
+- `default_market` — 目前硬编码 "CN"
+- `akshare_enabled` / `zhitu_enabled` — 可用于 provider 开关
+- `akshare_timeout_seconds` / `zhitu_timeout_seconds` — 可用于 provider 请求超时
+- `zhitu_rate_limit_per_minute` — 可用于更细粒度的限速
+- `cache_ttl_quote_seconds` — quote 缓存 TTL 未接入
+- `cache_ttl_overview_seconds` — overview 缓存 TTL 未接入
+- `cache_ttl_indicator_seconds` — indicator 缓存 TTL 未接入
+- `cache_ttl_orderbook_seconds` — orderbook 缓存 TTL 未接入
+- `cache_ttl_pool_seconds` — pool 缓存 TTL 未接入
+
+### schemas.py 拆分（P2 已完成）
+
+- 原 `server/schemas.py`（1128 行）已拆分为 `server/schema_defs/` 包：
+  - `_types.py` — 共享 Literal 类型
+  - `_helpers.py` — 共享 validator helpers（日期区间校验、interval 归一化、pool_type 归一化、include 去重）
+  - `_stock.py` — 股票相关 schema（10 个 Request）
+  - `_market.py` — 市场相关 schema（9 个 Request）
+  - `_sector.py` — 板块相关 schema（6 个 Request）
+  - `_analytics.py` — 分析/评分相关 schema（6 个 Request）
+  - `_macro.py` — 宏观/衍生品相关 schema（5 个 Request）
+  - `__init__.py` — 统一 re-export
+- `server/schemas.py` 保留为向后兼容的 re-export facade（`from ... import *`）
+- 所有现有 `from openclaw_stock_mcp.server.schemas import X` 不受影响

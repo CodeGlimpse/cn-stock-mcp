@@ -198,6 +198,86 @@ Last Updated: 2026-05-09
 
 ---
 
+## 7. 统一响应契约
+
+所有 MCP tool 返回值遵循以下共享字段约定：
+
+### 通用字段（跨 tool）
+
+| 字段 | 类型 | 语义 | 产出 tool |
+|---|---|---|---|
+| `partial_failure` | bool | 本次调用存在部分数据获取失败 | margin_trading, limit_stat, multi_timeframe_review, stock_quote, stock_candidate_scan, watchlist_review 等 |
+| `errors` | list[dict] | 失败条目列表；每条含 `error_code`, `message`, `retryable`, 上下文字段（如 `exchange`, `section`, `interval`, `indicator`, `symbol`） | 同上 |
+| `provider_used` | str 或 list[str] | 实际使用的 provider | 所有 tool |
+| `fallback_chain` | list[str] | 主备 provider 链路 | 所有 tool |
+| `latency_ms` | int | 调用耗时（毫秒） | 所有 tool |
+
+### 降级字段（tool-specific）
+
+| 字段 | 类型 | 语义 | 产出 tool |
+|---|---|---|---|
+| `used_fallback_endpoint` | bool | 降级到了备用接口 | index_compose |
+| `endpoint_note` | str | 降级原因说明 | index_compose |
+
+### errors 条目通用结构
+
+```json
+{
+  "error_code": "PROVIDER_UNAVAILABLE",
+  "message": "...",
+  "retryable": true,
+  "provider": "zhitu"
+}
+```
+
+tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval`, `indicator`, `symbol`）。
+
+---
+
+## 8. tool ↔ usecase 文件命名映射
+
+| MCP tool 名 | usecase 文件 | 备注 |
+|---|---|---|
+| stock_search | stock_search.py | 1:1 |
+| stock_quote | stock_quote.py | 1:1 |
+| stock_history | stock_history.py | 1:1 |
+| stock_review | stock_review.py | 1:1 |
+| stock_review_batch | stock_review_batch.py | 1:1 |
+| stock_orderbook | orderbook.py | 文件名不一致 |
+| stock_profile | stock_profile.py | 1:1 |
+| stock_financial | stock_financial.py | 1:1 |
+| stock_candidate_scan | stock_candidate_scan.py | 1:1 |
+| technical_indicator | technical_indicator.py | 1:1 |
+| trading_calendar | trading_calendar.py | 1:1 |
+| market_overview | market_overview.py | 1:1 |
+| market_brief | market_brief.py | 1:1 |
+| market_pool | market_pool.py | 1:1 |
+| sector_review | sector_review.py | 1:1 |
+| sector_rotation_review | sector_rotation_review.py | 1:1 |
+| sector_lookup | sector_lookup.py | 1:1 |
+| sector_quote | sector_quote.py | 1:1 |
+| sector_leaders | sector_leaders.py | 1:1 |
+| watchlist_review | watchlist_review.py | 1:1 |
+| multi_timeframe_review | multi_timeframe_review.py | 1:1 |
+| hot_theme_tracker | hot_theme_tracker.py | 1:1 |
+| event_calendar | event_calendar.py | 1:1 |
+| capital_flow | capital_flow.py | 1:1 |
+| limit_stat | limit_stat.py | 1:1 |
+| northbound | northbound.py | 1:1 |
+| valuation_rank | valuation_rank.py | 1:1 |
+| index_compose | index_compose.py | 1:1 |
+| industry_valuation_rank | industry_valuation_rank.py | 1:1 |
+| earnings_quality | earnings_quality.py | 1:1 |
+| macro_indicator | macro_indicator.py | 1:1 |
+| dragon_tiger | dragon_tiger.py | 1:1 |
+| etf_snapshot | etf_snapshot.py | 1:1 |
+| convertible_bond | convertible_bond.py | 1:1 |
+| derivatives_data | derivatives_data.py | 1:1 |
+| margin_trading | margin_trading.py | 1:1 |
+| provider_health | provider_health.py | 1:1 |
+
+---
+
 ## 6. 上游数据源文档入口
 
 ### AKShare
