@@ -15,8 +15,8 @@ class _Profile:
 
     def __init__(self):
         self.profile = self._P()
-        self.dividends = [_Record(announce_date="2026-05-01", ex_dividend_date="2026-05-10", record_date="2026-05-09", progress="实施")]
-        self.unlocks = [_Record(unlock_date="2026-05-10", unlock_amount=100.0, unlock_value=200.0, batch=1, announce_date="2026-05-01")]
+        self.dividends = [_Record(announce_date="2026-05-20", ex_dividend_date="2026-06-01", record_date="2026-05-31", progress="实施")]
+        self.unlocks = [_Record(unlock_date="2026-06-01", unlock_amount=100.0, unlock_value=200.0, batch=1, announce_date="2026-05-20")]
         self.quarter_profits = [_Record(period="2026-03-31", revenue=1.0, net_profit=2.0, eps=0.1)]
 
 
@@ -59,8 +59,8 @@ def test_event_calendar_generates_timeline_items():
         {
             "symbols": ["600519.SH"],
             "event_types": ["dividend", "unlock", "profit"],
-            "start_date": "2026-03-01",
-            "end_date": "2026-05-31",
+            "start_date": "2026-01-01",
+            "end_date": "2026-12-31",
             "provider": None,
         },
     )()
@@ -117,5 +117,5 @@ def test_event_calendar_next_event_priority():
 
     result = uc.execute(req)
     assert result["count"] == 1
-    assert result["items"][0]["event_date"] == "2026-05-10"
+    assert result["items"][0]["event_date"] == "2026-06-01"
     assert result["items"][0]["event_type"] == "dividend"
