@@ -143,3 +143,86 @@ class TestBuildMarginSummaryText:
     def test_empty(self):
         text = build_margin_summary_text([], [])
         assert "暂无" in text
+
+
+# ── UseCase: partial_failure and errors ───────────────────────────
+
+class TestMarginTradingUseCasePartialFailure:
+    def test_partial_failure_when_sse_summary_fails(self):
+        from unittest.mock import MagicMock
+        from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+
+        uc = MarginTradingUseCase()
+        provider = MagicMock()
+        provider.get_margin_sse_summary.side_effect = Exception("SSE down")
+        provider.get_margin_szse_summary.return_value = []
+        uc.router.get_provider = lambda name: provider
+
+        req = type("Req", (), {
+            "include": ["summary"],
+            "trade_date": "2026-05-09",
+            "start_date": None,
+            "end_date": None,
+            "exchange": "both",
+            "sort_by": "financing_buy",
+            "descending": True,
+            "top_n": None,
+        })()
+
+        result = uc.execute(req)
+        assert result["partial_failure"] is True
+        assert len(result["errors"]) == 1
+        assert result["errors"][0]["exchange"] == "SSE"
+        assert result["errors"][0]["section"] == "summary"
+
+    def test_no_errors_when_all_succeed(self):
+        from unittest.mock import MagicMock
+        from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+
+        uc = MarginTradingUseCase()
+        provider = MagicMock()
+        provider.get_margin_sse_summary.return_value = []
+        provider.get_margin_szse_summary.return_value = []
+        uc.router.get_provider = lambda name: provider
+
+        req = type("Req", (), {
+            "include": ["summary"],
+            "trade_date": "2026-05-09",
+            "start_date": None,
+            "end_date": None,
+            "exchange": "both",
+            "sort_by": "financing_buy",
+            "descending": True,
+            "top_n": None,
+        })()
+
+        result = uc.execute(req)
+        assert result["partial_failure"] is False
+        assert result["errors"] == []
+
+    def test_partial_failure_when_detail_exchange_fails(self):
+        from unittest.mock import MagicMock
+        from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+
+        uc = MarginTradingUseCase()
+        provider = MagicMock()
+        provider.get_margin_sse_summary.return_value = []
+        provider.get_margin_szse_summary.return_value = []
+        provider.get_margin_sse_detail.side_effect = Exception("SSE detail down")
+        provider.get_margin_szse_detail.return_value = []
+        uc.router.get_provider = lambda name: provider
+
+        req = type("Req", (), {
+            "include": ["summary", "detail"],
+            "trade_date": "2026-05-09",
+            "start_date": None,
+            "end_date": None,
+            "exchange": "both",
+            "sort_by": "financing_buy",
+            "descending": True,
+            "top_n": 10,
+        })()
+
+        result = uc.execute(req)
+        assert result["partial_failure"] is True
+        assert any(e["section"] == "detail" for e in result["errors"])

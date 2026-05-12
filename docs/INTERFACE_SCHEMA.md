@@ -183,7 +183,7 @@ Last Updated: 2026-05-09
 - `etf_snapshot`：ETF行情快照（全市场实时行情+IOPV折溢价+资金流+份额+净值）
 - `convertible_bond`：可转债数据（集思录快照/双低/溢价率/YTM/强赎监控/等权指数）
 - `derivatives_data`：期货/期权数据（期货实时+历史/期权合约列表/QVIX隐含波动率）
-- `margin_trading`：融资融券数据（两市汇总+个股明细，支持融资买入/融券卖出排序）
+- `margin_trading`：融资融券数据（两市汇总+个股明细，支持融资买入/融券卖出排序；返回 `partial_failure` + `errors` 标记部分交易所获取失败）
 
 补充（可观测性字段，已在关键工具 meta 中统一输出）：
 - `provider_used`：本次实际使用的 provider（或集合）

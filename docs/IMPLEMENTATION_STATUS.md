@@ -690,6 +690,8 @@
   - `summary`：list[MarginSummaryItem]（按日期+交易所）
   - `detail`：list[MarginDetailItem]（个股明细，支持排序截断）
   - `summary_text`：可读文本摘要
+  - `partial_failure`：bool，部分交易所数据获取失败时为 True
+  - `errors`：list，失败的 exchange+section+error_code+message（对齐项目其他 tool 的 partial_failure 模式）
 - AKShare 接口：
   - `stock_margin_sse` → SSE 汇总（支持日期区间）
   - `stock_margin_szse` → SZSE 汇总（单日）
@@ -702,4 +704,4 @@
 - added `MarginTradingUseCase` with SSE/SZSE dual-exchange + sort/top_n
 - added `margin_trading` to provider router → akshare
 - added MCP tool registration
-- added tests: `test_akshare_margin_trading_adapters.py` (9 tests)
+- added tests: `test_akshare_margin_trading_adapters.py` (9 adapter tests + 3 partial_failure usecase tests)

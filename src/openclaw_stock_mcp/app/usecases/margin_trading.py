@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date as dt_date
 
 from openclaw_stock_mcp.app.models.margin_trading import MarginTradingResult
+from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.providers.adapters.akshare_margin_trading_adapters import (
     adapt_margin_sse_detail_row,
@@ -36,34 +37,35 @@ class MarginTradingUseCase:
 
         summary = []
         detail = []
+        errors = []
 
         if "summary" in include:
             if exchange in ("SSE", "both"):
                 try:
                     rows = provider.get_margin_sse_summary(start_date=raw_start, end_date=raw_end)
                     summary.extend(adapt_margin_sse_summary_row(r) for r in rows)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    errors.append({"exchange": "SSE", "section": "summary", **serialize_exception(exc)})
             if exchange in ("SZSE", "both"):
                 try:
                     rows = provider.get_margin_szse_summary(date=raw_date)
                     summary.extend(adapt_margin_szse_summary_row(r) for r in rows)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    errors.append({"exchange": "SZSE", "section": "summary", **serialize_exception(exc)})
 
         if "detail" in include:
             if exchange in ("SSE", "both"):
                 try:
                     rows = provider.get_margin_sse_detail(date=raw_date)
                     detail.extend(adapt_margin_sse_detail_row(r) for r in rows)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    errors.append({"exchange": "SSE", "section": "detail", **serialize_exception(exc)})
             if exchange in ("SZSE", "both"):
                 try:
                     rows = provider.get_margin_szse_detail(date=raw_date)
                     detail.extend(adapt_margin_szse_detail_row(r) for r in rows)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    errors.append({"exchange": "SZSE", "section": "detail", **serialize_exception(exc)})
 
             # Sort detail
             if detail:
@@ -71,6 +73,7 @@ class MarginTradingUseCase:
                 if top_n:
                     detail = detail[:top_n]
 
+        partial_failure = len(errors) > 0
         summary_text = build_margin_summary_text(summary, detail)
 
         result = MarginTradingResult(
@@ -80,7 +83,10 @@ class MarginTradingUseCase:
             detail_count=len(detail),
             summary_text=summary_text,
         )
-        return result.model_dump()
+        payload = result.model_dump()
+        payload["partial_failure"] = partial_failure
+        payload["errors"] = errors
+        return payload
 
     @staticmethod
     def _sort_items(items: list, key: str, descending: bool = True) -> list:
