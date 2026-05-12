@@ -5,6 +5,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime, timedelta
 from io import StringIO
 
+from openclaw_stock_mcp.infra.time_utils import normalize_symbol
 from openclaw_stock_mcp.providers.errors import ProviderError
 
 try:
@@ -14,12 +15,13 @@ except Exception:  # pragma: no cover
 
 from openclaw_stock_mcp.app.models.bar import Bar
 from openclaw_stock_mcp.app.models.instrument import Instrument
+from openclaw_stock_mcp.app.models.quote import Quote
 from openclaw_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_fund_list_row,
     adapt_akshare_index_list_row,
     adapt_akshare_stock_list_row,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_bar_row, adapt_akshare_tx_bar_row
+from openclaw_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_bar_row, adapt_akshare_quote_row, adapt_akshare_tx_bar_row
 from openclaw_stock_mcp.providers.adapters.akshare_capital_flow_adapters import (
     adapt_akshare_individual_fund_flow,
     adapt_akshare_market_fund_flow,
@@ -53,6 +55,8 @@ class AKShareProvider:
 
     def __init__(self) -> None:
         self._trade_dates_cache: list[str] | None = None
+        self._bj_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
+        self._bj_spot_cache_ttl: int = 10  # seconds
 
     def _require_ak(self):
         if ak is None:
@@ -235,11 +239,73 @@ class AKShareProvider:
         items.sort(key=lambda item: self._search_rank(item, query))
         return items[:limit]
 
+    def _get_bj_spot_map(self) -> dict[str, dict]:
+        """Fetch full BJ spot table and return {code: row_dict}. Cached for _bj_spot_cache_ttl seconds."""
+        import time as _time
+
+        now = _time.time()
+        if self._bj_spot_cache is not None and (now - self._bj_spot_cache[0]) < self._bj_spot_cache_ttl:
+            return self._bj_spot_cache[1]
+
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_bj_a_spot_em)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare BJ spot failed: {exc}", retryable=True) from exc
+
+        code_map: dict[str, dict] = {}
+        for _, row in df.iterrows():
+            code = str(row.get("代码", "")).strip()
+            if code:
+                code_map[code] = row.to_dict()
+        self._bj_spot_cache = (now, code_map)
+        return code_map
+
     def get_quote(self, symbol: str, sec_type: str):
-        raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare quote not implemented in minimal version", retryable=False)
+        normalized = normalize_symbol(symbol)
+        code = normalized.split(".", 1)[0]
+
+        if sec_type == "stock" and normalized.endswith(".BJ"):
+            spot_map = self._get_bj_spot_map()
+            row = spot_map.get(code)
+            if row is None:
+                raise ProviderError("UNSUPPORTED_MARKET", f"AKShare BJ quote: code {code} not found in spot data", retryable=False)
+            return adapt_akshare_quote_row(row, normalized, sec_type)
+
+        raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare quote not implemented for this sec_type/market", retryable=False)
 
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
-        return [self.get_quote(symbol, sec_type or "stock") for symbol in symbols]
+        resolved_sec_type = sec_type or "stock"
+
+        # Fast path: all BJ stocks — one spot pull
+        bj_symbols = []
+        other_symbols = []
+        for sym in symbols:
+            normalized = normalize_symbol(sym)
+            if resolved_sec_type == "stock" and normalized.endswith(".BJ"):
+                bj_symbols.append(sym)
+            else:
+                other_symbols.append(sym)
+
+        results: dict[str, Quote] = {}
+
+        if bj_symbols:
+            spot_map = self._get_bj_spot_map()
+            for sym in bj_symbols:
+                normalized = normalize_symbol(sym)
+                code = normalized.split(".", 1)[0]
+                row = spot_map.get(code)
+                if row is not None:
+                    results[sym] = adapt_akshare_quote_row(row, normalized, resolved_sec_type)
+
+        # Non-BJ symbols still not supported for quote
+        for sym in other_symbols:
+            try:
+                results[sym] = self.get_quote(sym, resolved_sec_type)
+            except ProviderError:
+                pass
+
+        return [results.get(sym) for sym in symbols if results.get(sym) is not None]
 
     @staticmethod
     def _prepush_start(start: str | None, days: int = 10) -> str:

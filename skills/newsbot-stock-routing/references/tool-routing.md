@@ -86,7 +86,8 @@
 
 - `stock_quote(stock-main)`：`zhitu` 主，`akshare` 备；**批量请求自动走 `/hs/public/ssjymore`（最多 20 支）**
 - `stock_quote(index/fund)`：`zhitu` 主，`akshare` 备
-- `stock_quote(stock-bj/star)`：`zhitu` 主
+- `stock_quote(stock-bj)`：`zhitu` 主，`akshare` 备（AKShare 走 `stock_bj_a_spot_em()`，10s TTL 缓存）
+- `stock_quote(stock-star)`：`zhitu` 主
 - `stock_search`：`akshare` 主，`zhitu` 备
 - `stock_history(stock)`：`zhitu` 主，`akshare` 备
 - `stock_history(index)`：`zhitu` 主，`akshare` 备

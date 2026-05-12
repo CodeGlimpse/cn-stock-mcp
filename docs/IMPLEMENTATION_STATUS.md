@@ -377,9 +377,14 @@
 ### stock_quote(stock-main) 双源路由定稿
 - 路由策略：`zhitu` 主，`akshare` 备
 - 适用范围：`stock` 且非 `BJ`、非 `688`（即 A 股主板/常规沪深股票）
+- **北交所 stock_quote 现已增加 akshare fallback：**
+  - 路由策略：`zhitu` 主，`akshare` 备
+  - AKShare 走 `stock_bj_a_spot_em()` 全表拉取 + 本地代码过滤
+  - 内置 10 秒 TTL 缓存，避免频繁拉全表
+  - 字段通过 `adapt_akshare_quote_row` 映射到统一 `Quote` 模型
 - 维持既有策略：
   - `index/fund`：`zhitu` 主，`akshare` 备
-  - `stock-bj`：`zhitu` 主（无备）
+  - `stock-bj`：`zhitu` 主，`akshare` 备（新增）
   - `stock-star(688)`：`zhitu` 主（无备）
 - `provider_preference` 已生效：
   - 支持按请求显式指定优先顺序（如 `['akshare','zhitu']`）
@@ -483,6 +488,8 @@
 5. `1m` 周期当前未实现；需等可靠 provider 明确后再开放
 6. 智兔多 token 已支持 `429` 自动切换，但当前只做了最小冷却策略，尚未做更细粒度的配额统计与长期调度
 7. `sector_rotation_review` 当前虽已补充受控并发与共享缓存，但 live 请求在较大板块数或较大 `limit` 下仍会明显变慢
+8. 科创板 `stock_quote` 当前仍为 `zhitu` 单源（AKShare `stock_kc_a_spot_em()` 当前环境不稳定，待验证后补 fallback）
+9. `stock_orderbook` / `stock_profile` / `event_calendar` 仍为 `zhitu` 单源
 
 ## 仍待处理
 1. 增强 token alias / 多 token 选择策略

@@ -8,11 +8,11 @@ def test_stock_quote_stock_main_route_defaults_to_zhitu_primary():
     assert sel.fallback == ["akshare"]
 
 
-def test_stock_quote_bj_route_no_fallback():
+def test_stock_quote_bj_route_has_akshare_fallback():
     router = ProviderRouter()
     sel = router.choose_provider(tool_name="stock_quote", symbol="430001.BJ", sec_type="stock")
     assert sel.primary == "zhitu"
-    assert sel.fallback == []
+    assert sel.fallback == ["akshare"]
 
 
 def test_stock_history_index_route_prefers_zhitu():

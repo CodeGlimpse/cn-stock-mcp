@@ -148,8 +148,9 @@ Last Updated: 2026-05-09
 - industry_valuation_rank：行业成员股来自 `sector_lookup(children, primary)`（`zhitu`），成员估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - stock_quote：
   - stock-main：`zhitu` 主，`akshare` 备（批量请求使用 `/hs/public/ssjymore`，最多 20 支）
+  - stock-bj：`zhitu` 主，`akshare` 备（AKShare 走 `stock_bj_a_spot_em()`，10s TTL 缓存）
   - index/fund：`zhitu` 主，`akshare` 备
-  - stock-bj/star：`zhitu`
+  - stock-star：`zhitu`
 - hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`
 
 > `stock_orderbook` 当前已支持：
