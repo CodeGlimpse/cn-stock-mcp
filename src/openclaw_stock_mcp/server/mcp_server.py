@@ -28,7 +28,7 @@ from openclaw_stock_mcp.app.usecases.block_trade import BlockTradeUseCase
 from openclaw_stock_mcp.app.usecases.institute_hold import InstituteHoldUseCase
 from openclaw_stock_mcp.app.usecases.money_rate import MoneyRateUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
-from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
+from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
 from openclaw_stock_mcp.app.usecases.multi_timeframe_review import MultiTimeframeReviewUseCase
 from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase

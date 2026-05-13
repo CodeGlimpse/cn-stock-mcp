@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
 from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
 from openclaw_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
-from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
+from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 
 
