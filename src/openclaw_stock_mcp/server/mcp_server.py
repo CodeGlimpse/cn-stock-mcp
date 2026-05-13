@@ -24,6 +24,7 @@ from openclaw_stock_mcp.app.usecases.etf_snapshot import ETFSnapshotUseCase
 from openclaw_stock_mcp.app.usecases.convertible_bond import ConvertibleBondUseCase
 from openclaw_stock_mcp.app.usecases.derivatives_data import DerivativesDataUseCase
 from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+from openclaw_stock_mcp.app.usecases.block_trade import BlockTradeUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -65,6 +66,7 @@ from openclaw_stock_mcp.server.schemas import (
     ConvertibleBondRequest,
     DerivativesDataRequest,
     MarginTradingRequest,
+    BlockTradeRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -193,6 +195,7 @@ def create_server() -> MCPServerStub:
     convertible_bond = ConvertibleBondUseCase()
     derivatives_data = DerivativesDataUseCase()
     margin_trading = MarginTradingUseCase()
+    block_trade = BlockTradeUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -231,5 +234,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="convertible_bond", description="Get convertible bond (可转债) data: real-time snapshot with double-low/premium/YTM, call/redeem monitoring, and bond index history. Supports double-low strategy screening and call-status filtering.", input_model=ConvertibleBondRequest, handler=convertible_bond.execute))
     server.register_tool(MCPTool(name="derivatives_data", description="Get derivatives data: futures real-time quotes and history, option contract lists (SSE/SZSE), and QVIX implied volatility index. Supports multiple futures symbols and QVIX underlyings.", input_model=DerivativesDataRequest, handler=derivatives_data.execute))
     server.register_tool(MCPTool(name="margin_trading", description="Get margin trading (融资融券) data: market-level summary with financing/securities balance, and stock-level detail with financing buy/sell and securities volume. Supports SSE/SZSE exchanges.", input_model=MarginTradingRequest, handler=margin_trading.execute))
+    server.register_tool(MCPTool(name="block_trade", description="Get block trade (大宗交易) data: daily trade detail with buyer/seller broker, daily stock summary with discount rate, industry aggregation, broker success-rate ranking, and active stock tracking. Supports date range and period-based queries.", input_model=BlockTradeRequest, handler=block_trade.execute))
 
     return server

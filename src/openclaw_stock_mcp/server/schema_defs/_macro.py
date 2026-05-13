@@ -113,7 +113,32 @@ class DerivativesDataRequest(BaseModel):
         return self
 
 
+class BlockTradeRequest(BaseModel):
+    include: list[Literal["daily_detail", "daily_stat", "industry_stat", "broker_rank", "active_stock"]] = Field(
+        default=["daily_detail", "daily_stat"]
+    )
+    trade_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    period: Literal["近一月", "近三月", "近六月", "近一年"] = "近一月"
+    industry_period: Literal["近3日", "近5日", "近10日", "近30日"] = "近3日"
+    sort_by: Literal["turnover", "discount_rate", "turnover_to_float_cap", "listed_count", "avg_return_5d"] = "turnover"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        self.trade_date, self.start_date, self.end_date = validate_date_range(
+            self.trade_date, self.start_date, self.end_date
+        )
+        if not self.include:
+            raise ValueError("include must contain at least one of: daily_detail, daily_stat, industry_stat, broker_rank, active_stock")
+        self.include = dedupe_include(self.include)  # type: ignore[assignment]
+        return self
+
+
 __all__ = [
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
-    "ConvertibleBondRequest", "DerivativesDataRequest",
+    "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
 ]

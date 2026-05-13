@@ -13,6 +13,7 @@ from ._analytics import (
     WatchlistReviewRequest,
 )
 from ._macro import (
+    BlockTradeRequest,
     ConvertibleBondRequest,
     DerivativesDataRequest,
     DragonTigerRequest,
@@ -83,5 +84,5 @@ __all__ = [
     "EventCalendarRequest", "IndexComposeRequest",
     # Macro
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
-    "ConvertibleBondRequest", "DerivativesDataRequest",
+    "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
 ]

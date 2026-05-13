@@ -33,6 +33,7 @@
 - 可转债（双低/溢价率/YTM/强赎监控/等权指数）→ `convertible_bond`
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
 - 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
+- 大宗交易（每日明细+个股汇总/折溢率+行业统计+营业部胜率排行+活跃个股追踪）→ `block_trade`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -108,6 +109,7 @@
 - `convertible_bond`：`akshare`
 - `derivatives_data`：`akshare`
 - `margin_trading`：`akshare`
+- `block_trade`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -270,6 +272,21 @@
 ### 融资融券汇总+明细
 ```json
 {"tool":"margin_trading","payload":{"include":["summary","detail"],"trade_date":"2026-05-08","exchange":"both","sort_by":"financing_buy","top_n":20}}
+```
+
+### 大宗交易（每日明细+个股汇总）
+```json
+{"tool":"block_trade","payload":{"include":["daily_detail","daily_stat"],"trade_date":"2026-05-06","sort_by":"turnover","top_n":20}}
+```
+
+### 大宗交易（行业统计+营业部排行）
+```json
+{"tool":"block_trade","payload":{"include":["industry_stat","broker_rank"],"period":"近一月","industry_period":"近3日","top_n":10}}
+```
+
+### 大宗交易（活跃个股追踪）
+```json
+{"tool":"block_trade","payload":{"include":["active_stock"],"period":"近三月","sort_by":"total_turnover","top_n":20}}
 ```
 
 

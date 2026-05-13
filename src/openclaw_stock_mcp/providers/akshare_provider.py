@@ -947,3 +947,52 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare margin_szse_detail failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Block Trade (大宗交易) ────────────────────────────
+
+    def get_block_trade_daily(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch block trade daily detail from ak.stock_dzjy_mrmx()."""
+        lib = self._require_ak()
+        kwargs = {"start_date": start_date.replace("-", ""), "end_date": (end_date or start_date).replace("-", "")}
+        try:
+            df = self._call_ak_quietly(lib.stock_dzjy_mrmx, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare block_trade_daily failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_block_trade_daily_stat(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch block trade daily stock summary from ak.stock_dzjy_mrtj()."""
+        lib = self._require_ak()
+        kwargs = {"start_date": start_date.replace("-", ""), "end_date": (end_date or start_date).replace("-", "")}
+        try:
+            df = self._call_ak_quietly(lib.stock_dzjy_mrtj, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare block_trade_daily_stat failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_block_trade_industry(self, period: str = "近3日") -> list[dict]:
+        """Fetch block trade industry summary from ak.stock_dzjy_hyyybtj()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_dzjy_hyyybtj, symbol=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare block_trade_industry failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_block_trade_broker_rank(self, period: str = "近一月") -> list[dict]:
+        """Fetch block trade broker ranking from ak.stock_dzjy_yybph()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_dzjy_yybph, symbol=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare block_trade_broker_rank failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_block_trade_active_stock(self, period: str = "近一月") -> list[dict]:
+        """Fetch block trade active stock ranking from ak.stock_dzjy_hygtj()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_dzjy_hygtj, symbol=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare block_trade_active_stock failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

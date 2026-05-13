@@ -275,6 +275,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | derivatives_data | derivatives_data.py | 1:1 |
 | margin_trading | margin_trading.py | 1:1 |
 | provider_health | provider_health.py | 1:1 |
+| block_trade | block_trade.py | 1:1 |
 
 ---
 
