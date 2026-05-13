@@ -75,6 +75,7 @@ from .money_rate import (
 )
 from .stock_screen import StockScreenItem, StockScreenResult
 from .insider_trade import InsiderTop10Item, InsiderChangeItem, InsiderTradeResult
+from .dividend_rank import DividendRankItem, DividendPlanItem, DividendDetailItem, DividendRankResult
 
 __all__ = [
     "ToolError",
@@ -140,4 +141,8 @@ __all__ = [
     "InsiderTop10Item",
     "InsiderChangeItem",
     "InsiderTradeResult",
+    "DividendRankItem",
+    "DividendPlanItem",
+    "DividendDetailItem",
+    "DividendRankResult",
 ]

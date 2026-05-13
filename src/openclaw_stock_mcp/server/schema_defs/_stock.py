@@ -138,7 +138,7 @@ __all__ = [
     "StockSearchRequest", "StockQuoteRequest", "StockHistoryRequest",
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
-    "EarningsQualityRequest", "InsiderTradeRequest",
+    "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
 ]
 
 
@@ -151,3 +151,22 @@ class InsiderTradeRequest(BaseModel):
     quarter: Literal["auto", "20261", "20254", "20253", "20252", "20251", "20244", "20243", "20242", "20241"] = "auto"
     top_n: int | None = Field(default=None, ge=1, le=50)
     provider: Literal["akshare"] | None = "akshare"
+
+
+class DividendRankRequest(BaseModel):
+    include: list[Literal["rank", "plan", "detail"]] = Field(
+        default=["rank", "plan"]
+    )
+    report_date: Literal["latest", "20241231", "20231231", "20221231", "20211231", "20201231"] = "latest"
+    symbol: str | None = None
+    sec_type: str = "stock"
+    sort_by: Literal["avg_annual_dividend", "total_dividend", "dividend_count", "dividend_yield", "cash_dividend_ratio", "eps"] = "avg_annual_dividend"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if "detail" in self.include and not self.symbol:
+            raise ValueError("symbol is required when include contains 'detail'")
+        return self

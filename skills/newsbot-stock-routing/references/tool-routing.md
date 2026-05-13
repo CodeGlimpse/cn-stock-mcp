@@ -38,6 +38,7 @@
 - 货币市场利率（SHIBOR曲线+银行间拆借+回购定盘利率）→ `money_rate`
 - 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件）→ `stock_screen`
 - 高管增减持（十大流通股东变动+增减持历史）→ `insider_trade`
+- 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -118,6 +119,7 @@
 - `money_rate`：`akshare`
 - `stock_screen`：`akshare`
 - `insider_trade`：`akshare`
+- `dividend_rank`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -345,6 +347,21 @@
 ### 高管增减持（仅十大流通股东变动）
 ```json
 {"tool":"insider_trade","payload":{"include":["top10"],"symbol":"600519.SH","quarter":"20254","top_n":10}}
+```
+
+### 股息率/分红排名（高股息排名）
+```json
+{"tool":"dividend_rank","payload":{"include":["rank"],"sort_by":"avg_annual_dividend","descending":true,"top_n":20}}
+```
+
+### 股息率/分红排名（最新分红方案，按股息率排序）
+```json
+{"tool":"dividend_rank","payload":{"include":["plan"],"report_date":"latest","sort_by":"dividend_yield","descending":true,"top_n":20}}
+```
+
+### 股息率/分红排名（单股分红历史）
+```json
+{"tool":"dividend_rank","payload":{"include":["detail"],"symbol":"600519.SH"}}
 ```
 
 

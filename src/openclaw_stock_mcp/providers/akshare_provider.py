@@ -1114,3 +1114,39 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare insider_change failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Dividend Rank (股息率/分红排名) ──────────────────────
+
+    def get_dividend_history_rank(self) -> list[dict]:
+        """Fetch full-market historical dividend ranking from ak.stock_history_dividend()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_history_dividend)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dividend_history_rank failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_dividend_plan(self, date: str) -> list[dict]:
+        """Fetch dividend distribution plan by report period from ak.stock_fhps_em().
+
+        date: YYYYMMDD, e.g. "20241231"
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_fhps_em, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dividend_plan failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_dividend_detail(self, symbol: str) -> list[dict]:
+        """Fetch per-stock historical dividend detail from ak.stock_history_dividend_detail().
+
+        symbol: 6-digit code, e.g. "000002"
+        indicator: "分红" for dividend history
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_history_dividend_detail, symbol=symbol, indicator="分红")
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dividend_detail failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

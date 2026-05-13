@@ -1,5 +1,6 @@
 from .schemas import (
     BlockTradeRequest,
+    DividendRankRequest,
     HotThemeTrackerRequest,
     InstituteHoldRequest,
     InsiderTradeRequest,
@@ -59,4 +60,5 @@ __all__ = [
     "MoneyRateRequest",
     "StockScreenRequest",
     "InsiderTradeRequest",
+    "DividendRankRequest",
 ]

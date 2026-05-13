@@ -45,6 +45,7 @@ from ._sector import (
 from ._stock import (
     EarningsQualityRequest,
     InsiderTradeRequest,
+    DividendRankRequest,
     StockFinancialRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
@@ -74,7 +75,7 @@ __all__ = [
     "StockSearchRequest", "StockQuoteRequest", "StockHistoryRequest",
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
-    "EarningsQualityRequest", "InsiderTradeRequest",
+    "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
     # Market
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",
