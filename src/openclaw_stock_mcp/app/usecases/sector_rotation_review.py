@@ -24,9 +24,17 @@ class SectorRotationReviewUseCase:
     def execute(self, request):
         items: list[dict] = []
         errors: list[dict] = []
-        inner_top_n = max(request.limit, request.top_n, request.member_top_n)
 
-        results = self._collect_sector_results(request, inner_top_n)
+        skip_detail = getattr(request, "skip_member_detail", False)
+        # Tighter inner_top_n: only fetch what we'll actually display
+        # member_top_n is per-sector display count; top_n is ranking count
+        # We need at most member_top_n members per sector for leaders/laggards
+        inner_top_n = request.member_top_n if skip_detail else min(
+            request.member_top_n * 3,  # 3x buffer for filtering/sorting
+            request.limit,
+        )
+
+        results = self._collect_sector_results(request, inner_top_n, skip_detail)
         for sector_name in request.sector_names:
             sector_result = results.get(sector_name)
             if sector_result is None:
@@ -36,7 +44,7 @@ class SectorRotationReviewUseCase:
                 continue
 
             card = self._to_sector_card(sector_result, request.sector_type, request.member_top_n)
-            if card["reviewed_count"] <= 0:
+            if card["reviewed_count"] <= 0 and card.get("mode") != "skip_member_detail":
                 errors.append(
                     {
                         "sector_name": sector_name,
@@ -149,18 +157,18 @@ class SectorRotationReviewUseCase:
             },
         }
 
-    def _collect_sector_results(self, request, inner_top_n: int) -> dict[str, dict | Exception]:
+    def _collect_sector_results(self, request, inner_top_n: int, skip_detail: bool = False) -> dict[str, dict | Exception]:
         sector_names = list(request.sector_names)
         if not sector_names:
             return {}
 
         max_workers = max(1, min(len(sector_names), int(getattr(self.settings, "sector_rotation_max_workers", 2) or 2)))
         if max_workers == 1:
-            return {name: self._run_sector_review(name, request, inner_top_n) for name in sector_names}
+            return {name: self._run_sector_review(name, request, inner_top_n, skip_detail) for name in sector_names}
 
         results: dict[str, dict | Exception] = {}
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_map = {executor.submit(self._run_sector_review, name, request, inner_top_n): name for name in sector_names}
+            future_map = {executor.submit(self._run_sector_review, name, request, inner_top_n, skip_detail): name for name in sector_names}
             for future in as_completed(future_map):
                 sector_name = future_map[future]
                 try:
@@ -169,8 +177,10 @@ class SectorRotationReviewUseCase:
                     results[sector_name] = exc
         return results
 
-    def _run_sector_review(self, sector_name: str, request, inner_top_n: int):
+    def _run_sector_review(self, sector_name: str, request, inner_top_n: int, skip_detail: bool = False):
         try:
+            if skip_detail:
+                return self._run_sector_lookup_only(sector_name, request)
             sector_req = SimpleNamespace(
                 sector_name=sector_name,
                 sector_type=getattr(request, "sector_type", "primary"),
@@ -194,6 +204,75 @@ class SectorRotationReviewUseCase:
             return SectorReviewUseCase().execute(sector_req)
         except Exception as exc:
             return exc
+
+    def _run_sector_lookup_only(self, sector_name: str, request) -> dict:
+        """Lightweight sector result: only lookup members, no per-stock review.
+
+        Returns a minimal dict compatible with _to_sector_card() but with
+        all review-derived fields set to None/empty. Used when
+        skip_member_detail=True for fast sector comparison.
+        """
+        try:
+            from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
+            lookup = SectorLookupUseCase()
+            members_resp = lookup.execute(SimpleNamespace(
+                mode="children",
+                sector_type=getattr(request, "sector_type", "primary"),
+                sector_name=sector_name,
+                limit=getattr(request, "limit", 100),
+                provider=request.provider,
+            ))
+        except Exception:
+            members_resp = {"items": []}
+
+        members = members_resp.get("items", [])
+        symbols = [item.symbol for item in members if getattr(item, "symbol", None)]
+        member_count = len(symbols)
+
+        # Get batch quote for basic breadth estimation (no history/review)
+        breadth = {
+            "positive_count": 0,
+            "negative_count": 0,
+            "flat_count": member_count,
+            "stronger_than_benchmark_count": 0,
+            "high_volume_count": 0,
+        }
+
+        return {
+            "sector_name": sector_name,
+            "subject_name": sector_name,
+            "mode": "skip_member_detail",
+            "trade_date": request.trade_date,
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "member_count": member_count,
+            "reviewed_count": 0,
+            "items": [],
+            "breadth": breadth,
+            "stats": {
+                "avg_return": None,
+                "median_return": None,
+                "avg_relative_strength": None,
+                "median_relative_strength": None,
+                "avg_volume_ratio": None,
+                "max_drawdown_worst": None,
+                "return_stddev": None,
+            },
+            "sentiment": {"label": "neutral", "label_zh": "中性", "score": 0.0},
+            "benchmark_summary": {
+                "dominant_benchmark_symbol": None,
+                "dominant_benchmark_name": None,
+            },
+            "continuity": {},
+            "rotation": {"label": "unknown", "label_zh": "未知", "score": 0.0},
+            "structure": {"tags": ["skip_member_detail"]},
+            "leaders": [],
+            "laggards": [],
+            "summary": f"{sector_name}：成员 {member_count} 只（跳过个股复盘）",
+            "partial_failure": False,
+            "errors": [],
+            "meta": {"sector_lookup": {"source": members_resp.get("source")}},
+        }
 
     def _to_sector_card(self, result: dict, sector_type: str, member_top_n: int) -> dict:
         reviewed_count = int(result.get("reviewed_count") or len(result.get("items", [])) or 0)

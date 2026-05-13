@@ -51,6 +51,7 @@ class SectorRotationReviewRequest(BaseModel):
     top_n: int = Field(default=5, ge=1, le=15)
     limit: int = Field(default=100, ge=1, le=500)
     member_top_n: int = Field(default=3, ge=1, le=10)
+    skip_member_detail: bool = Field(default=False, description="When True, skip per-member stock_review expansion and return only sector-level aggregate (sector_lookup + quote-level breadth). Much faster for sector comparison only.")
     min_relative_strength: float | None = None
     min_return: float | None = None
     max_drawdown_limit: float | None = None

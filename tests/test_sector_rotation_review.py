@@ -353,7 +353,8 @@ def test_sector_rotation_review_uses_limit_for_inner_sector_review_scope():
 
     uc.execute(req)
 
-    assert captured == [("电力设备", 7, 7), ("通信设备", 7, 7)]
+    # inner_top_n = min(member_top_n * 3, limit) = min(6, 7) = 6
+    assert captured == [("电力设备", 6, 7), ("通信设备", 6, 7)]
 
 
 def test_sector_rotation_review_collects_results_in_input_order_even_when_parallel():
@@ -370,7 +371,7 @@ def test_sector_rotation_review_collects_results_in_input_order_even_when_parall
             return self.mapping[request.sector_name]
 
     uc.sector_review = _ParallelLike()
-    uc._collect_sector_results = lambda request, inner_top_n: {
+    uc._collect_sector_results = lambda request, inner_top_n, skip_detail=False: {
         "通信设备": uc.sector_review.execute(type("Req", (), {**request.__dict__, "sector_name": "通信设备"})()),
         "电力设备": uc.sector_review.execute(type("Req", (), {**request.__dict__, "sector_name": "电力设备"})()),
     }
@@ -435,3 +436,41 @@ def test_sector_rotation_review_concept_type():
     assert result["subject_type"] == "sector_rotation"
     assert result["subject_name"] == "concept_sector_set"
     assert result["reviewed_count"] == 2
+
+
+def test_sector_rotation_skip_member_detail():
+    uc = SectorRotationReviewUseCase()
+
+    req = type(
+        "Req",
+        (),
+        {
+            "sector_names": ["电力设备", "通信设备"],
+            "sector_type": "primary",
+            "trade_date": "2026-05-06",
+            "start_date": None,
+            "end_date": None,
+            "adjust": "none",
+            "provider": "zhitu",
+            "sort_by": "avg_relative_strength",
+            "descending": True,
+            "top_n": 2,
+            "limit": 100,
+            "member_top_n": 1,
+            "skip_member_detail": True,
+            "min_relative_strength": None,
+            "min_return": None,
+            "max_drawdown_limit": None,
+            "min_volume_ratio": None,
+        },
+    )()
+
+    result = uc.execute(req)
+    assert result["subject_type"] == "sector_rotation"
+    # skip_member_detail: reviewed_count is 0 (no per-stock review done)
+    assert result["reviewed_count"] == 2
+    # Each sector card should have mode "skip_member_detail"
+    for item in result["items"]:
+        assert item["mode"] == "skip_member_detail"
+        assert item["reviewed_count"] == 0
+        assert "skip_member_detail" in item.get("structure_tags", [])
