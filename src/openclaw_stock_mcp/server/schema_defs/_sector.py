@@ -10,7 +10,7 @@ from ._helpers import (
     normalize_pool_type,
     validate_date_range,
 )
-from ._types import AdjustType, ProviderName, SectorType
+from ._types import AdjustType, ProviderName, SectorLookupMode, SectorType
 
 
 class SectorReviewRequest(BaseModel):
@@ -164,6 +164,10 @@ class IndustryValuationRankRequest(BaseModel):
         self.sector_names = normalized
         return self
 
+
+# Rebuild models that reference types imported under `from __future__ import annotations`
+# (Pydantic v2 needs explicit rebuild when forward refs can't be resolved at class-creation time)
+SectorLookupRequest.model_rebuild(_types_namespace={"SectorLookupMode": SectorLookupMode})
 
 __all__ = [
     "SectorReviewRequest", "SectorRotationReviewRequest", "SectorLookupRequest",
