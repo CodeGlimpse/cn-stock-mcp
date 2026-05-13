@@ -53,6 +53,7 @@
 - `block_trade`
 - `institute_hold`
 - `money_rate`
+- `stock_screen`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`

@@ -150,4 +150,20 @@ __all__ = [
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",
     "LimitStatRequest", "NorthboundRequest", "MarginTradingRequest",
+    "StockScreenRequest",
 ]
+
+
+class StockScreenRequest(BaseModel):
+    market: Literal["all", "sh", "sz", "bj", "main", "star", "gem"] = "all"
+    min_price: float | None = Field(default=None, description="Minimum latest price (inclusive)")
+    max_price: float | None = Field(default=None, description="Maximum latest price (inclusive)")
+    min_change_pct: float | None = Field(default=None, description="Minimum change percent (inclusive)")
+    max_change_pct: float | None = Field(default=None, description="Maximum change percent (inclusive)")
+    min_volume: float | None = Field(default=None, description="Minimum volume (inclusive)")
+    min_turnover: float | None = Field(default=None, description="Minimum turnover (CNY, inclusive)")
+    min_amplitude: float | None = Field(default=None, description="Minimum amplitude percent (inclusive)")
+    sort_by: Literal["change_pct", "turnover", "volume", "latest_price", "amplitude"] = "change_pct"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"

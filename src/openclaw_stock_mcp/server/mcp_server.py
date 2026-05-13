@@ -27,6 +27,7 @@ from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
 from openclaw_stock_mcp.app.usecases.block_trade import BlockTradeUseCase
 from openclaw_stock_mcp.app.usecases.institute_hold import InstituteHoldUseCase
 from openclaw_stock_mcp.app.usecases.money_rate import MoneyRateUseCase
+from openclaw_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -71,6 +72,7 @@ from openclaw_stock_mcp.server.schemas import (
     BlockTradeRequest,
     InstituteHoldRequest,
     MoneyRateRequest,
+    StockScreenRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -202,6 +204,7 @@ def create_server() -> MCPServerStub:
     block_trade = BlockTradeUseCase()
     institute_hold = InstituteHoldUseCase()
     money_rate = MoneyRateUseCase()
+    stock_screen = StockScreenUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -243,5 +246,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="block_trade", description="Get block trade (大宗交易) data: daily trade detail with buyer/seller broker, daily stock summary with discount rate, industry aggregation, broker success-rate ranking, and active stock tracking. Supports date range and period-based queries.", input_model=BlockTradeRequest, handler=block_trade.execute))
     server.register_tool(MCPTool(name="institute_hold", description="Get institute holding (机构持仓) data: quarterly market-wide summary with institution count and holding ratio changes, and per-stock detail with individual institution breakdown. Supports auto-quarter detection.", input_model=InstituteHoldRequest, handler=institute_hold.execute))
     server.register_tool(MCPTool(name="money_rate", description="Get money market rates (货币市场利率): SHIBOR full-term curve (O/N~1Y), interbank rate by tenor, repo fixing rates (FR/FDR). Supports latest and historical modes.", input_model=MoneyRateRequest, handler=money_rate.execute))
+    server.register_tool(MCPTool(name="stock_screen", description="Screen/filter A-share stocks by market, price range, change percent, volume, turnover, amplitude. Returns sorted results from real-time Sina source. Like a basic stock screener.", input_model=StockScreenRequest, handler=stock_screen.execute))
 
     return server

@@ -1076,3 +1076,17 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare repo_rate_hist failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Stock Screen (选股筛选) ──────────────────────────────
+
+    def get_a_share_spot_all(self) -> list[dict]:
+        """Fetch full A-share spot table from ak.stock_zh_a_spot() (Sina source).
+
+        Returns all SH/SZ/BJ stocks with real-time quote fields.
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_zh_a_spot)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare a_share_spot_all failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

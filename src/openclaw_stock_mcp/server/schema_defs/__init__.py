@@ -30,6 +30,7 @@ from ._market import (
     MarketOverviewRequest,
     MarketPoolRequest,
     NorthboundRequest,
+    StockScreenRequest,
     TechnicalIndicatorRequest,
     TradingCalendarRequest,
 )
@@ -76,7 +77,7 @@ __all__ = [
     # Market
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",
-    "LimitStatRequest", "NorthboundRequest", "MarginTradingRequest",
+    "LimitStatRequest", "NorthboundRequest", "MarginTradingRequest", "StockScreenRequest",
     # Sector
     "SectorReviewRequest", "SectorRotationReviewRequest", "SectorLookupRequest",
     "SectorQuoteRequest", "SectorLeadersRequest", "IndustryValuationRankRequest",

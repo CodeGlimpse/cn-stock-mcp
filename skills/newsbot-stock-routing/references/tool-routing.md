@@ -36,6 +36,7 @@
 - 大宗交易（每日明细+个股汇总/折溢率+行业统计+营业部胜率排行+活跃个股追踪）→ `block_trade`
 - 机构持仓（季度汇总+个股明细/增持减持变动）→ `institute_hold`
 - 货币市场利率（SHIBOR曲线+银行间拆借+回购定盘利率）→ `money_rate`
+- 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件）→ `stock_screen`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -114,6 +115,7 @@
 - `block_trade`：`akshare`
 - `institute_hold`：`akshare`
 - `money_rate`：`akshare`
+- `stock_screen`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -316,6 +318,21 @@
 ### 货币市场利率（回购历史）
 ```json
 {"tool":"money_rate","payload":{"include":["repo"],"repo_mode":"hist","start_date":"2026-05-01","end_date":"2026-05-13"}}
+```
+
+### 选股筛选（涨跌幅>3%，成交额>1亿）
+```json
+{"tool":"stock_screen","payload":{"market":"main","min_change_pct":3,"min_turnover":100000000,"sort_by":"change_pct","descending":true,"top_n":20}}
+```
+
+### 选股筛选（科创板，振幅>5%）
+```json
+{"tool":"stock_screen","payload":{"market":"star","min_amplitude":5,"sort_by":"amplitude","descending":true,"top_n":20}}
+```
+
+### 选股筛选（低价股，10-30元，放量）
+```json
+{"tool":"stock_screen","payload":{"market":"all","min_price":10,"max_price":30,"min_volume":50000000,"sort_by":"turnover","descending":true,"top_n":30}}
 ```
 
 
