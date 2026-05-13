@@ -138,7 +138,28 @@ class BlockTradeRequest(BaseModel):
         return self
 
 
+class InstituteHoldRequest(BaseModel):
+    include: list[Literal["summary", "detail"]] = Field(
+        default=["summary"]
+    )
+    quarter: Literal["auto", "20261", "20254", "20253", "20252", "20251", "20244", "20243", "20242", "20241"] = "auto"
+    symbol: str | None = None
+    sec_type: str = "stock"
+    sort_by: Literal["institute_count", "hold_ratio", "hold_ratio_change", "float_ratio", "float_ratio_change"] = "institute_count"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if "detail" in self.include and not self.symbol:
+            raise ValueError("symbol is required when include contains 'detail'")
+        self.include = dedupe_include(self.include)  # type: ignore[assignment]
+        return self
+
+
 __all__ = [
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
     "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
+    "InstituteHoldRequest",
 ]

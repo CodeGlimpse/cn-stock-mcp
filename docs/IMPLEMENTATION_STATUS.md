@@ -51,6 +51,7 @@
 - `derivatives_data`
 - `margin_trading`
 - `block_trade`
+- `institute_hold`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`

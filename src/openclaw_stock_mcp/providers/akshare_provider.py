@@ -996,3 +996,30 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare block_trade_active_stock failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Institute Hold (机构持仓) ──────────────────────────
+
+    def get_institute_hold(self, quarter: str) -> list[dict]:
+        """Fetch quarterly institute holding summary from ak.stock_institute_hold().
+
+        quarter format: YYYYQ, e.g. "20243" for 2024Q3.
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_institute_hold, symbol=quarter)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare institute_hold failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_institute_hold_detail(self, stock: str, quarter: str) -> list[dict]:
+        """Fetch per-stock institute holding detail from ak.stock_institute_hold_detail().
+
+        stock: 6-digit code, e.g. "600519"
+        quarter: YYYYQ, e.g. "20243"
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_institute_hold_detail, stock=stock, quarter=quarter)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare institute_hold_detail failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

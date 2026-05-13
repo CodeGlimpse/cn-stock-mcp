@@ -34,6 +34,7 @@
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
 - 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
 - 大宗交易（每日明细+个股汇总/折溢率+行业统计+营业部胜率排行+活跃个股追踪）→ `block_trade`
+- 机构持仓（季度汇总+个股明细/增持减持变动）→ `institute_hold`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -110,6 +111,7 @@
 - `derivatives_data`：`akshare`
 - `margin_trading`：`akshare`
 - `block_trade`：`akshare`
+- `institute_hold`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -287,6 +289,16 @@
 ### 大宗交易（活跃个股追踪）
 ```json
 {"tool":"block_trade","payload":{"include":["active_stock"],"period":"近三月","sort_by":"total_turnover","top_n":20}}
+```
+
+### 机构持仓（季度汇总）
+```json
+{"tool":"institute_hold","payload":{"include":["summary"],"quarter":"auto","sort_by":"institute_count","top_n":20}}
+```
+
+### 机构持仓（个股明细）
+```json
+{"tool":"institute_hold","payload":{"include":["detail"],"quarter":"auto","symbol":"600519.SH","sort_by":"hold_ratio_change","descending":true}}
 ```
 
 

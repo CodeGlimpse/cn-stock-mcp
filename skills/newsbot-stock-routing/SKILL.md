@@ -37,6 +37,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
 - 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
 - 大宗交易（每日明细+个股汇总+行业统计+营业部排行+活跃个股）→ `block_trade`
+- 机构持仓（季度汇总+个股明细/增减持变动）→ `institute_hold`
 
 ## Operating rules
 
