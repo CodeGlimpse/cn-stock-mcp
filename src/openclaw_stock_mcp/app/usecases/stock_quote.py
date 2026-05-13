@@ -1,17 +1,27 @@
 import time
 
+from openclaw_stock_mcp.app.services.cache_service import CacheService
 from openclaw_stock_mcp.app.services.error_mapper import serialize_exception
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
+from openclaw_stock_mcp.infra.config import get_settings
 from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class StockQuoteUseCase:
+    _shared_quote_cache: CacheService | None = None
+
     def __init__(self) -> None:
         self.router = ProviderRouter()
         self.resolver = SymbolResolver()
+        settings = get_settings()
+        if StockQuoteUseCase._shared_quote_cache is None:
+            StockQuoteUseCase._shared_quote_cache = CacheService(
+                maxsize=4096, ttl=max(int(settings.cache_ttl_quote_seconds or 10), 1)
+            )
+        self.quote_cache = StockQuoteUseCase._shared_quote_cache
 
     def _selection_from_preference(self, preferences: list[str] | None) -> ProviderSelection | None:
         if not preferences:
@@ -150,6 +160,28 @@ class StockQuoteUseCase:
                     sec_type=resolved.sec_type,
                     preferred=getattr(request, "provider", None),
                 )
+                # Check cache for individual quote
+                cache_key = f"quote:{resolved.symbol}:{resolved.sec_type}"
+                cached = self.quote_cache.get(cache_key)
+                if cached is not None:
+                    items.append(cached)
+                    meta_items.append(
+                        {
+                            "symbol": raw_symbol,
+                            "resolved_symbol": resolved.symbol,
+                            "sec_type": resolved.sec_type,
+                            "selected_primary": sym_selection.primary,
+                            "selected_fallback": sym_selection.fallback,
+                            "attempted": [],
+                            "final_provider": "cache",
+                            "used_fallback": False,
+                            "provider_used": "cache",
+                            "fallback_chain": [sym_selection.primary, *sym_selection.fallback],
+                            "latency_ms": 0,
+                        }
+                    )
+                    continue
+
                 try:
                     quote, fallback_meta = run_with_fallback_meta(
                         self.router,
@@ -157,6 +189,7 @@ class StockQuoteUseCase:
                         lambda provider: provider.get_quote(resolved.symbol, resolved.sec_type),
                     )
                     items.append(quote)
+                    self.quote_cache.set(cache_key, quote)
                     meta_items.append(
                         {
                             "symbol": raw_symbol,

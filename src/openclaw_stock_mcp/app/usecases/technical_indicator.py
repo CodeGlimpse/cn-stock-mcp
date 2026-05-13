@@ -1,15 +1,30 @@
+from openclaw_stock_mcp.app.services.cache_service import CacheService
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
 from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
+from openclaw_stock_mcp.infra.config import get_settings
 
 
 class TechnicalIndicatorUseCase:
+    _shared_indicator_cache: CacheService | None = None
+
     def __init__(self) -> None:
         self.router = ProviderRouter()
         self.resolver = SymbolResolver()
+        settings = get_settings()
+        if TechnicalIndicatorUseCase._shared_indicator_cache is None:
+            TechnicalIndicatorUseCase._shared_indicator_cache = CacheService(
+                maxsize=2048, ttl=max(int(settings.cache_ttl_indicator_seconds or 300), 10)
+            )
+        self.indicator_cache = TechnicalIndicatorUseCase._shared_indicator_cache
 
     def execute(self, request):
         resolved = self.resolver.resolve(request.symbol, request.sec_type)
+        cache_key = f"indicator:{resolved.symbol}:{resolved.sec_type}:{request.interval}:{request.indicator}:{request.limit}"
+        cached = self.indicator_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         selection = self.router.choose_provider(
             tool_name="technical_indicator",
             symbol=resolved.symbol,
@@ -41,4 +56,5 @@ class TechnicalIndicatorUseCase:
                     "used_fallback": fallback_meta.used_fallback,
                 }
             )
+        self.indicator_cache.set(cache_key, payload)
         return payload

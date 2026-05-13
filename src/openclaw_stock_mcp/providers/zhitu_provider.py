@@ -50,6 +50,11 @@ class ZhituProvider:
         self._instrument_name_cache: dict[tuple[str, str], str] = {}
         self._concept_name_map: dict[str, str] | None = None  # display_name -> zhitu_mc
         self._token_cooldowns: dict[str, float] = {}
+        self._daily_quota: int = max(int(self.settings.zhitu_daily_quota_per_token or 500), 1)
+        self._daily_counters: dict[str, dict[str, int | str]] = {
+            token: {"date": "", "count": 0}
+            for token in self.tokens
+        }
         self._token_stats: dict[str, dict[str, float | int | None]] = {
             token: {
                 "total_requests": 0,
@@ -64,6 +69,28 @@ class ZhituProvider:
 
     def _now(self) -> float:
         return time.time()
+
+    def _today_str(self) -> str:
+        from datetime import date
+        return date.today().isoformat()
+
+    def _ensure_daily_counter(self, token: str) -> dict[str, int | str]:
+        if token not in self._daily_counters:
+            self._daily_counters[token] = {"date": "", "count": 0}
+        counter = self._daily_counters[token]
+        today = self._today_str()
+        if counter["date"] != today:
+            counter["date"] = today
+            counter["count"] = 0
+        return counter
+
+    def _daily_remaining(self, token: str) -> int:
+        counter = self._ensure_daily_counter(token)
+        return max(0, self._daily_quota - int(counter.get("count", 0)))
+
+    def _increment_daily(self, token: str) -> None:
+        counter = self._ensure_daily_counter(token)
+        counter["count"] = int(counter.get("count", 0)) + 1
 
     def _ensure_token_state(self, token: str):
         if token not in self._token_stats:
@@ -95,6 +122,9 @@ class ZhituProvider:
         if cooldown_until > now:
             penalty += 100.0
 
+        if self._daily_remaining(token) <= 0:
+            penalty += 200.0
+
         if isinstance(last_failure_at, (int, float)):
             age = max(0.0, now - float(last_failure_at))
             if age < 300:
@@ -108,7 +138,13 @@ class ZhituProvider:
 
         now = self._now()
         available = [token for token in self.tokens if self._token_cooldowns.get(token, 0) <= now]
+        # If all available tokens have exhausted daily quota, fall back to
+        # the full list so we can still try (the upstream may allow some
+        # overage or the quota config might be too conservative).
         candidates = available or list(self.tokens)
+        with_quota = [t for t in candidates if self._daily_remaining(t) > 0]
+        if with_quota:
+            candidates = with_quota
         return sorted(candidates, key=lambda token: self._token_score(token, now), reverse=True)
 
     def _mark_token_rate_limited(self, token: str):
@@ -118,6 +154,7 @@ class ZhituProvider:
 
     def _record_token_success(self, token: str):
         self._ensure_token_state(token)
+        self._increment_daily(token)
         stats = self._token_stats[token]
         stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
         stats["success_count"] = int(stats.get("success_count", 0) or 0) + 1
@@ -125,6 +162,7 @@ class ZhituProvider:
 
     def _record_token_failure(self, token: str, rate_limited: bool = False):
         self._ensure_token_state(token)
+        self._increment_daily(token)
         stats = self._token_stats[token]
         stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
         stats["failure_count"] = int(stats.get("failure_count", 0) or 0) + 1
@@ -676,6 +714,7 @@ class ZhituProvider:
             rate_limits = int(stats.get("rate_limit_count", 0) or 0)
             cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
             success_rate = (success / total) if total > 0 else None
+            daily_used = int(self._ensure_daily_counter(token).get("count", 0))
             rows.append(
                 {
                     "token": token,
@@ -690,6 +729,9 @@ class ZhituProvider:
                     "last_success_at": stats.get("last_success_at"),
                     "last_failure_at": stats.get("last_failure_at"),
                     "is_current": token == self.token,
+                    "daily_quota": self._daily_quota,
+                    "daily_used": daily_used,
+                    "daily_remaining": max(0, self._daily_quota - daily_used),
                 }
             )
         rows.sort(key=lambda item: item["score"], reverse=True)

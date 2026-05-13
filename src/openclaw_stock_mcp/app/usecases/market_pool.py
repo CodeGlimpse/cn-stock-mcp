@@ -1,13 +1,23 @@
 from datetime import datetime
 
+from openclaw_stock_mcp.app.services.cache_service import CacheService
 from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
 from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
+from openclaw_stock_mcp.infra.config import get_settings
 from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class MarketPoolUseCase:
+    _shared_pool_cache: CacheService | None = None
+
     def __init__(self) -> None:
         self.router = ProviderRouter()
+        settings = get_settings()
+        if MarketPoolUseCase._shared_pool_cache is None:
+            MarketPoolUseCase._shared_pool_cache = CacheService(
+                maxsize=256, ttl=max(int(settings.cache_ttl_pool_seconds or 600), 10)
+            )
+        self.pool_cache = MarketPoolUseCase._shared_pool_cache
 
     def _annotate_anomalies(self, items: list[dict] | list) -> list:
         for item in items:
@@ -62,6 +72,17 @@ class MarketPoolUseCase:
     def execute(self, request):
         effective_trade_date, calendar_meta = self._resolve_effective_trade_date(getattr(request, "trade_date", None))
 
+        cache_key = f"pool:{request.pool_type}:{effective_trade_date}"
+        cached = self.pool_cache.get(cache_key)
+        if cached is not None:
+            items = cached["items"]
+            if request.limit:
+                items = items[: request.limit]
+            return {
+                **cached,
+                "items": items,
+            }
+
         selection = self.router.choose_provider(
             tool_name="market_pool",
             sec_type="stock",
@@ -76,6 +97,23 @@ class MarketPoolUseCase:
             ),
         )
         items = self._annotate_anomalies(items)
+        # Cache the full result before applying limit
+        self.pool_cache.set(cache_key, {
+            "pool_type": request.pool_type,
+            "trade_date": effective_trade_date,
+            "requested_trade_date": calendar_meta["requested_trade_date"],
+            "items": items,
+            "count": len(items),
+            "source": fallback_meta.final_provider or selection.primary,
+            "meta": {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider,
+                "used_fallback": fallback_meta.used_fallback,
+                "calendar": calendar_meta,
+            },
+        })
         if request.limit:
             items = items[: request.limit]
         return {

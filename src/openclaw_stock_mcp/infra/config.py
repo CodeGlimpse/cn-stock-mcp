@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     zhitu_token: str = ""
     zhitu_token_config_path: str = "config/zhitu_tokens.json"
     zhitu_timeout_seconds: int = 15
-    zhitu_rate_limit_per_minute: int = 300
+    zhitu_daily_quota_per_token: int = 500
     zhitu_token_cooldown_seconds: int = 60
 
     cache_ttl_list_seconds: int = 86400

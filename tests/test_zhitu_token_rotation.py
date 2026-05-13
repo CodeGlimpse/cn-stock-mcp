@@ -42,13 +42,15 @@ class _RateLimitedClient:
 
 class _Zhitu(ZhituProvider):
     def __init__(self):
-        self.settings = type('S', (), {'zhitu_base_url': 'https://api.zhituapi.com', 'zhitu_timeout_seconds': 15, 'zhitu_token_cooldown_seconds': 60})()
+        self.settings = type('S', (), {'zhitu_base_url': 'https://api.zhituapi.com', 'zhitu_timeout_seconds': 15, 'zhitu_token_cooldown_seconds': 60, 'zhitu_daily_quota_per_token': 500})()
         self.base_url = self.settings.zhitu_base_url.rstrip('/')
         self.tokens = ['TOKEN_A', 'TOKEN_B']
         self.token = self.tokens[0]
         self.client = _Client()
         self._instrument_name_cache = {}
         self._token_cooldowns = {}
+        self._daily_quota = int(self.settings.zhitu_daily_quota_per_token)
+        self._daily_counters = {token: {"date": "", "count": 0} for token in self.tokens}
         self._token_stats = {
             token: {
                 'total_requests': 0,
@@ -64,13 +66,15 @@ class _Zhitu(ZhituProvider):
 
 class _ZhituAll429(ZhituProvider):
     def __init__(self):
-        self.settings = type('S', (), {'zhitu_base_url': 'https://api.zhituapi.com', 'zhitu_timeout_seconds': 15, 'zhitu_token_cooldown_seconds': 60})()
+        self.settings = type('S', (), {'zhitu_base_url': 'https://api.zhituapi.com', 'zhitu_timeout_seconds': 15, 'zhitu_token_cooldown_seconds': 60, 'zhitu_daily_quota_per_token': 500})()
         self.base_url = self.settings.zhitu_base_url.rstrip('/')
         self.tokens = ['TOKEN_A', 'TOKEN_B']
         self.token = self.tokens[0]
         self.client = _RateLimitedClient()
         self._instrument_name_cache = {}
         self._token_cooldowns = {}
+        self._daily_quota = int(self.settings.zhitu_daily_quota_per_token)
+        self._daily_counters = {token: {"date": "", "count": 0} for token in self.tokens}
         self._token_stats = {
             token: {
                 'total_requests': 0,

@@ -3,10 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 
+from openclaw_stock_mcp.infra.config import get_settings
+from openclaw_stock_mcp.infra.logging import setup_logging
 from openclaw_stock_mcp.server.transport import TransportApp
 
 
 def main() -> None:
+    settings = get_settings()
+    setup_logging(settings.log_level)
+
     parser = argparse.ArgumentParser(description="openclaw-stock-mcp")
     parser.add_argument("--list-tools", action="store_true", help="List registered tools")
     parser.add_argument("--tool", type=str, help="Tool name to invoke")

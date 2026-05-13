@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-11
+更新时间：2026-05-13
 
 ## 已完成
 
@@ -487,7 +487,7 @@
 3. `sector_lookup(children/members)` 依赖智兔一级板块名称；无效板块名会返回空列表
 4. `market_pool` 少量记录可能含上游异常值，当前已通过 `extra.data_quality / anomaly_flags` 标记可疑数据
 5. `1m` 周期当前未实现；需等可靠 provider 明确后再开放
-6. 智兔多 token 已支持 `429` 自动切换，但当前只做了最小冷却策略，尚未做更细粒度的配额统计与长期调度
+6. ~~智兔多 token 只做了最小冷却策略，尚未做更细粒度的配额统计与长期调度~~ → 已修复：新增每日限额跟踪（`zhitu_daily_quota_per_token`），跨日自动重置，配额耗尽自动切 token
 7. `sector_rotation_review` 当前虽已补充受控并发与共享缓存，但 live 请求在较大板块数或较大 `limit` 下仍会明显变慢
 8. 科创板 `stock_quote` 当前仍为 `zhitu` 单源（AKShare `stock_kc_a_spot_em()` 当前环境不稳定，待验证后补 fallback）
 9. `stock_orderbook` / `stock_profile` / `event_calendar` 仍为 `zhitu` 单源
@@ -718,45 +718,49 @@
 | 字段 | 默认值 | 是否被代码消费 | 消费者 |
 |---|---|---|---|
 | `app_env` | dev | 否 | — |
-| `log_level` | INFO | 否（仅 infra/logging.py 定义） | — |
+| `log_level` | INFO | **是** | main.py → setup_logging() |
 | `mcp_server_name` | openclaw-stock-mcp | 是 | mcp_server.py |
 | `mcp_server_version` | 0.1.0 | 是 | mcp_server.py |
 | `default_market` | CN | 否 | — |
 | `default_provider_order` | akshare,zhitu | 是 | provider_router.py |
 | `enable_provider_fallback` | True | 是 | provider_router.py |
-| `akshare_enabled` | True | 否 | — |
+| `akshare_enabled` | True | **是** | provider_router._is_enabled() |
 | `akshare_timeout_seconds` | 20 | 否 | — |
-| `zhitu_enabled` | True | 否 | — |
+| `zhitu_enabled` | True | **是** | provider_router._is_enabled() |
 | `zhitu_base_url` | https://api.zhituapi.com | 是 | zhitu_provider.py |
 | `zhitu_token` | "" | 是 | zhitu_provider.py |
 | `zhitu_token_config_path` | config/zhitu_tokens.json | 是 | zhitu_provider.py |
-| `zhitu_timeout_seconds` | 15 | 否 | — |
-| `zhitu_rate_limit_per_minute` | 300 | 否 | — |
+| `zhitu_timeout_seconds` | 15 | 是 | zhitu_provider.py → build_http_client() |
+| ~~`zhitu_rate_limit_per_minute`~~ | ~~300~~ | ~~否~~ | — （已重命名为 `zhitu_daily_quota_per_token`） |
+| `zhitu_daily_quota_per_token` | 500 | **是** | zhitu_provider._daily_quota / _daily_remaining() / get_token_health() |
 | `zhitu_token_cooldown_seconds` | 60 | 是 | zhitu_provider.py |
 | `cache_ttl_list_seconds` | 86400 | 是 | stock_review（calendar cache） |
-| `cache_ttl_quote_seconds` | 10 | **否** | — |
-| `cache_ttl_overview_seconds` | 10 | **否** | — |
+| `cache_ttl_quote_seconds` | 10 | **是** | stock_quote |
+| `cache_ttl_overview_seconds` | 10 | **是** | market_overview |
 | `cache_ttl_history_seconds` | 3600 | 是 | stock_review（history/benchmark cache） |
-| `cache_ttl_indicator_seconds` | 300 | **否** | — |
-| `cache_ttl_orderbook_seconds` | 3 | **否** | — |
-| `cache_ttl_pool_seconds` | 600 | **否** | — |
+| `cache_ttl_indicator_seconds` | 300 | **是** | technical_indicator |
+| `cache_ttl_orderbook_seconds` | 3 | **是** | stock_orderbook |
+| `cache_ttl_pool_seconds` | 600 | **是** | market_pool |
 | `stock_review_batch_max_workers` | 4 | 是 | stock_review_batch |
 | `sector_rotation_max_workers` | 2 | 是 | sector_rotation_review |
 
-### 未接线的配置（P3 改进项）
+### 仍未接线的配置（P3 改进项）
 
 以下配置已定义但**没有任何代码消费**：
 - `app_env` — 可用于环境区分
-- `log_level` — logging.py 定义了但未真正接入
 - `default_market` — 目前硬编码 "CN"
-- `akshare_enabled` / `zhitu_enabled` — 可用于 provider 开关
-- `akshare_timeout_seconds` / `zhitu_timeout_seconds` — 可用于 provider 请求超时
-- `zhitu_rate_limit_per_minute` — 可用于更细粒度的限速
-- `cache_ttl_quote_seconds` — quote 缓存 TTL 未接入
-- `cache_ttl_overview_seconds` — overview 缓存 TTL 未接入
-- `cache_ttl_indicator_seconds` — indicator 缓存 TTL 未接入
-- `cache_ttl_orderbook_seconds` — orderbook 缓存 TTL 未接入
-- `cache_ttl_pool_seconds` — pool 缓存 TTL 未接入
+- `akshare_timeout_seconds` — AKShare 内部使用 requests，无法统一超时
+
+### 已完成接入（2026-05-13）
+
+- `log_level` → main.py setup_logging()
+- `akshare_enabled` / `zhitu_enabled` → ProviderRouter._is_enabled() / _filter_selection()
+- `zhitu_daily_quota_per_token`（原 `zhitu_rate_limit_per_minute`）→ ZhituProvider 每日限额跟踪
+- `cache_ttl_quote_seconds` → StockQuoteUseCase
+- `cache_ttl_overview_seconds` → MarketOverviewUseCase
+- `cache_ttl_indicator_seconds` → TechnicalIndicatorUseCase
+- `cache_ttl_orderbook_seconds` → OrderbookUseCase
+- `cache_ttl_pool_seconds` → MarketPoolUseCase
 
 ### schemas.py 拆分（P2 已完成）
 

@@ -1,16 +1,37 @@
 from __future__ import annotations
 
 from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+from openclaw_stock_mcp.infra.config import get_settings
 from openclaw_stock_mcp.providers.akshare_provider import AKShareProvider
+from openclaw_stock_mcp.providers.errors import ProviderError
 from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 
 class ProviderRouter:
     def __init__(self) -> None:
+        self._settings = get_settings()
         self.akshare = AKShareProvider()
         self.zhitu = ZhituProvider()
 
+    def _is_enabled(self, name: str) -> bool:
+        if name == "zhitu":
+            return self._settings.zhitu_enabled
+        if name == "akshare":
+            return self._settings.akshare_enabled
+        return True
+
+    def _filter_selection(self, selection: ProviderSelection) -> ProviderSelection:
+        providers = [selection.primary, *selection.fallback]
+        filtered = [p for p in providers if self._is_enabled(p)]
+        if not filtered:
+            raise ProviderError("PROVIDER_DISABLED", f"No enabled provider for selection", retryable=False)
+        return ProviderSelection(primary=filtered[0], fallback=filtered[1:])
+
     def choose_provider(self, tool_name: str, symbol: str | None = None, sec_type: str | None = None, preferred: str | None = None) -> ProviderSelection:
+        selection = self._raw_choose(tool_name, symbol, sec_type, preferred)
+        return self._filter_selection(selection)
+
+    def _raw_choose(self, tool_name: str, symbol: str | None = None, sec_type: str | None = None, preferred: str | None = None) -> ProviderSelection:
         if tool_name in {"trading_calendar", "stock_review"}:
             return ProviderSelection(primary="akshare", fallback=[])
 
@@ -104,6 +125,8 @@ class ProviderRouter:
         return ProviderSelection(primary="akshare", fallback=["zhitu"])
 
     def get_provider(self, name: str):
+        if not self._is_enabled(name):
+            raise ProviderError("PROVIDER_DISABLED", f"Provider {name} is disabled by configuration", retryable=False)
         if name == "zhitu":
             return self.zhitu
         return self.akshare
