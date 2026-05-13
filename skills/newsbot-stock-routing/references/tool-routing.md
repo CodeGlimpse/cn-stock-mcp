@@ -35,6 +35,7 @@
 - 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
 - 大宗交易（每日明细+个股汇总/折溢率+行业统计+营业部胜率排行+活跃个股追踪）→ `block_trade`
 - 机构持仓（季度汇总+个股明细/增持减持变动）→ `institute_hold`
+- 货币市场利率（SHIBOR曲线+银行间拆借+回购定盘利率）→ `money_rate`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -112,6 +113,7 @@
 - `margin_trading`：`akshare`
 - `block_trade`：`akshare`
 - `institute_hold`：`akshare`
+- `money_rate`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -299,6 +301,21 @@
 ### 机构持仓（个股明细）
 ```json
 {"tool":"institute_hold","payload":{"include":["detail"],"quarter":"auto","symbol":"600519.SH","sort_by":"hold_ratio_change","descending":true}}
+```
+
+### 货币市场利率（SHIBOR+回购）
+```json
+{"tool":"money_rate","payload":{"include":["shibor","repo"],"shibor_days":10,"repo_mode":"latest"}}
+```
+
+### 货币市场利率（银行间拆借历史）
+```json
+{"tool":"money_rate","payload":{"include":["interbank"],"interbank_indicator":"1周","interbank_days":30}}
+```
+
+### 货币市场利率（回购历史）
+```json
+{"tool":"money_rate","payload":{"include":["repo"],"repo_mode":"hist","start_date":"2026-05-01","end_date":"2026-05-13"}}
 ```
 
 

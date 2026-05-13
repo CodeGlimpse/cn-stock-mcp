@@ -20,6 +20,7 @@ from ._macro import (
     ETFSnapshotRequest,
     InstituteHoldRequest,
     MacroIndicatorRequest,
+    MoneyRateRequest,
 )
 from ._market import (
     CapitalFlowRequest,
@@ -86,5 +87,5 @@ __all__ = [
     # Macro
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
     "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
-    "InstituteHoldRequest",
+    "InstituteHoldRequest", "MoneyRateRequest",
 ]

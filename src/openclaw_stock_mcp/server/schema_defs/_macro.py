@@ -158,8 +158,28 @@ class InstituteHoldRequest(BaseModel):
         return self
 
 
+class MoneyRateRequest(BaseModel):
+    include: list[Literal["shibor", "interbank", "repo"]] = Field(
+        default=["shibor", "repo"]
+    )
+    shibor_days: int = Field(default=10, ge=1, le=365, description="Number of recent days for SHIBOR curve")
+    interbank_indicator: Literal["隔夜", "1周", "2周", "1月", "3月", "6月", "9月", "1年"] = "隔夜"
+    interbank_days: int = Field(default=30, ge=1, le=365, description="Number of recent days for interbank rate")
+    repo_mode: Literal["latest", "hist"] = "latest"
+    start_date: str | None = None
+    end_date: str | None = None
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if "repo" in self.include and self.repo_mode == "hist" and not self.start_date:
+            raise ValueError("start_date is required when repo_mode is 'hist'")
+        self.include = dedupe_include(self.include)  # type: ignore[assignment]
+        return self
+
+
 __all__ = [
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
     "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
-    "InstituteHoldRequest",
+    "InstituteHoldRequest", "MoneyRateRequest",
 ]

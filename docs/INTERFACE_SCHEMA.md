@@ -277,6 +277,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | provider_health | provider_health.py | 1:1 |
 | block_trade | block_trade.py | 1:1 |
 | institute_hold | institute_hold.py | 1:1 |
+| money_rate | money_rate.py | 1:1 |
 
 ---
 

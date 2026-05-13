@@ -1023,3 +1023,56 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare institute_hold_detail failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Money Rate (货币市场利率) ──────────────────────────
+
+    def get_shibor_all(self) -> list[dict]:
+        """Fetch SHIBOR full-term curve from ak.macro_china_shibor_all()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.macro_china_shibor_all)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare shibor_all failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_interbank_rate(self, indicator: str = "隔夜") -> list[dict]:
+        """Fetch interbank rate from ak.rate_interbank().
+
+        indicator: 隔夜/1周/2周/1月/3月/6月/9月/1年
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(
+                lib.rate_interbank,
+                market="上海银行同业拆借市场",
+                symbol="Shibor人民币",
+                indicator=indicator,
+            )
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare interbank_rate failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_repo_rate_latest(self) -> list[dict]:
+        """Fetch latest repo fixing rates from ak.repo_rate_query()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.repo_rate_query, symbol="回购定盘利率")
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare repo_rate_latest failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_repo_rate_hist(self, start_date: str, end_date: str) -> list[dict]:
+        """Fetch repo rate history from ak.repo_rate_hist().
+
+        start_date/end_date: YYYYMMDD format.
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(
+                lib.repo_rate_hist,
+                start_date=start_date.replace("-", ""),
+                end_date=end_date.replace("-", ""),
+            )
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare repo_rate_hist failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

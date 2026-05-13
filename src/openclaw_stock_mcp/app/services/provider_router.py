@@ -118,6 +118,9 @@ class ProviderRouter:
         if tool_name == "institute_hold":
             return ProviderSelection(primary="akshare", fallback=[])
 
+        if tool_name == "money_rate":
+            return ProviderSelection(primary="akshare", fallback=[])
+
         if tool_name == "stock_quote":
             if sec_type == "index" or sec_type == "fund":
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])
