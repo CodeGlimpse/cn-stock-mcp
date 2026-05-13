@@ -40,6 +40,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 机构持仓（季度汇总+个股明细/增减持变动）→ `institute_hold`
 - 货币市场利率（SHIBOR曲线+银行间拆借+回购定盘利率）→ `money_rate`
 - 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件组合）→ `stock_screen`
+- 高管增减持（十大流通股东变动+高管/股东增减持历史）→ `insider_trade`
 
 ## Operating rules
 

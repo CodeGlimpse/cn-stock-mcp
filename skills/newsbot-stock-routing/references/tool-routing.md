@@ -37,6 +37,7 @@
 - 机构持仓（季度汇总+个股明细/增持减持变动）→ `institute_hold`
 - 货币市场利率（SHIBOR曲线+银行间拆借+回购定盘利率）→ `money_rate`
 - 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件）→ `stock_screen`
+- 高管增减持（十大流通股东变动+增减持历史）→ `insider_trade`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -116,6 +117,7 @@
 - `institute_hold`：`akshare`
 - `money_rate`：`akshare`
 - `stock_screen`：`akshare`
+- `insider_trade`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -333,6 +335,16 @@
 ### 选股筛选（低价股，10-30元，放量）
 ```json
 {"tool":"stock_screen","payload":{"market":"all","min_price":10,"max_price":30,"min_volume":50000000,"sort_by":"turnover","descending":true,"top_n":30}}
+```
+
+### 高管增减持（十大股东+增减持历史）
+```json
+{"tool":"insider_trade","payload":{"include":["top10","change"],"symbol":"600519.SH","quarter":"auto"}}
+```
+
+### 高管增减持（仅十大流通股东变动）
+```json
+{"tool":"insider_trade","payload":{"include":["top10"],"symbol":"600519.SH","quarter":"20254","top_n":10}}
 ```
 
 

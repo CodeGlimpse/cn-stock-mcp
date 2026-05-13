@@ -1080,13 +1080,37 @@ class AKShareProvider:
     # ── Stock Screen (选股筛选) ──────────────────────────────
 
     def get_a_share_spot_all(self) -> list[dict]:
-        """Fetch full A-share spot table from ak.stock_zh_a_spot() (Sina source).
-
-        Returns all SH/SZ/BJ stocks with real-time quote fields.
-        """
+        """Fetch full A-share spot table from ak.stock_zh_a_spot() (Sina source)."""
         lib = self._require_ak()
         try:
             df = self._call_ak_quietly(lib.stock_zh_a_spot)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare a_share_spot_all failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    # ── Insider Trade (高管增减持/十大股东) ────────────────
+
+    def get_insider_top10(self, symbol: str, date: str) -> list[dict]:
+        """Fetch top 10 free-float shareholders from ak.stock_gdfx_free_top_10_em().
+
+        symbol: sh600519 format
+        date: YYYYMMDD quarter-end, e.g. "20250930"
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_gdfx_free_top_10_em, symbol=symbol, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare insider_top10 failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_insider_change(self, symbol: str) -> list[dict]:
+        """Fetch insider/shareholder trade changes from ak.stock_shareholder_change_ths().
+
+        symbol: 6-digit code, e.g. "600519"
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_shareholder_change_ths, symbol=symbol)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare insider_change failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")

@@ -74,6 +74,7 @@ from .money_rate import (
     MoneyRateResult,
 )
 from .stock_screen import StockScreenItem, StockScreenResult
+from .insider_trade import InsiderTop10Item, InsiderChangeItem, InsiderTradeResult
 
 __all__ = [
     "ToolError",
@@ -136,4 +137,7 @@ __all__ = [
     "MoneyRateResult",
     "StockScreenItem",
     "StockScreenResult",
+    "InsiderTop10Item",
+    "InsiderChangeItem",
+    "InsiderTradeResult",
 ]

@@ -138,5 +138,16 @@ __all__ = [
     "StockSearchRequest", "StockQuoteRequest", "StockHistoryRequest",
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
-    "EarningsQualityRequest",
+    "EarningsQualityRequest", "InsiderTradeRequest",
 ]
+
+
+class InsiderTradeRequest(BaseModel):
+    include: list[Literal["top10", "change"]] = Field(
+        default=["top10", "change"]
+    )
+    symbol: str
+    sec_type: str = "stock"
+    quarter: Literal["auto", "20261", "20254", "20253", "20252", "20251", "20244", "20243", "20242", "20241"] = "auto"
+    top_n: int | None = Field(default=None, ge=1, le=50)
+    provider: Literal["akshare"] | None = "akshare"
