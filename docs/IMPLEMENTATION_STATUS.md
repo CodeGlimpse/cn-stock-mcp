@@ -489,7 +489,7 @@
 5. `1m` 周期当前未实现；需等可靠 provider 明确后再开放
 6. ~~智兔多 token 只做了最小冷却策略，尚未做更细粒度的配额统计与长期调度~~ → 已修复：新增每日限额跟踪（`zhitu_daily_quota_per_token`），跨日自动重置，配额耗尽自动切 token
 7. `sector_rotation_review` 当前虽已补充受控并发与共享缓存，但 live 请求在较大板块数或较大 `limit` 下仍会明显变慢
-8. 科创板 `stock_quote` 当前仍为 `zhitu` 单源（AKShare `stock_kc_a_spot_em()` 当前环境不稳定，待验证后补 fallback）
+8. ~~科创板 `stock_quote` 当前仍为 `zhitu` 单源~~ → 已补 AKShare fallback（Sina `stock_zh_a_spot()` 源，缺失 PE/PB/市值/换手率/振幅，作为 fallback 可接受）
 9. `stock_orderbook` / `stock_profile` / `event_calendar` 仍为 `zhitu` 单源
 10. ~~`margin_trading` 静默吞错~~ → 已修复（P0），现返回 `partial_failure` + `errors`
 11. ~~`limit_stat` 跌停数获取失败静默当 0~~ → 已修复（P1），现返回 `partial_failure` + `errors`

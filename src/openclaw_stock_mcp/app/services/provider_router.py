@@ -118,7 +118,7 @@ class ProviderRouter:
             if normalized.endswith(".BJ") or normalized.startswith(("430", "83", "87", "92")):
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])
             if normalized.startswith("688") or normalized.startswith("688."):
-                return ProviderSelection(primary="zhitu", fallback=[])
+                return ProviderSelection(primary="zhitu", fallback=["akshare"])
             # stock-main（SH/SZ 非 688）定稿：zhitu 主，akshare 备
             return ProviderSelection(primary="zhitu", fallback=["akshare"])
 

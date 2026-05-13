@@ -57,6 +57,8 @@ class AKShareProvider:
         self._trade_dates_cache: list[str] | None = None
         self._bj_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
         self._bj_spot_cache_ttl: int = 10  # seconds
+        self._kc_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
+        self._kc_spot_cache_ttl: int = 10  # seconds
 
     def _require_ak(self):
         if ak is None:
@@ -261,6 +263,36 @@ class AKShareProvider:
         self._bj_spot_cache = (now, code_map)
         return code_map
 
+    def _get_kc_spot_map(self) -> dict[str, dict]:
+        """Fetch full A-share spot table via Sina and return {code: row_dict} for 688xxx stocks.
+
+        Uses stock_zh_a_spot() (Sina source) which is more reliable than the
+        Eastmoney source for KC stocks in proxy-restricted environments.
+        Only 688-prefixed rows are kept to limit memory. Cached for _kc_spot_cache_ttl seconds.
+        Missing fields (PE/PB/market_cap/turnover_rate/amplitude) will be None — acceptable for fallback.
+        """
+        import time as _time
+
+        now = _time.time()
+        if self._kc_spot_cache is not None and (now - self._kc_spot_cache[0]) < self._kc_spot_cache_ttl:
+            return self._kc_spot_cache[1]
+
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_zh_a_spot)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare KC spot (Sina) failed: {exc}", retryable=True) from exc
+
+        code_map: dict[str, dict] = {}
+        for _, row in df.iterrows():
+            raw_code = str(row.get("代码", "")).strip()
+            # Sina returns codes like "sh688001" — extract the 6-digit code
+            code = raw_code.lstrip("sh").lstrip("sz")
+            if code.startswith("688") and len(code) == 6:
+                code_map[code] = row.to_dict()
+        self._kc_spot_cache = (now, code_map)
+        return code_map
+
     def get_quote(self, symbol: str, sec_type: str):
         normalized = normalize_symbol(symbol)
         code = normalized.split(".", 1)[0]
@@ -272,6 +304,13 @@ class AKShareProvider:
                 raise ProviderError("UNSUPPORTED_MARKET", f"AKShare BJ quote: code {code} not found in spot data", retryable=False)
             return adapt_akshare_quote_row(row, normalized, sec_type)
 
+        if sec_type == "stock" and code.startswith("688"):
+            spot_map = self._get_kc_spot_map()
+            row = spot_map.get(code)
+            if row is None:
+                raise ProviderError("UNSUPPORTED_MARKET", f"AKShare KC quote: code {code} not found in spot data", retryable=False)
+            return adapt_akshare_quote_row(row, normalized, sec_type)
+
         raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare quote not implemented for this sec_type/market", retryable=False)
 
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
@@ -279,11 +318,14 @@ class AKShareProvider:
 
         # Fast path: all BJ stocks — one spot pull
         bj_symbols = []
+        kc_symbols = []
         other_symbols = []
         for sym in symbols:
             normalized = normalize_symbol(sym)
             if resolved_sec_type == "stock" and normalized.endswith(".BJ"):
                 bj_symbols.append(sym)
+            elif resolved_sec_type == "stock" and normalized.split(".", 1)[0].startswith("688"):
+                kc_symbols.append(sym)
             else:
                 other_symbols.append(sym)
 
@@ -292,6 +334,15 @@ class AKShareProvider:
         if bj_symbols:
             spot_map = self._get_bj_spot_map()
             for sym in bj_symbols:
+                normalized = normalize_symbol(sym)
+                code = normalized.split(".", 1)[0]
+                row = spot_map.get(code)
+                if row is not None:
+                    results[sym] = adapt_akshare_quote_row(row, normalized, resolved_sec_type)
+
+        if kc_symbols:
+            spot_map = self._get_kc_spot_map()
+            for sym in kc_symbols:
                 normalized = normalize_symbol(sym)
                 code = normalized.split(".", 1)[0]
                 row = spot_map.get(code)

@@ -41,3 +41,10 @@ def test_hot_theme_tracker_defaults_to_akshare_primary_by_generic_rule():
     sel = router.choose_provider(tool_name="hot_theme_tracker")
     assert sel.primary == "akshare"
     assert sel.fallback == ["zhitu"]
+
+
+def test_stock_quote_star_has_akshare_fallback():
+    router = ProviderRouter()
+    sel = router.choose_provider(tool_name="stock_quote", symbol="688001.SH", sec_type="stock")
+    assert sel.primary == "zhitu"
+    assert sel.fallback == ["akshare"]
