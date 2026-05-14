@@ -541,7 +541,15 @@ class ZhituProvider:
                 exchange_map = {code: ex for _, code, ex in batch}
                 try:
                     raw_list = self._get_json("/hs/public/ssjymore", params={"stock_codes": ",".join(codes)})
+                    if isinstance(raw_list, dict):
+                        if raw_list.get("error"):
+                            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu batch quote unavailable: {raw_list.get('error')}", retryable=True)
+                        raw_list = raw_list.get("data") or raw_list.get("items") or raw_list.get("list") or []
+                    if not isinstance(raw_list, list):
+                        raise ProviderError("PROVIDER_UNAVAILABLE", "Zhitu batch quote returned unexpected payload", retryable=True)
                     for raw in raw_list:
+                        if not isinstance(raw, dict):
+                            continue
                         dm = raw.get("dm", "")
                         code = dm.lstrip("sh").lstrip("sz")
                         exchange = exchange_map.get(code, "SH" if dm.startswith("sh") else "SZ")
@@ -549,7 +557,7 @@ class ZhituProvider:
                         orig_sym = code_to_orig.get(code, quote.symbol)
                         results[orig_sym] = quote
                         self._cache_instrument_name("stock", quote.symbol, quote.name)
-                except ProviderError:
+                except Exception:
                     for orig_sym, code, exchange in batch:
                         try:
                             quote = self.get_quote(orig_sym, "stock")
