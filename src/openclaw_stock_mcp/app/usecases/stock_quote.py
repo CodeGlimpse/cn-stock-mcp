@@ -116,24 +116,65 @@ class StockQuoteUseCase:
         if self._can_use_batch([sym for sym, _ in resolved_symbols], request.sec_type, selection):
             try:
                 provider = self.router.get_provider(selection.primary)
-                quotes = provider.get_quotes([sym for sym, _ in resolved_symbols], request.sec_type)
-                for (raw_symbol, resolved), quote in zip(resolved_symbols, quotes):
-                    items.append(quote)
-                    meta_items.append(
-                        {
-                            "symbol": raw_symbol,
-                            "resolved_symbol": resolved.symbol,
-                            "sec_type": resolved.sec_type,
-                            "selected_primary": selection.primary,
-                            "selected_fallback": selection.fallback,
-                            "attempted": [selection.primary],
-                            "final_provider": selection.primary,
-                            "used_fallback": False,
-                            "provider_used": selection.primary,
-                            "fallback_chain": [selection.primary, *selection.fallback],
-                            "latency_ms": 0,
+                if hasattr(provider, "get_quotes_with_meta"):
+                    quotes, batch_meta = provider.get_quotes_with_meta([sym for sym, _ in resolved_symbols], request.sec_type)
+                else:
+                    quotes = provider.get_quotes([sym for sym, _ in resolved_symbols], request.sec_type)
+                    batch_meta = getattr(provider, "last_batch_meta", None) or {}
+
+                quote_by_symbol = {q.symbol: q for q in quotes}
+                for raw_symbol, resolved in resolved_symbols:
+                    quote = quote_by_symbol.get(resolved.symbol)
+                    symbol_batch_meta = (batch_meta.get("per_symbol") or {}).get(raw_symbol, {}) if isinstance(batch_meta, dict) else {}
+                    if quote is not None:
+                        items.append(quote)
+                        meta_items.append(
+                            {
+                                "symbol": raw_symbol,
+                                "resolved_symbol": resolved.symbol,
+                                "sec_type": resolved.sec_type,
+                                "selected_primary": selection.primary,
+                                "selected_fallback": selection.fallback,
+                                "attempted": [selection.primary],
+                                "final_provider": selection.primary,
+                                "used_fallback": False,
+                                "provider_used": selection.primary,
+                                "fallback_chain": [selection.primary, *selection.fallback],
+                                "latency_ms": 0,
+                                "batch_attempted": bool(batch_meta.get("batch_attempted")) if isinstance(batch_meta, dict) else True,
+                                "batch_failed": bool(symbol_batch_meta.get("batch_failed")),
+                                "batch_fallback_used": bool(symbol_batch_meta.get("batch_fallback_used")) if isinstance(batch_meta, dict) else False,
+                                "batch_fallback_mode": symbol_batch_meta.get("batch_fallback_mode"),
+                                "batch_error": symbol_batch_meta.get("batch_error"),
+                            }
+                        )
+                    else:
+                        err = symbol_batch_meta.get("batch_error") or {
+                            "error_code": "PARTIAL_RESULT",
+                            "message": "symbol missing from batch result",
+                            "retryable": True,
                         }
-                    )
+                        errors.append({"symbol": raw_symbol, **err})
+                        meta_items.append(
+                            {
+                                "symbol": raw_symbol,
+                                "resolved_symbol": resolved.symbol,
+                                "sec_type": resolved.sec_type,
+                                "selected_primary": selection.primary,
+                                "selected_fallback": selection.fallback,
+                                "attempted": [selection.primary],
+                                "final_provider": None,
+                                "used_fallback": False,
+                                "provider_used": None,
+                                "fallback_chain": [selection.primary, *selection.fallback],
+                                "latency_ms": 0,
+                                "batch_attempted": bool(batch_meta.get("batch_attempted")) if isinstance(batch_meta, dict) else True,
+                                "batch_failed": True,
+                                "batch_fallback_used": bool(symbol_batch_meta.get("batch_fallback_used")) if isinstance(batch_meta, dict) else False,
+                                "batch_fallback_mode": symbol_batch_meta.get("batch_fallback_mode"),
+                                "batch_error": err,
+                            }
+                        )
             except Exception as exc:
                 for raw_symbol, resolved in resolved_symbols:
                     errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
@@ -231,6 +272,13 @@ class StockQuoteUseCase:
                 "per_symbol": meta_items,
                 "provider_used": sorted({m.get("provider_used") for m in meta_items if m.get("provider_used")}),
                 "fallback_chain": sorted({tuple(m.get("fallback_chain", [])) for m in meta_items if m.get("fallback_chain")}),
+                "batch": {
+                    "attempted": any(m.get("batch_attempted") for m in meta_items),
+                    "failed": any(m.get("batch_failed") for m in meta_items),
+                    "fallback_used": any(m.get("batch_fallback_used") for m in meta_items),
+                    "fallback_mode": next((m.get("batch_fallback_mode") for m in meta_items if m.get("batch_fallback_mode")), None),
+                    "failed_symbols": [m.get("symbol") for m in meta_items if m.get("batch_failed")],
+                },
                 "latency_ms": int((time.perf_counter() - started_at) * 1000),
             },
         }

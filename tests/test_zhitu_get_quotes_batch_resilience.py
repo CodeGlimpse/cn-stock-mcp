@@ -47,11 +47,45 @@ def test_zhitu_get_quotes_batch_unexpected_payload_falls_back_to_single():
     assert "/hs/real/ssjy/000001" in provider.paths
 
 
-def test_zhitu_get_quotes_batch_skips_non_dict_items():
-    provider = _NonDictItemBatchZhitu()
+def test_zhitu_get_quotes_batch_unexpected_payload_meta_marks_fallback():
+    provider = _UnexpectedBatchZhitu()
 
-    quotes = provider.get_quotes(["600519.SH"], "stock")
+    quotes, meta = provider.get_quotes_with_meta(["600519.SH", "000001.SZ"], "stock")
 
-    assert len(quotes) == 1
-    assert quotes[0].symbol == "600519.SH"
-    assert quotes[0].name == "贵州茅台"
+    assert len(quotes) == 2
+    assert meta["batch_attempted"] is True
+    assert meta["batch_failed"] is True
+    assert meta["batch_fallback_used"] is True
+    assert meta["batch_fallback_mode"] == "single_quote"
+    assert meta["missing_symbols"] == []
+    assert meta["per_symbol"]["600519.SH"]["batch_failed"] is True
+    assert meta["per_symbol"]["000001.SZ"]["batch_failed"] is True
+
+
+def test_zhitu_get_quotes_batch_missing_symbol_meta_marks_partial():
+    class _PartialBatchZhitu(ZhituProvider):
+        def __init__(self):
+            self._instrument_name_cache = {}
+
+        def _get_json(self, path: str, params=None):
+            if path == "/hs/public/ssjymore":
+                return [{"dm": "sh600519", "mc": "贵州茅台", "p": 1600.0, "pc": 1.5}]
+            if path == "/hs/real/ssjy/000001":
+                return {"p": 10.0, "pc": -0.5, "mc": "平安银行"}
+            raise AssertionError(f"unexpected path: {path}")
+
+        def _fill_quote_name(self, quote, sec_type, symbol):
+            return quote
+
+    provider = _PartialBatchZhitu()
+
+    quotes, meta = provider.get_quotes_with_meta(["600519.SH", "000001.SZ"], "stock")
+
+    assert len(quotes) == 2
+    assert meta["batch_attempted"] is True
+    assert meta["batch_failed"] is True
+    assert meta["batch_fallback_used"] is True
+    assert meta["per_symbol"]["600519.SH"]["batch_failed"] is False
+    assert meta["per_symbol"]["000001.SZ"]["batch_failed"] is True
+    assert meta["per_symbol"]["000001.SZ"]["batch_fallback_mode"] == "single_quote"
+

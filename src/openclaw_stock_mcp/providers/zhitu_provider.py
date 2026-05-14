@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from typing import Any
 
 import httpx
 
@@ -66,6 +67,7 @@ class ZhituProvider:
             }
             for token in self.tokens
         }
+        self.last_batch_meta: dict[str, Any] | None = None
 
     def _now(self) -> float:
         return time.time()
@@ -514,10 +516,25 @@ class ZhituProvider:
 
         raise ProviderError("UNSUPPORTED_MARKET", f"Zhitu quote route not implemented for {symbol}/{sec_type}", retryable=False)
 
-    def get_quotes(self, symbols: list[str], sec_type: str | None = None):
+    def get_quotes_with_meta(self, symbols: list[str], sec_type: str | None = None) -> tuple[list[Quote], dict[str, Any]]:
+        self.last_batch_meta = None
         resolved_sec_type = sec_type or "stock"
         if resolved_sec_type != "stock":
-            return [self.get_quote(symbol, resolved_sec_type) for symbol in symbols]
+            quotes = [self.get_quote(symbol, resolved_sec_type) for symbol in symbols]
+            meta = {
+                "batch_attempted": False,
+                "batch_failed": False,
+                "batch_fallback_used": False,
+                "batch_fallback_mode": None,
+                "batch_provider": None,
+                "batch_error": None,
+                "requested_symbols": list(symbols),
+                "returned_symbols": [q.symbol for q in quotes],
+                "missing_symbols": [],
+                "per_symbol": {},
+            }
+            self.last_batch_meta = meta
+            return quotes, meta
 
         main_board_items = []
         other_symbols = []
@@ -532,13 +549,35 @@ class ZhituProvider:
                 other_symbols.append(sym)
 
         results: dict[str, Quote] = {}
+        per_symbol_meta: dict[str, dict[str, Any]] = {
+            sym: {
+                "batch_attempted": False,
+                "batch_failed": False,
+                "batch_fallback_used": False,
+                "batch_fallback_mode": None,
+                "batch_provider": None,
+                "batch_error": None,
+            }
+            for sym in symbols
+        }
+        batch_attempted = False
+        batch_failed = False
+        batch_fallback_used = False
+        batch_error: dict[str, Any] | None = None
 
         if main_board_items:
             batch_groups = [main_board_items[i : i + 20] for i in range(0, len(main_board_items), 20)]
             for batch in batch_groups:
+                batch_attempted = True
                 codes = [code for _, code, _ in batch]
                 code_to_orig = {code: orig for orig, code, _ in batch}
                 exchange_map = {code: ex for _, code, ex in batch}
+                requested_batch_symbols = [orig for orig, _, _ in batch]
+                for orig_sym in requested_batch_symbols:
+                    per_symbol_meta[orig_sym].update({
+                        "batch_attempted": True,
+                        "batch_provider": self.name,
+                    })
                 try:
                     raw_list = self._get_json("/hs/public/ssjymore", params={"stock_codes": ",".join(codes)})
                     if isinstance(raw_list, dict):
@@ -547,18 +586,54 @@ class ZhituProvider:
                         raw_list = raw_list.get("data") or raw_list.get("items") or raw_list.get("list") or []
                     if not isinstance(raw_list, list):
                         raise ProviderError("PROVIDER_UNAVAILABLE", "Zhitu batch quote returned unexpected payload", retryable=True)
+                    returned_in_batch: set[str] = set()
                     for raw in raw_list:
                         if not isinstance(raw, dict):
                             continue
                         dm = raw.get("dm", "")
-                        code = dm.lstrip("sh").lstrip("sz")
+                        code = dm[2:] if dm.startswith(("sh", "sz")) else dm
+                        if not code:
+                            continue
                         exchange = exchange_map.get(code, "SH" if dm.startswith("sh") else "SZ")
                         quote = adapt_zhitu_batch_quote(raw, code, exchange)
                         orig_sym = code_to_orig.get(code, quote.symbol)
+                        returned_in_batch.add(orig_sym)
                         results[orig_sym] = quote
                         self._cache_instrument_name("stock", quote.symbol, quote.name)
-                except Exception:
-                    for orig_sym, code, exchange in batch:
+                    missing_after_batch = [orig for orig, _, _ in batch if orig not in returned_in_batch]
+                    if missing_after_batch:
+                        batch_failed = True
+                        batch_fallback_used = True
+                        for orig_sym in missing_after_batch:
+                            per_symbol_meta[orig_sym].update({
+                                "batch_failed": True,
+                                "batch_fallback_used": True,
+                                "batch_fallback_mode": "single_quote",
+                                "batch_error": {
+                                    "error_code": "PARTIAL_RESULT",
+                                    "message": "symbol missing from batch response",
+                                    "retryable": True,
+                                },
+                            })
+                            try:
+                                quote = self.get_quote(orig_sym, "stock")
+                                results[orig_sym] = quote
+                            except ProviderError:
+                                pass
+                except Exception as exc:
+                    batch_failed = True
+                    batch_fallback_used = True
+                    if isinstance(exc, ProviderError):
+                        batch_error = {"error_code": exc.code, "message": exc.message, "retryable": exc.retryable}
+                    else:
+                        batch_error = {"error_code": "INTERNAL_ERROR", "message": str(exc), "retryable": False}
+                    for orig_sym, _, _ in batch:
+                        per_symbol_meta[orig_sym].update({
+                            "batch_failed": True,
+                            "batch_fallback_used": True,
+                            "batch_fallback_mode": "single_quote",
+                            "batch_error": batch_error,
+                        })
                         try:
                             quote = self.get_quote(orig_sym, "stock")
                             results[orig_sym] = quote
@@ -576,7 +651,26 @@ class ZhituProvider:
         for sym in symbols:
             if sym in results:
                 ordered.append(results[sym])
-        return ordered
+
+        meta = {
+            "batch_attempted": batch_attempted,
+            "batch_failed": batch_failed,
+            "batch_fallback_used": batch_fallback_used,
+            "batch_fallback_mode": "single_quote" if batch_fallback_used else None,
+            "batch_provider": self.name if batch_attempted else None,
+            "batch_error": batch_error,
+            "requested_symbols": list(symbols),
+            "returned_symbols": [q.symbol for q in ordered],
+            "missing_symbols": [sym for sym in symbols if sym not in results],
+            "per_symbol": per_symbol_meta,
+        }
+        self.last_batch_meta = meta
+        return ordered, meta
+
+    def get_quotes(self, symbols: list[str], sec_type: str | None = None):
+        quotes, meta = self.get_quotes_with_meta(symbols, sec_type)
+        self.last_batch_meta = meta
+        return quotes
 
     def _map_zhitu_interval(self, interval: str) -> str:
         interval_map = {"5m": "5", "15m": "15", "30m": "30", "60m": "60", "1d": "d", "1w": "w", "1M": "m", "1y": "y"}
