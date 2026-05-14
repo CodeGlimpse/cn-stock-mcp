@@ -42,6 +42,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件组合）→ `stock_screen`
 - 高管增减持（十大流通股东变动+高管/股东增减持历史）→ `insider_trade`
 - 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
+- 股东变动（十大股东变动+全市场股东持股汇总/按类型筛选）→ `shareholder_change`
 
 ## Operating rules
 

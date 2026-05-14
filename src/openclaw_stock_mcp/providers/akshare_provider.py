@@ -1150,3 +1150,30 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare dividend_detail failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Shareholder Change (股东变动) ──────────────────────
+
+    def get_shareholder_top10(self, symbol: str, date: str) -> list[dict]:
+        """Fetch top 10 shareholders from ak.stock_gdfx_top_10_em().
+
+        symbol: sh600519 format
+        date: YYYYMMDD, e.g. "20250930"
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_gdfx_top_10_em, symbol=symbol, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare shareholder_top10 failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_shareholder_change(self, date: str) -> list[dict]:
+        """Fetch shareholder holding change summary from ak.stock_gdfx_free_holding_change_em().
+
+        date: YYYYMMDD, e.g. "20250930"
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_gdfx_free_holding_change_em, date=date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare shareholder_change failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

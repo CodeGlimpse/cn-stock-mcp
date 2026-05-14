@@ -39,6 +39,7 @@
 - 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件）→ `stock_screen`
 - 高管增减持（十大流通股东变动+增减持历史）→ `insider_trade`
 - 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
+- 股东变动（十大股东变动+全市场股东持股汇总）→ `shareholder_change`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -120,6 +121,7 @@
 - `stock_screen`：`akshare`
 - `insider_trade`：`akshare`
 - `dividend_rank`：`akshare`
+- `shareholder_change`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -362,6 +364,21 @@
 ### 股息率/分红排名（单股分红历史）
 ```json
 {"tool":"dividend_rank","payload":{"include":["detail"],"symbol":"600519.SH"}}
+```
+
+### 股东变动（单股十大股东变动）
+```json
+{"tool":"shareholder_change","payload":{"include":["top10"],"symbol":"600519.SH","quarter":"auto"}}
+```
+
+### 股东变动（全市场社保基金持股变动）
+```json
+{"tool":"shareholder_change","payload":{"include":["change"],"quarter":"auto","shareholder_type":"社保","sort_by":"new_hold","descending":true,"top_n":20}}
+```
+
+### 股东变动（基金持股汇总）
+```json
+{"tool":"shareholder_change","payload":{"include":["change"],"quarter":"auto","shareholder_type":"基金","sort_by":"float_cap","descending":true,"top_n":10}}
 ```
 
 

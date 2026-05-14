@@ -139,6 +139,7 @@ __all__ = [
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
+    "ShareholderChangeRequest",
 ]
 
 
@@ -169,4 +170,24 @@ class DividendRankRequest(BaseModel):
     def validate_request(self):
         if "detail" in self.include and not self.symbol:
             raise ValueError("symbol is required when include contains 'detail'")
+        return self
+
+
+class ShareholderChangeRequest(BaseModel):
+    include: list[Literal["top10", "change"]] = Field(
+        default=["top10", "change"]
+    )
+    symbol: str | None = None
+    sec_type: str = "stock"
+    quarter: Literal["auto", "20261", "20254", "20253", "20252", "20251", "20244", "20243", "20242", "20241"] = "auto"
+    shareholder_type: Literal["基金", "社保", "QFII", "券商", "保险", "信托", "个人", "其它", None] = None
+    sort_by: Literal["total_hold", "new_hold", "increase_hold", "decrease_hold", "float_cap"] = "total_hold"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if "top10" in self.include and not self.symbol:
+            raise ValueError("symbol is required when include contains 'top10'")
         return self
