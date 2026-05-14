@@ -141,6 +141,7 @@ __all__ = [
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
     "ShareholderChangeRequest",
     "StockRepurchaseRequest",
+    "StockCompareRequest",
 ]
 
 
@@ -202,3 +203,10 @@ class StockRepurchaseRequest(BaseModel):
     descending: bool = True
     top_n: int | None = Field(default=None, ge=1, le=500)
     provider: Literal["akshare"] | None = "akshare"
+
+
+class StockCompareRequest(BaseModel):
+    symbols: list[str] = Field(..., min_length=2, max_length=10, description="2-10 stock symbols to compare, e.g. ['600519.SH', '000858.SZ']")
+    sec_type: str = "stock"
+    include: list[Literal["quote", "valuation", "financial", "dividend"]] = Field(default=["quote", "valuation"])
+    provider: str | None = None

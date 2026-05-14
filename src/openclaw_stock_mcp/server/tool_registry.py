@@ -2,6 +2,7 @@ from .schemas import (
     BlockTradeRequest,
     DisclosureCalendarRequest,
     StockRepurchaseRequest,
+    StockCompareRequest,
     DividendRankRequest,
     HotThemeTrackerRequest,
     ShareholderChangeRequest,
@@ -67,4 +68,5 @@ __all__ = [
     "ShareholderChangeRequest",
     "DisclosureCalendarRequest",
     "StockRepurchaseRequest",
+    "StockCompareRequest",
 ]

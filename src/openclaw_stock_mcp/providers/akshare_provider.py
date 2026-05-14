@@ -1203,3 +1203,18 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare stock_repurchase failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Stock Compare (多股横向对比) ────────────────────────
+
+    def get_financial_abstract(self, symbol: str) -> list[dict]:
+        """Fetch financial abstract from ak.stock_financial_abstract().
+
+        symbol: 6-digit code, e.g. "600519"
+        Returns transposed table: rows=indicators, columns=report_dates.
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_financial_abstract, symbol=symbol)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare financial_abstract failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

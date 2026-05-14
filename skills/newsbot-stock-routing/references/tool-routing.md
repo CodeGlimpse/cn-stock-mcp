@@ -42,6 +42,7 @@
 - 股东变动（十大股东变动+全市场股东持股汇总）→ `shareholder_change`
 - 披露日历（财报披露时间表/预约日/变更/实际披露日）→ `disclosure_calendar`
 - 回购明细（公司回购计划/进度/已回购金额）→ `stock_repurchase`
+- 多股横向对比（行情+估值+财务+股息分层加载）→ `stock_compare`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -126,6 +127,7 @@
 - `shareholder_change`：`akshare`
 - `disclosure_calendar`：`akshare`
 - `stock_repurchase`：`akshare`
+- `stock_compare`：`zhitu` 主 + `akshare` 备
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -413,6 +415,16 @@
 ### 回购明细（已完成）
 ```json
 {"tool":"stock_repurchase","payload":{"status":"完成实施","sort_by":"plan_amount_max","descending":true,"top_n":20}}
+```
+
+### 多股横向对比（行情+估值）
+```json
+{"tool":"stock_compare","payload":{"symbols":["600519.SH","000858.SZ","000568.SZ"],"include":["quote","valuation"]}}
+```
+
+### 多股横向对比（行情+估值+财务）
+```json
+{"tool":"stock_compare","payload":{"symbols":["600519.SH","000858.SZ"],"include":["quote","valuation","financial"]}}
 ```
 
 
