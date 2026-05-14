@@ -4,6 +4,7 @@ from openclaw_stock_mcp.app.models.limit_up_pool import (
     BrokenItem,
     LimitDownItem,
     LimitUpItem,
+    LimitUpPoolSentiment,
     PreviousItem,
     StrongItem,
     SubNewItem,
@@ -155,18 +156,59 @@ def adapt_broken_row(row: dict) -> BrokenItem:
     )
 
 
-def build_limit_up_summary(lu, ld, strong, prev, sub, broken) -> str:
+def build_limit_up_sentiment(trade_date: str | None, lu, ld, strong, prev, sub, broken) -> LimitUpPoolSentiment:
+    multi_limit_total = sum(1 for i in lu if i.consecutive_limit is not None and i.consecutive_limit >= 2)
+    highest_consecutive_limit = max((i.consecutive_limit or 0 for i in lu), default=0) or None
+    previous_up_count = sum(1 for i in prev if i.change_pct is not None and i.change_pct > 0)
+    previous_up_ratio = (previous_up_count / len(prev)) if prev else None
+    broken_denominator = len(lu) + len(broken)
+    broken_rate = (len(broken) / broken_denominator) if broken_denominator > 0 else None
+
+    seal_amounts_up = [float(i.seal_amount) for i in lu if i.seal_amount is not None]
+    seal_amounts_down = [float(i.seal_amount) for i in ld if i.seal_amount is not None]
+    turnover_rates_up = [float(i.turnover_rate) for i in lu if i.turnover_rate is not None]
+
+    ladder_counts: dict[str, int] = {"1": 0, "2": 0, "3": 0, "4": 0, "5+": 0}
+    for i in lu:
+        level = i.consecutive_limit or 1
+        if level >= 5:
+            ladder_counts["5+"] += 1
+        elif level >= 1:
+            ladder_counts[str(level)] += 1
+    ladder = {k: v for k, v in ladder_counts.items() if v > 0}
+
+    return LimitUpPoolSentiment(
+        trade_date=trade_date,
+        limit_up_total=len(lu),
+        limit_down_total=len(ld),
+        strong_total=len(strong),
+        previous_total=len(prev),
+        sub_new_total=len(sub),
+        broken_total=len(broken),
+        multi_limit_total=multi_limit_total,
+        highest_consecutive_limit=highest_consecutive_limit,
+        previous_up_count=previous_up_count,
+        previous_up_ratio=previous_up_ratio,
+        broken_rate=broken_rate,
+        limit_up_seal_amount_sum=sum(seal_amounts_up) if seal_amounts_up else None,
+        limit_down_seal_amount_sum=sum(seal_amounts_down) if seal_amounts_down else None,
+        avg_limit_up_turnover_rate=(sum(turnover_rates_up) / len(turnover_rates_up)) if turnover_rates_up else None,
+        ladder=ladder,
+    )
+
+
+def build_limit_up_summary(lu, ld, strong, prev, sub, broken, sentiment: LimitUpPoolSentiment | None = None) -> str:
     parts = []
     if lu:
-        multi = [i for i in lu if i.consecutive_limit and i.consecutive_limit >= 2]
-        parts.append(f"涨停 {len(lu)} 只(连板 {len(multi)})")
+        multi = sentiment.multi_limit_total if sentiment is not None else len([i for i in lu if i.consecutive_limit and i.consecutive_limit >= 2])
+        parts.append(f"涨停 {len(lu)} 只(连板 {multi})")
     if ld:
         parts.append(f"跌停 {len(ld)} 只")
     if strong:
         parts.append(f"强势 {len(strong)} 只")
     if prev:
-        still_up = [i for i in prev if i.change_pct and i.change_pct > 0]
-        parts.append(f"昨涨停 {len(prev)} 只(续涨 {len(still_up)})")
+        still_up = sentiment.previous_up_count if sentiment is not None else len([i for i in prev if i.change_pct and i.change_pct > 0])
+        parts.append(f"昨涨停 {len(prev)} 只(续涨 {still_up})")
     if sub:
         parts.append(f"次新 {len(sub)} 只")
     if broken:

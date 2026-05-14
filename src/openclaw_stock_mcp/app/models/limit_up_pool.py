@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LimitUpItem(BaseModel):
@@ -117,6 +117,25 @@ class BrokenItem(BaseModel):
     source: str = "akshare"
 
 
+class LimitUpPoolSentiment(BaseModel):
+    trade_date: str | None = None
+    limit_up_total: int = 0
+    limit_down_total: int = 0
+    strong_total: int = 0
+    previous_total: int = 0
+    sub_new_total: int = 0
+    broken_total: int = 0
+    multi_limit_total: int = 0
+    highest_consecutive_limit: int | None = None
+    previous_up_count: int = 0
+    previous_up_ratio: float | None = None
+    broken_rate: float | None = None
+    limit_up_seal_amount_sum: float | None = None
+    limit_down_seal_amount_sum: float | None = None
+    avg_limit_up_turnover_rate: float | None = None
+    ladder: dict[str, int] = Field(default_factory=dict)
+
+
 class LimitUpPoolResult(BaseModel):
     limit_up: list[LimitUpItem] = []
     limit_up_count: int = 0
@@ -130,4 +149,5 @@ class LimitUpPoolResult(BaseModel):
     sub_new_count: int = 0
     broken: list[BrokenItem] = []
     broken_count: int = 0
+    sentiment: LimitUpPoolSentiment | None = None
     summary: str = ""

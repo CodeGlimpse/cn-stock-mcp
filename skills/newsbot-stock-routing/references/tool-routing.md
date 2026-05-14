@@ -48,7 +48,7 @@
 - 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
 - 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
 - 主力资金流向（全市场趋势+行业净流入排名+单股历史）→ `fund_flow`
-- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板）→ `limit_up_pool`
+- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板，含情绪指标汇总）→ `limit_up_pool`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
