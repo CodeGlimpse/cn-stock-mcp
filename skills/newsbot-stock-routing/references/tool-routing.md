@@ -189,7 +189,7 @@
 {"tool":"market_pool","payload":{"pool_type":"limit_up","limit":20}}
 ```
 
-### 涨跌停股池深度分析
+### 涨跌停股池深度分析（含情绪指标汇总 / 行业维度情绪汇总）
 ```json
 {"tool":"limit_up_pool","payload":{"include":["limit_up","limit_down","strong","broken"],"trade_date":"20260513","top_n":30}}
 ```

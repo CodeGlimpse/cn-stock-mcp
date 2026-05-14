@@ -1,6 +1,6 @@
 # Integration Guide (`openclaw-stock-mcp`)
 
-Last Updated: 2026-05-06
+Last Updated: 2026-05-15
 
 ## 1) 本地运行与自检
 
@@ -24,6 +24,20 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
 PYTHONPATH=src python -m openclaw_stock_mcp.main --stdio
 ```
+
+### 非 live 稳定回归
+```bash
+cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
+.venv/bin/python -m pytest -q -m "not live"
+```
+
+### live smoke（推荐）
+```bash
+cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
+bash scripts/smoke_live.sh
+```
+
+> 说明：`scripts/smoke_live.sh` 是对 `pytest -q tests/live -m "live and smoke" --maxfail=1 -rA` 的薄包装；与 `.github/workflows/live-smoke.yml` 使用同一命令。
 
 > 约束：stdio 模式不要向 stdout 打普通日志，调试日志写 stderr 或文件。
 
@@ -98,23 +112,21 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --stdio
 
 ### Step 2 - 调用回归（建议顺序）
 1. `provider_health`
-2. `stock_quote`（stock-main / index）
+2. `stock_quote`（stock-main / index / BJ）
 3. `stock_history`（stock）
-4. `stock_review`（trade_date）
-5. `stock_review_batch`
-6. `market_overview` + `market_brief`
-7. `sector_lookup`
-8. `sector_review`
-9. `sector_rotation_review`
-10. `stock_candidate_scan`
-11. `watchlist_review`
-12. `multi_timeframe_review`
+4. `market_overview`
+5. `sector_lookup`（先 list，不要写死脆弱 sector_name）
+6. `stock_review`（优先使用最近有效交易日，不要长期写死旧 `trade_date`）
+7. `market_pool` 或 provider 直连最小路径
+8. 更重的 `sector_review` / `sector_rotation_review` / `stock_candidate_scan` / `watchlist_review` / `multi_timeframe_review` 放到 extended live 回归
 
 ### Step 3 - 常见风险点
 - 环境变量未透传（尤其 token）
 - cwd 或 PYTHONPATH 错误
 - 宿主注入代理变量导致上游请求异常
 - Python 解释器与依赖环境不一致
+- live 测试写死旧 `trade_date` 或脆弱 `sector_name`，导致 smoke 偶发失败
+- 把 smoke 和 extended live 回归混在一起，导致 CI 信号噪声过大
 
 ---
 
@@ -123,5 +135,6 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --stdio
 满足以下条件即可判定挂载可用：
 1. `--list-tools` 与宿主看到的工具集一致。
 2. `provider_health` 成功。
-3. 回归清单中核心链路（quote/history/review/sector）至少各成功 1 次。
-4. stdio 模式下协议输出正常，无 stdout 杂日志干扰。
+3. `live smoke` 命令（`bash scripts/smoke_live.sh`）至少能稳定跑通核心链路。
+4. 更重的 live extended 用例可单独执行，不与默认 smoke 混跑。
+5. stdio 模式下协议输出正常，无 stdout 杂日志干扰。

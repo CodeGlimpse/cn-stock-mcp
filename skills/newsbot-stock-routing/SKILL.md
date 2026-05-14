@@ -49,7 +49,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
 - 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
 - 主力资金流向（全市场/行业/个股）→ `fund_flow`
-- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板）→ `limit_up_pool`
+- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板，含情绪指标汇总与行业维度情绪汇总）→ `limit_up_pool`
 - 龙虎榜机构席位深度（单股买卖席位/活跃营业部/机构明细/机构追踪/席位标签）→ `sec_reveal`
 
 ## Operating rules
@@ -60,6 +60,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 若 `requested_trade_date != trade_date`，必须明确说明“已回退到有效交易日”。
 - `sector_rotation_review` 支持多板块横向比较 / 板块轮动（`sector_type=primary` 和 `sector_type=concept` 均已验证通过）；若用户给的是单个板块，优先走 `sector_review`。
 - `hot_theme_tracker` 当前适合快速回答“主线是谁 / 是否扩散 / 哪些方向在退潮”，不是单板块深度复盘的替代品。
+- `limit_up_pool` 适合做结构化股池复盘、情绪指标汇总和行业维度情绪汇总；如果用户只要轻量实时池子快照，优先走 `market_pool`。
 - `sector_rotation_review` live 路径仍偏重；默认先用较小 `limit`（如 3~5），需要更大覆盖时再逐步放大。设 `skip_member_detail=true` 可跳过个股展开、只做板块级聚合，大幅加速（适合仅需板块间对比的场景）。
 - `market_brief` 里的 `overview / index_ranking / highlights / pools` 是**兼容补充字段**，不要把它们当成主契约。
 - 当字段为 `null`、空数组，或 `applicable=false` 时，不要脑补结论。

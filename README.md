@@ -12,6 +12,8 @@
 - usecase + fallback
 - MCP Python SDK（FastMCP）stdio transport
 - smoke test 脚本
+- pytest live smoke 分层（`tests/live/`）
+- GitHub Actions 可选 live smoke workflow
 - provider_health 自检
 
 ## 文档导航
@@ -95,12 +97,22 @@ pip install -r requirements-dev.txt
 # 推荐：使用项目虚拟环境，避免系统 Python 依赖缺失
 .venv/bin/python -m pytest -q -m "not live"
 
+# 仅跑 live smoke（tests/live/ 中标记为 smoke 的高信号测试）
+bash scripts/smoke_live.sh
+
 # 默认：仅跑稳定回归（不含 live 网络测试）
 make test
 
 # 跑全部测试（含 live）
 make test-all
 ```
+
+补充：
+- `tests/live/test_smoke_transport.py`：MCP tool / transport 层 smoke
+- `tests/live/test_smoke_provider.py`：少量 provider 直连 smoke
+- `tests/live/test_live_extended.py`：更重、更脆的 live 扩展回归
+- `tests/live/conftest.py` 提供 `recent_trade_date` fixture，避免 live case 写死旧交易日
+- `.github/workflows/live-smoke.yml` 提供可选的 GitHub Actions 手动/定时 smoke job
 
 ### 配置
 
@@ -575,8 +587,17 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool multi_timeframe_review -
 ### 运行 smoke test
 
 ```bash
+# 轻量 provider / 本地 CLI smoke（旧脚本，适合开发时快速探测）
 PYTHONPATH=src python scripts/smoke_test.py
+
+# pytest live smoke（推荐，和 GitHub Actions live-smoke workflow 保持一致）
+bash scripts/smoke_live.sh
 ```
+
+说明：
+- `scripts/smoke_test.py` 更偏本地快速探测脚本
+- `scripts/smoke_live.sh` 是对 `pytest -q tests/live -m "live and smoke" --maxfail=1 -rA` 的薄包装
+- GitHub Actions 中的 `.github/workflows/live-smoke.yml` 复用同一命令，避免本地与 CI 出现两套 live 断言逻辑
 
 ### 运行 provider 自检
 
@@ -713,33 +734,27 @@ openclaw skills info newsbot-stock-routing
 
 建议至少验证这些真实路径：
 
-1. `market_brief` 非交易日回退
-   - 检查 `requested_trade_date != trade_date`
-2. `sector_review` 单日复盘
-   - 检查 `subject_type=sector`
-   - 检查 `sentiment.score_semantics=sentiment_temperature_v1`
-3. `sector_review` 区间复盘
-   - 检查 `rotation.label_zh`
-   - 检查 `meta.rotation_score_schema.schema=rotation_signal_v1`
-4. `market_brief`
-   - 检查 `meta.review_envelope_schema.schema=review_envelope_v1`
-   - 检查 `leaders / laggards / buckets` 正常生成
-5. `sector_rotation_review` 单日轮动复盘
-   - 检查 `subject_type=sector_rotation`
-   - 检查 `meta.item_schema.schema=sector_rotation_item_v1`
-   - 检查 `rotation.label_zh / rankings / buckets` 正常生成
-6. `stock_candidate_scan` 候选扫描
-   - 检查 `subject_type=candidate_scan`
-   - 检查 `meta.candidate_score_schema.schema=candidate_score_v1`
-   - 检查 `candidate_score / candidate_label / buckets` 正常生成
-7. `watchlist_review` 观察池复盘
-   - 检查 `subject_type=watchlist`
-   - 检查 `meta.watchlist_score_schema.schema=watchlist_score_v1`
-   - 检查 `watchlist_score / status_label / buckets` 正常生成
-8. `multi_timeframe_review` 多周期复盘
-   - 检查 `subject_type=multi_timeframe`
-   - 检查 `meta.alignment_score_schema.schema=multi_timeframe_alignment_v1`
-   - 检查 `trend_label / conflict_points / items` 正常生成
+1. `provider_health`
+   - 检查 `success=true`
+2. `stock_quote`（stock-main / index / BJ）
+   - 检查 `items` 至少 1 条
+3. `stock_history`
+   - 检查 `items` 正常生成
+4. `market_overview`
+   - 检查结构存在
+5. `sector_lookup`（`list + primary` / `list + concept`）
+   - 检查 `items` 至少 1 条
+6. `stock_review`
+   - 使用 `recent_trade_date` fixture，避免写死旧交易日
+7. `market_pool` 或 provider 直连最小路径
+   - 只做最小可用性检查
+8. 更重的 `sector_review / sector_rotation_review / stock_candidate_scan / watchlist_review / multi_timeframe_review`
+   - 放在 `tests/live/test_live_extended.py`，不和 smoke 混跑
+
+实现口径：
+- 默认 CI 跑 `pytest -m "not live"`
+- 可选 live smoke workflow 跑 `pytest tests/live -m "live and smoke"`
+- 本地全量 live 回归再跑 `pytest -m "live"`
 
 ### 6. 维护规则
 
