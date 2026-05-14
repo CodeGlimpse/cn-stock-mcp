@@ -152,6 +152,7 @@ __all__ = [
     "LimitStatRequest", "NorthboundRequest", "MarginTradingRequest",
     "StockScreenRequest",
     "DisclosureCalendarRequest",
+    "FundFlowRequest",
 ]
 
 
@@ -199,3 +200,15 @@ class DisclosureCalendarRequest(BaseModel):
             else:
                 self.period = f"{year}年报"
         return self
+
+
+class FundFlowRequest(BaseModel):
+    include: list[Literal["market", "industry", "stock"]] = Field(
+        default=["market", "industry"]
+    )
+    period: Literal["即时", "3日", "5日", "10日"] = "即时"
+    symbol: str | None = Field(default=None, description="Stock code required when include='stock', e.g. 600519")
+    sort_by: Literal["net_inflow", "inflow", "change_pct"] = "net_inflow"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=200)
+    provider: Literal["akshare"] | None = "akshare"

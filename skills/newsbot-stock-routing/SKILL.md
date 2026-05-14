@@ -48,6 +48,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 多股横向对比（行情+估值+财务+股息分层加载）→ `stock_compare`
 - 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
 - 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
+- 主力资金流向（全市场/行业/个股）→ `fund_flow`
 
 ## Operating rules
 

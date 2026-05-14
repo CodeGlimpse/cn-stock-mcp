@@ -1277,3 +1277,39 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare index_option failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Fund Flow (主力资金流向) ───────────────────────────
+
+    def get_market_fund_flow(self) -> list[dict]:
+        """Fetch market-level fund flow from ak.stock_market_fund_flow()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_market_fund_flow)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare market_fund_flow failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_industry_fund_flow(self, symbol: str = "即时") -> list[dict]:
+        """Fetch industry fund flow from ak.stock_fund_flow_industry().
+
+        symbol: 即时/3日/5日/10日
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_fund_flow_industry, symbol=symbol)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare industry_fund_flow failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_stock_fund_flow(self, stock: str, market: str = "sh") -> list[dict]:
+        """Fetch individual stock fund flow from ak.stock_individual_fund_flow().
+
+        stock: 6-digit code, e.g. "600519"
+        market: sh/sz
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_individual_fund_flow, stock=stock, market=market)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare stock_fund_flow failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

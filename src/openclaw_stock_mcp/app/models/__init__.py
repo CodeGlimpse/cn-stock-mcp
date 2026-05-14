@@ -82,6 +82,7 @@ from .stock_repurchase import RepurchaseItem, RepurchaseResult
 from .stock_compare import StockCompareItem, StockCompareResult
 from .industry_chain import IndustryListItem, ConceptListItem, IndustryChainResult
 from .stock_warrant import OptionItem, StockWarrantResult
+from .fund_flow import MarketFundFlowItem, IndustryFundFlowItem, StockFundFlowItem, FundFlowResult
 
 __all__ = [
     "ToolError",
@@ -165,4 +166,8 @@ __all__ = [
     "IndustryChainResult",
     "OptionItem",
     "StockWarrantResult",
+    "MarketFundFlowItem",
+    "IndustryFundFlowItem",
+    "StockFundFlowItem",
+    "FundFlowResult",
 ]
