@@ -8,6 +8,7 @@ from .schemas import (
     IndustryChainRequest,
     StockWarrantRequest,
     FundFlowRequest,
+    LimitUpPoolRequest,
     ShareholderChangeRequest,
     InstituteHoldRequest,
     InsiderTradeRequest,
@@ -75,4 +76,5 @@ __all__ = [
     "IndustryChainRequest",
     "StockWarrantRequest",
     "FundFlowRequest",
+    "LimitUpPoolRequest",
 ]

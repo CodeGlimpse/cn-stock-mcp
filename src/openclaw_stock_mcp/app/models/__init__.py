@@ -83,6 +83,15 @@ from .stock_compare import StockCompareItem, StockCompareResult
 from .industry_chain import IndustryListItem, ConceptListItem, IndustryChainResult
 from .stock_warrant import OptionItem, StockWarrantResult
 from .fund_flow import MarketFundFlowItem, IndustryFundFlowItem, StockFundFlowItem, FundFlowResult
+from .limit_up_pool import (
+    LimitUpItem as LimitUpPoolItem,
+    LimitDownItem,
+    StrongItem,
+    PreviousItem,
+    SubNewItem,
+    BrokenItem,
+    LimitUpPoolResult,
+)
 
 __all__ = [
     "ToolError",
@@ -170,4 +179,11 @@ __all__ = [
     "IndustryFundFlowItem",
     "StockFundFlowItem",
     "FundFlowResult",
+    "LimitUpPoolItem",
+    "LimitDownItem",
+    "StrongItem",
+    "PreviousItem",
+    "SubNewItem",
+    "BrokenItem",
+    "LimitUpPoolResult",
 ]

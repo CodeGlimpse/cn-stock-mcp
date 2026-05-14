@@ -153,6 +153,7 @@ __all__ = [
     "StockScreenRequest",
     "DisclosureCalendarRequest",
     "FundFlowRequest",
+    "LimitUpPoolRequest",
 ]
 
 
@@ -211,4 +212,13 @@ class FundFlowRequest(BaseModel):
     sort_by: Literal["net_inflow", "inflow", "change_pct"] = "net_inflow"
     descending: bool = True
     top_n: int | None = Field(default=None, ge=1, le=200)
+    provider: Literal["akshare"] | None = "akshare"
+
+
+class LimitUpPoolRequest(BaseModel):
+    include: list[Literal["limit_up", "limit_down", "strong", "previous", "sub_new", "broken"]] = Field(
+        default=["limit_up", "limit_down", "strong"]
+    )
+    trade_date: str | None = Field(default=None, description="YYYYMMDD, defaults to today")
+    top_n: int | None = Field(default=None, ge=1, le=500)
     provider: Literal["akshare"] | None = "akshare"

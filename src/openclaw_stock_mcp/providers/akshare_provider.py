@@ -1313,3 +1313,65 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare stock_fund_flow failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Limit Up Pool (涨停/跌停股池) ─────────────────────
+
+    def get_limit_up_pool_raw(self, date: str = "") -> list[dict]:
+        """Fetch raw limit-up pool from ak.stock_zt_pool_em()."""
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.stock_zt_pool_em, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare limit_up_pool failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_limit_down_pool(self, date: str = "") -> list[dict]:
+        """Fetch limit-down pool from ak.stock_zt_pool_dtgc_em()."""
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.stock_zt_pool_dtgc_em, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare limit_down_pool failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_strong_pool(self, date: str = "") -> list[dict]:
+        """Fetch strong/continuous limit-up pool from ak.stock_zt_pool_strong_em()."""
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.stock_zt_pool_strong_em, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare strong_pool failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_previous_limit_pool(self, date: str = "") -> list[dict]:
+        """Fetch previous day limit-up performance from ak.stock_zt_pool_previous_em()."""
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.stock_zt_pool_previous_em, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare previous_limit_pool failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_sub_new_pool(self, date: str = "") -> list[dict]:
+        """Fetch sub-new stock limit-up pool from ak.stock_zt_pool_sub_new_em()."""
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.stock_zt_pool_sub_new_em, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare sub_new_pool failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_broken_pool(self, date: str = "") -> list[dict]:
+        """Fetch broken limit-up pool from ak.stock_zt_pool_zbgc_em()."""
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.stock_zt_pool_zbgc_em, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare broken_pool failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

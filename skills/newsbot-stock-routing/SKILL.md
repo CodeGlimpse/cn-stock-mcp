@@ -25,7 +25,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 历史走势 / K 线 / 分时 → `stock_history`
 - 单只标的跨周期共振 / 冲突 → `multi_timeframe_review`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
-- 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
+- 涨停/跌停/强势/次新/炸板股池 → `limit_up_pool`（深度历史分析）或 `market_pool`（轻量快照）
 - 是否交易日 / 上下个交易日 → `trading_calendar`
 - 板块列表 / 板块成员 → `sector_lookup`
 - 代码不确定 / 名称歧义 → `stock_search`
@@ -49,6 +49,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
 - 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
 - 主力资金流向（全市场/行业/个股）→ `fund_flow`
+- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板）→ `limit_up_pool`
 
 ## Operating rules
 

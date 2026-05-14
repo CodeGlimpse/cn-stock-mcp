@@ -288,6 +288,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | industry_chain | industry_chain.py | 1:1 |
 | stock_warrant | stock_warrant.py | 1:1 |
 | fund_flow | fund_flow.py | 1:1 |
+| limit_up_pool | limit_up_pool.py | 1:1 |
 
 ---
 

@@ -26,6 +26,7 @@ from ._macro import (
 from ._market import (
     CapitalFlowRequest,
     FundFlowRequest,
+    LimitUpPoolRequest,
     LimitStatRequest,
     MarginTradingRequest,
     MarketBriefRequest,
@@ -84,7 +85,7 @@ __all__ = [
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
     "ShareholderChangeRequest", "StockRepurchaseRequest", "StockCompareRequest",
-    "IndustryChainRequest", "StockWarrantRequest", "FundFlowRequest",
+    "IndustryChainRequest", "StockWarrantRequest", "FundFlowRequest", "LimitUpPoolRequest",
     # Market
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",

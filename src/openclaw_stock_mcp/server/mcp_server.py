@@ -37,6 +37,7 @@ from openclaw_stock_mcp.app.usecases.stock_compare import StockCompareUseCase
 from openclaw_stock_mcp.app.usecases.industry_chain import IndustryChainUseCase
 from openclaw_stock_mcp.app.usecases.stock_warrant import StockWarrantUseCase
 from openclaw_stock_mcp.app.usecases.fund_flow import FundFlowUseCase
+from openclaw_stock_mcp.app.usecases.limit_up_pool import LimitUpPoolUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -91,6 +92,7 @@ from openclaw_stock_mcp.server.schemas import (
     IndustryChainRequest,
     StockWarrantRequest,
     FundFlowRequest,
+    LimitUpPoolRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -232,6 +234,7 @@ def create_server() -> MCPServerStub:
     industry_chain = IndustryChainUseCase()
     stock_warrant = StockWarrantUseCase()
     fund_flow = FundFlowUseCase()
+    limit_up_pool = LimitUpPoolUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -283,5 +286,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="industry_chain", description="Get industry chain data (产业链上下游): THS industry board summary with change/inflow/leaders, concept board summary with driver events/leaders. For understanding sector relationships and theme tracking.", input_model=IndustryChainRequest, handler=industry_chain.execute))
     server.register_tool(MCPTool(name="stock_warrant", description="Get option/warrant data (权证/期权): ETF options (50ETF/300ETF/etc), commodity options (4 exchanges), CFFEX index options. Real-time quotes with price/volume/open_interest/strike.", input_model=StockWarrantRequest, handler=stock_warrant.execute))
     server.register_tool(MCPTool(name="fund_flow", description="Get fund flow data (主力资金流向): market-level 120-day trend (主力/超大单/大单/中单/小单), industry 90-sector ranking with net inflow, individual stock 120-day history. Sina source.", input_model=FundFlowRequest, handler=fund_flow.execute))
+    server.register_tool(MCPTool(name="limit_up_pool", description="Get limit-up/limit-down pool analysis (涨停/跌停股池历史分析): limit-up, limit-down, strong/continuous, previous-day limit performance, sub-new, and broken-limit pools by trade date. EastMoney source.", input_model=LimitUpPoolRequest, handler=limit_up_pool.execute))
 
     return server

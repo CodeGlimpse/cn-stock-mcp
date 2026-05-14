@@ -46,6 +46,7 @@
 - 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
 - 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
 - 主力资金流向（全市场趋势+行业净流入排名+单股历史）→ `fund_flow`
+- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板）→ `limit_up_pool`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -134,6 +135,7 @@
 - `industry_chain`：`akshare`
 - `stock_warrant`：`akshare`
 - `fund_flow`：`akshare`
+- `limit_up_pool`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -176,6 +178,16 @@
 ### 股池
 ```json
 {"tool":"market_pool","payload":{"pool_type":"limit_up","limit":20}}
+```
+
+### 涨跌停股池深度分析
+```json
+{"tool":"limit_up_pool","payload":{"include":["limit_up","limit_down","strong","broken"],"trade_date":"20260513","top_n":30}}
+```
+
+### 昨日涨停今日表现
+```json
+{"tool":"limit_up_pool","payload":{"include":["previous"],"trade_date":"20260513","top_n":30}}
 ```
 
 ### 热点主线跟踪
