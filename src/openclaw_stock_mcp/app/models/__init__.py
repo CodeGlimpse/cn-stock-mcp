@@ -44,6 +44,11 @@ from .index_compose import (
     IndexComposeSummary,
     IndexComposeResult,
 )
+from .index_enhance import (
+    IndexEnhanceMemberItem,
+    IndexEnhanceSummary,
+    IndexEnhanceResult,
+)
 from .industry_valuation_rank import (
     IndustryValuationItem,
     IndustryValuationSummary,
@@ -134,6 +139,9 @@ __all__ = [
     "IndexConstituentItem",
     "IndexComposeSummary",
     "IndexComposeResult",
+    "IndexEnhanceMemberItem",
+    "IndexEnhanceSummary",
+    "IndexEnhanceResult",
     "IndustryValuationItem",
     "IndustryValuationSummary",
     "IndustryValuationRankResult",

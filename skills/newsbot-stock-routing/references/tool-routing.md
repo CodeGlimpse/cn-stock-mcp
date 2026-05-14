@@ -25,6 +25,7 @@
 - 北向资金流向 / 持股排行 → `northbound`
 - 估值排名（PE/PB + 市场估值温度）→ `valuation_rank`
 - 指数成分与权重分析 → `index_compose`
+- 指数增强组合对比（增强收益/基准收益/超额收益/成分贡献）→ `index_enhance`
 - 行业估值分位（一级行业横向估值）→ `industry_valuation_rank`
 - 盈利质量评估（财报质量打分）→ `earnings_quality`
 - 宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/非农/BDI/黄金等）→ `macro_indicator`
@@ -115,6 +116,7 @@
 - `northbound`：`akshare`
 - `valuation_rank`：市场估值快照用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - `index_compose`：`akshare`
+- `index_enhance`：`akshare` + quote/history provider fallback
 - `industry_valuation_rank`：成员股获取走 `sector_lookup(children, primary)`（`zhitu`），估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - `earnings_quality`：`akshare`（复用 `stock_financial` 抽象快照）
 - `macro_indicator`：`akshare`
@@ -165,6 +167,11 @@
 ### 指数历史
 ```json
 {"tool":"stock_history","payload":{"symbol":"000001.SH","sec_type":"index","interval":"d","limit":30}}
+```
+
+### 指数增强对比
+```json
+{"tool":"index_enhance","payload":{"index_code":"000300","top_n":50,"weighting":"weight"}}
 ```
 
 ### 单股复盘

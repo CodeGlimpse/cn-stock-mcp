@@ -42,6 +42,7 @@
 - `northbound`
 - `valuation_rank`
 - `index_compose`
+- `index_enhance`
 - `industry_valuation_rank`
 - `earnings_quality`
 - `macro_indicator`

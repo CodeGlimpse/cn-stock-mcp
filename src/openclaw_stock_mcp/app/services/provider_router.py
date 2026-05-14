@@ -18,6 +18,7 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
     "limit_stat":           ("akshare", []),
     "northbound":           ("akshare", []),
     "index_compose":        ("akshare", []),
+    "index_enhance":        ("akshare", []),
     "earnings_quality":     ("akshare", []),
     "macro_indicator":      ("akshare", []),
     "dragon_tiger":         ("akshare", []),

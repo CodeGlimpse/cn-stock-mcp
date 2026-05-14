@@ -266,6 +266,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | northbound | northbound.py | 1:1 |
 | valuation_rank | valuation_rank.py | 1:1 |
 | index_compose | index_compose.py | 1:1 |
+| index_enhance | index_enhance.py | 1:1 |
 | industry_valuation_rank | industry_valuation_rank.py | 1:1 |
 | earnings_quality | earnings_quality.py | 1:1 |
 | macro_indicator | macro_indicator.py | 1:1 |

@@ -240,8 +240,26 @@ class IndexComposeRequest(BaseModel):
         return self
 
 
+class IndexEnhanceRequest(BaseModel):
+    index_code: str = Field(min_length=1, description="Index code, e.g. 000300 or 000300.SH")
+    top_n: int = Field(default=50, ge=1, le=300, description="Top-weight constituents used as the enhanced sample")
+    weighting: Literal["weight", "equal"] = Field(default="weight", description="Use index weights or equal weights for the sample portfolio")
+    start_date: str | None = Field(default=None, description="Optional YYYYMMDD start date for benchmark history lookup")
+    end_date: str | None = Field(default=None, description="Optional YYYYMMDD end date for benchmark history lookup")
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        self.index_code = (self.index_code or "").strip()
+        if not self.index_code:
+            raise ValueError("index_code is required")
+        from ._helpers import validate_date_order
+        validate_date_order(self.start_date, self.end_date)
+        return self
+
+
 __all__ = [
     "StockCandidateScanRequest", "WatchlistReviewRequest",
     "MultiTimeframeReviewRequest", "HotThemeTrackerRequest",
-    "EventCalendarRequest", "IndexComposeRequest",
+    "EventCalendarRequest", "IndexComposeRequest", "IndexEnhanceRequest",
 ]

@@ -8,6 +8,7 @@ from ._analytics import (
     EventCalendarRequest,
     HotThemeTrackerRequest,
     IndexComposeRequest,
+    IndexEnhanceRequest,
     MultiTimeframeReviewRequest,
     StockCandidateScanRequest,
     WatchlistReviewRequest,
@@ -98,7 +99,7 @@ __all__ = [
     # Analytics
     "StockCandidateScanRequest", "WatchlistReviewRequest",
     "MultiTimeframeReviewRequest", "HotThemeTrackerRequest",
-    "EventCalendarRequest", "IndexComposeRequest",
+    "EventCalendarRequest", "IndexComposeRequest", "IndexEnhanceRequest",
     # Macro
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
     "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
