@@ -31,4 +31,8 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 markers = [
   "live: tests requiring network/real upstream providers",
+  "smoke: short high-signal live checks",
+  "slow: slower or broader live regression checks",
+  "transport: MCP transport/tool layer checks",
+  "provider: direct upstream provider checks",
 ]
