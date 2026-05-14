@@ -151,6 +151,7 @@ __all__ = [
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",
     "LimitStatRequest", "NorthboundRequest", "MarginTradingRequest",
     "StockScreenRequest",
+    "DisclosureCalendarRequest",
 ]
 
 
@@ -167,3 +168,34 @@ class StockScreenRequest(BaseModel):
     descending: bool = True
     top_n: int | None = Field(default=None, ge=1, le=500)
     provider: Literal["akshare"] | None = "akshare"
+
+
+class DisclosureCalendarRequest(BaseModel):
+    market: Literal["沪深京", "深市", "沪市", "京市"] = "沪深京"
+    period: str = Field(default="auto", description="报告期：YYYY年报/YYYY一季/YYYY半年/YYYY三季，如 '2024年报'/'2025一季'，或 'auto'")
+    symbol: str | None = None
+    sec_type: str = "stock"
+    status: Literal["all", "disclosed", "pending", "changed"] = "all"
+    sort_by: Literal["first_schedule", "actual_date"] = "first_schedule"
+    descending: bool = False
+    top_n: int | None = Field(default=None, ge=1, le=1000)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_period(self):
+        if self.period == "auto":
+            from datetime import date
+            today = date.today()
+            year = today.year
+            month = today.month
+            if month <= 4:
+                self.period = f"{year - 1}年报"
+            elif month <= 5:
+                self.period = f"{year}一季"
+            elif month <= 8:
+                self.period = f"{year}半年"
+            elif month <= 10:
+                self.period = f"{year}三季"
+            else:
+                self.period = f"{year}年报"
+        return self

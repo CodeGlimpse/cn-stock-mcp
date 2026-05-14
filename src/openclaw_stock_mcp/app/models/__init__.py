@@ -77,6 +77,7 @@ from .stock_screen import StockScreenItem, StockScreenResult
 from .insider_trade import InsiderTop10Item, InsiderChangeItem, InsiderTradeResult
 from .dividend_rank import DividendRankItem, DividendPlanItem, DividendDetailItem, DividendRankResult
 from .shareholder_change import ShareholderTop10Item, ShareholderChangeItem, ShareholderChangeResult
+from .disclosure_calendar import DisclosureItem, DisclosureResult
 
 __all__ = [
     "ToolError",
@@ -149,4 +150,6 @@ __all__ = [
     "ShareholderTop10Item",
     "ShareholderChangeItem",
     "ShareholderChangeResult",
+    "DisclosureItem",
+    "DisclosureResult",
 ]

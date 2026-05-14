@@ -1177,3 +1177,18 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare shareholder_change failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Disclosure Calendar (披露日历) ──────────────────────
+
+    def get_disclosure_calendar(self, market: str = "沪深京", period: str = "2024年报") -> list[dict]:
+        """Fetch disclosure calendar from ak.stock_report_disclosure().
+
+        market: 沪深京/深市/沪市/京市
+        period: YYYY年报/YYYY一季/YYYY半年/YYYY三季
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_report_disclosure, market=market, period=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare disclosure_calendar failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

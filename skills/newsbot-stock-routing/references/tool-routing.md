@@ -40,6 +40,7 @@
 - 高管增减持（十大流通股东变动+增减持历史）→ `insider_trade`
 - 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
 - 股东变动（十大股东变动+全市场股东持股汇总）→ `shareholder_change`
+- 披露日历（财报披露时间表/预约日/变更/实际披露日）→ `disclosure_calendar`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -122,6 +123,7 @@
 - `insider_trade`：`akshare`
 - `dividend_rank`：`akshare`
 - `shareholder_change`：`akshare`
+- `disclosure_calendar`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -379,6 +381,21 @@
 ### 股东变动（基金持股汇总）
 ```json
 {"tool":"shareholder_change","payload":{"include":["change"],"quarter":"auto","shareholder_type":"基金","sort_by":"float_cap","descending":true,"top_n":10}}
+```
+
+### 披露日历（最新报告期，已披露）
+```json
+{"tool":"disclosure_calendar","payload":{"period":"auto","status":"disclosed","sort_by":"actual_date","top_n":30}}
+```
+
+### 披露日历（待披露）
+```json
+{"tool":"disclosure_calendar","payload":{"period":"2024年报","status":"pending","sort_by":"first_schedule","top_n":20}}
+```
+
+### 披露日历（变更日期）
+```json
+{"tool":"disclosure_calendar","payload":{"period":"2024年报","status":"changed","top_n":20}}
 ```
 
 
