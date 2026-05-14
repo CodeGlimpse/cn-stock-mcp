@@ -48,7 +48,7 @@ from ._stock import (
     InsiderTradeRequest,
     DividendRankRequest,
     ShareholderChangeRequest,
-    ShareholderChangeRequest,
+    StockRepurchaseRequest,
     StockFinancialRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
@@ -79,7 +79,7 @@ __all__ = [
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
-    "ShareholderChangeRequest",
+    "ShareholderChangeRequest", "StockRepurchaseRequest",
     # Market
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",

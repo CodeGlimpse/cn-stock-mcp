@@ -44,6 +44,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
 - 股东变动（十大股东变动+全市场股东持股汇总/按类型筛选）→ `shareholder_change`
 - 披露日历（财报披露时间表/预约日/变更/实际披露日）→ `disclosure_calendar`
+- 回购明细（公司回购计划/进度/已回购金额）→ `stock_repurchase`
 
 ## Operating rules
 

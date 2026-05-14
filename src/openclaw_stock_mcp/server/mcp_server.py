@@ -32,6 +32,7 @@ from openclaw_stock_mcp.app.usecases.insider_trade import InsiderTradeUseCase
 from openclaw_stock_mcp.app.usecases.dividend_rank import DividendRankUseCase
 from openclaw_stock_mcp.app.usecases.shareholder_change import ShareholderChangeUseCase
 from openclaw_stock_mcp.app.usecases.disclosure_calendar import DisclosureCalendarUseCase
+from openclaw_stock_mcp.app.usecases.stock_repurchase import StockRepurchaseUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -81,6 +82,7 @@ from openclaw_stock_mcp.server.schemas import (
     DividendRankRequest,
     ShareholderChangeRequest,
     DisclosureCalendarRequest,
+    StockRepurchaseRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -217,6 +219,7 @@ def create_server() -> MCPServerStub:
     dividend_rank = DividendRankUseCase()
     shareholder_change = ShareholderChangeUseCase()
     disclosure_calendar = DisclosureCalendarUseCase()
+    stock_repurchase = StockRepurchaseUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -263,5 +266,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="dividend_rank", description="Get dividend data (股息率/分红排名): market-wide historical dividend ranking by cumulative/average yield, per-report-period dividend plan with yield/EPS/BVPS, and per-stock historical dividend detail. Supports sorting and filtering.", input_model=DividendRankRequest, handler=dividend_rank.execute))
     server.register_tool(MCPTool(name="shareholder_change", description="Get shareholder change data (股东变动): top 10 shareholders with holding changes per stock, and market-wide shareholder holding change summary (by shareholder type: fund/SSF/QFII/etc). Quarterly data.", input_model=ShareholderChangeRequest, handler=shareholder_change.execute))
     server.register_tool(MCPTool(name="disclosure_calendar", description="Get disclosure calendar (披露日历): financial report disclosure schedule with first-scheduled date, change history, and actual disclosure date. Filter by market, period, status (disclosed/pending/changed).", input_model=DisclosureCalendarRequest, handler=disclosure_calendar.execute))
+    server.register_tool(MCPTool(name="stock_repurchase", description="Get stock repurchase data (回购明细): company buyback plans with price range, quantity, progress, and actual repurchase amount. Filter by progress status (董事会预案/股东大会通过/实施中/完成实施).", input_model=StockRepurchaseRequest, handler=stock_repurchase.execute))
 
     return server

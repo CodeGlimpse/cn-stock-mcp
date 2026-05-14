@@ -78,6 +78,7 @@ from .insider_trade import InsiderTop10Item, InsiderChangeItem, InsiderTradeResu
 from .dividend_rank import DividendRankItem, DividendPlanItem, DividendDetailItem, DividendRankResult
 from .shareholder_change import ShareholderTop10Item, ShareholderChangeItem, ShareholderChangeResult
 from .disclosure_calendar import DisclosureItem, DisclosureResult
+from .stock_repurchase import RepurchaseItem, RepurchaseResult
 
 __all__ = [
     "ToolError",
@@ -152,4 +153,6 @@ __all__ = [
     "ShareholderChangeResult",
     "DisclosureItem",
     "DisclosureResult",
+    "RepurchaseItem",
+    "RepurchaseResult",
 ]

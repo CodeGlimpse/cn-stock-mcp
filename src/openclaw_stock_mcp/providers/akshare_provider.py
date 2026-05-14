@@ -1192,3 +1192,14 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare disclosure_calendar failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Stock Repurchase (回购明细) ──────────────────────────
+
+    def get_stock_repurchase(self) -> list[dict]:
+        """Fetch stock repurchase data from ak.stock_repurchase_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_repurchase_em)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare stock_repurchase failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

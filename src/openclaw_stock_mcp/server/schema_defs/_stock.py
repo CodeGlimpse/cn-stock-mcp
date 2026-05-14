@@ -140,6 +140,7 @@ __all__ = [
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
     "ShareholderChangeRequest",
+    "StockRepurchaseRequest",
 ]
 
 
@@ -191,3 +192,13 @@ class ShareholderChangeRequest(BaseModel):
         if "top10" in self.include and not self.symbol:
             raise ValueError("symbol is required when include contains 'top10'")
         return self
+
+
+class StockRepurchaseRequest(BaseModel):
+    status: Literal["all", "董事会预案", "股东大会通过", "实施中", "完成实施"] = "all"
+    symbol: str | None = None
+    sec_type: str = "stock"
+    sort_by: Literal["done_amount", "plan_amount_max", "plan_ratio_max", "latest_price", "start_date"] = "done_amount"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"

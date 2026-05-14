@@ -41,6 +41,7 @@
 - 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
 - 股东变动（十大股东变动+全市场股东持股汇总）→ `shareholder_change`
 - 披露日历（财报披露时间表/预约日/变更/实际披露日）→ `disclosure_calendar`
+- 回购明细（公司回购计划/进度/已回购金额）→ `stock_repurchase`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -124,6 +125,7 @@
 - `dividend_rank`：`akshare`
 - `shareholder_change`：`akshare`
 - `disclosure_calendar`：`akshare`
+- `stock_repurchase`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -396,6 +398,21 @@
 ### 披露日历（变更日期）
 ```json
 {"tool":"disclosure_calendar","payload":{"period":"2024年报","status":"changed","top_n":20}}
+```
+
+### 回购明细（按已回购金额排序）
+```json
+{"tool":"stock_repurchase","payload":{"sort_by":"done_amount","descending":true,"top_n":20}}
+```
+
+### 回购明细（实施中）
+```json
+{"tool":"stock_repurchase","payload":{"status":"实施中","sort_by":"done_amount","descending":true,"top_n":20}}
+```
+
+### 回购明细（已完成）
+```json
+{"tool":"stock_repurchase","payload":{"status":"完成实施","sort_by":"plan_amount_max","descending":true,"top_n":20}}
 ```
 
 

@@ -283,6 +283,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | dividend_rank | dividend_rank.py | 1:1 |
 | shareholder_change | shareholder_change.py | 1:1 |
 | disclosure_calendar | disclosure_calendar.py | 1:1 |
+| stock_repurchase | stock_repurchase.py | 1:1 |
 
 ---
 
