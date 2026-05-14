@@ -181,7 +181,7 @@ class MoneyRateRequest(BaseModel):
 __all__ = [
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
     "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
-    "InstituteHoldRequest", "MoneyRateRequest", "StockWarrantRequest",
+    "InstituteHoldRequest", "MoneyRateRequest", "StockWarrantRequest", "SecRevealRequest",
 ]
 
 
@@ -193,3 +193,25 @@ class StockWarrantRequest(BaseModel):
     commodity_exchange: Literal["郑商所", "大商所", "上期所", "广期所"] = "郑商所"
     top_n: int | None = Field(default=None, ge=1, le=500)
     provider: Literal["akshare"] | None = "akshare"
+
+
+class SecRevealRequest(BaseModel):
+    include: list[Literal["stock_seat_detail", "active_broker", "institution_detail", "institution_trace"]] = Field(
+        default=["institution_detail", "institution_trace"]
+    )
+    symbol: str | None = Field(default=None, description="Stock code required for stock_seat_detail, e.g. 300965")
+    trade_date: str | None = Field(default=None, description="YYYYMMDD, used for stock_seat_detail")
+    start_date: str | None = Field(default=None, description="YYYYMMDD, used for active_broker")
+    end_date: str | None = Field(default=None, description="YYYYMMDD, used for active_broker")
+    period: Literal["5", "10", "30", "60"] = "5"
+    sort_by: Literal["net_amount", "buy_amount", "sell_amount", "inst_net_amount", "inst_buy_amount", "total_buy_amount"] = "net_amount"
+    descending: bool = True
+    top_n: int | None = Field(default=20, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        if "stock_seat_detail" in self.include and not self.symbol:
+            raise ValueError("symbol is required when include contains 'stock_seat_detail'")
+        self.include = dedupe_include(self.include)  # type: ignore[assignment]
+        return self

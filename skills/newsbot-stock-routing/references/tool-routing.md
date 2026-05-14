@@ -29,6 +29,7 @@
 - 盈利质量评估（财报质量打分）→ `earnings_quality`
 - 宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/非农/BDI/黄金等）→ `macro_indicator`
 - 龙虎榜（日榜明细/机构买卖/活跃营业部/营业部胜率/个股上榜统计）→ `dragon_tiger`
+- 龙虎榜机构席位深度（单股买卖席位/活跃营业部/机构明细/机构追踪）→ `sec_reveal`
 - ETF行情快照（全市场实时+IOPV折溢价+资金流+份额+净值）→ `etf_snapshot`
 - 可转债（双低/溢价率/YTM/强赎监控/等权指数）→ `convertible_bond`
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
@@ -136,6 +137,7 @@
 - `stock_warrant`：`akshare`
 - `fund_flow`：`akshare`
 - `limit_up_pool`：`akshare`
+- `sec_reveal`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -188,6 +190,21 @@
 ### 昨日涨停今日表现
 ```json
 {"tool":"limit_up_pool","payload":{"include":["previous"],"trade_date":"20260513","top_n":30}}
+```
+
+### 龙虎榜席位深度（单股买卖席位）
+```json
+{"tool":"sec_reveal","payload":{"include":["stock_seat_detail"],"symbol":"300965","trade_date":"20260513","top_n":5}}
+```
+
+### 龙虎榜机构追踪
+```json
+{"tool":"sec_reveal","payload":{"include":["institution_detail","institution_trace"],"period":"5","top_n":20}}
+```
+
+### 活跃营业部
+```json
+{"tool":"sec_reveal","payload":{"include":["active_broker"],"start_date":"20260513","end_date":"20260513","top_n":20}}
 ```
 
 ### 热点主线跟踪

@@ -1375,3 +1375,49 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare broken_pool failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Sec Reveal (龙虎榜机构席位深度) ───────────────────
+
+    def get_lhb_stock_seat_detail(self, symbol: str, date: str, flag: str = "买入") -> list[dict]:
+        """Fetch stock-level dragon-tiger seat details from ak.stock_lhb_stock_detail_em().
+
+        symbol: 6-digit stock code, e.g. "300965"
+        date: YYYYMMDD
+        flag: 买入/卖出
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_stock_detail_em, symbol=symbol, date=date, flag=flag)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare lhb_stock_seat_detail failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_lhb_active_broker(self, start_date: str, end_date: str | None = None) -> list[dict]:
+        """Fetch active broker seats from ak.stock_lhb_hyyyb_em()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_hyyyb_em, start_date=start_date, end_date=end_date or start_date)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare lhb_active_broker failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_lhb_institution_detail_sina(self) -> list[dict]:
+        """Fetch recent institution dragon-tiger detail from ak.stock_lhb_jgmx_sina()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_jgmx_sina)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare lhb_institution_detail_sina failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_lhb_institution_trace_sina(self, period: str = "5") -> list[dict]:
+        """Fetch institution tracking stats from ak.stock_lhb_jgzz_sina().
+
+        period: 5/10/30/60
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_lhb_jgzz_sina, symbol=period)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare lhb_institution_trace_sina failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

@@ -31,7 +31,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 代码不确定 / 名称歧义 → `stock_search`
 - 上游健康检查 → `provider_health`
 - 宏观经济指标（CPI/PMI/GDP/LPR/M2等）→ `macro_indicator`
-- 龙虎榜明细（游资/机构/营业部胜率）→ `dragon_tiger`
+- 龙虎榜明细（游资/机构/营业部胜率）→ `dragon_tiger`; 机构席位深度/单股席位 → `sec_reveal`
 - ETF行情快照（IOPV折溢价/资金流/份额/净值）→ `etf_snapshot`
 - 可转债（双低/溢价率/YTM/强赎监控）→ `convertible_bond`
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
@@ -50,6 +50,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
 - 主力资金流向（全市场/行业/个股）→ `fund_flow`
 - 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板）→ `limit_up_pool`
+- 龙虎榜机构席位深度（单股买卖席位/活跃营业部/机构明细/机构追踪）→ `sec_reveal`
 
 ## Operating rules
 

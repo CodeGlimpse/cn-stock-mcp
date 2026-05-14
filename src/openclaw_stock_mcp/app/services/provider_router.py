@@ -39,6 +39,7 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
     "stock_warrant":      ("akshare", []),
     "fund_flow":          ("akshare", []),
     "limit_up_pool":      ("akshare", []),
+    "sec_reveal":         ("akshare", []),
     # ── Zhitu-only ──
     "market_pool":          ("zhitu", []),
     "stock_orderbook":      ("zhitu", []),

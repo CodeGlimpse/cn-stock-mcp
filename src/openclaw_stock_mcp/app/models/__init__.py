@@ -92,6 +92,13 @@ from .limit_up_pool import (
     BrokenItem,
     LimitUpPoolResult,
 )
+from .sec_reveal import (
+    SeatDetailItem,
+    ActiveBrokerItem,
+    InstitutionDetailItem,
+    InstitutionTraceItem,
+    SecRevealResult,
+)
 
 __all__ = [
     "ToolError",
@@ -186,4 +193,9 @@ __all__ = [
     "SubNewItem",
     "BrokenItem",
     "LimitUpPoolResult",
+    "SeatDetailItem",
+    "ActiveBrokerItem",
+    "InstitutionDetailItem",
+    "InstitutionTraceItem",
+    "SecRevealResult",
 ]
