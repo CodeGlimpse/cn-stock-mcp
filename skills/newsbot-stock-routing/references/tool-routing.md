@@ -30,7 +30,7 @@
 - 盈利质量评估（财报质量打分）→ `earnings_quality`
 - 宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/非农/BDI/黄金等）→ `macro_indicator`
 - 龙虎榜（日榜明细/机构买卖/活跃营业部/营业部胜率/个股上榜统计）→ `dragon_tiger`
-- 龙虎榜机构席位深度（单股买卖席位/活跃营业部/机构明细/机构追踪）→ `sec_reveal`
+- 龙虎榜机构席位深度（单股买卖席位/活跃营业部/机构明细/机构追踪/席位标签）→ `sec_reveal`
 - ETF行情快照（全市场实时+IOPV折溢价+资金流+份额+净值）→ `etf_snapshot`
 - 可转债（双低/溢价率/YTM/强赎监控/等权指数）→ `convertible_bond`
 - 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`

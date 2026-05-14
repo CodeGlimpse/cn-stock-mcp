@@ -12,6 +12,7 @@ from openclaw_stock_mcp.providers.adapters.akshare_sec_reveal_adapters import (
     adapt_seat_detail_row,
     build_sec_reveal_summary,
 )
+from openclaw_stock_mcp.providers.adapters.broker_tags import summarize_broker_tags
 
 
 class SecRevealUseCase:
@@ -98,6 +99,7 @@ class SecRevealUseCase:
         summary = build_sec_reveal_summary(
             stock_seat_buy, stock_seat_sell, active_broker, institution_detail, institution_trace
         )
+        broker_tag_summary = summarize_broker_tags([*stock_seat_buy, *stock_seat_sell, *active_broker])
         return SecRevealResult(
             stock_seat_buy=stock_seat_buy,
             stock_seat_buy_count=len(stock_seat_buy),
@@ -109,6 +111,7 @@ class SecRevealUseCase:
             institution_detail_count=len(institution_detail),
             institution_trace=institution_trace,
             institution_trace_count=len(institution_trace),
+            broker_tag_summary=broker_tag_summary,
             summary=summary,
         ).model_dump()
 

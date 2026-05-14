@@ -51,7 +51,10 @@ def test_sec_reveal_stock_seat_detail():
     assert result["stock_seat_buy_count"] == 2
     assert result["stock_seat_sell_count"] == 1
     assert result["stock_seat_buy"][0]["broker_name"] == "华源证券股份有限公司湖北分公司"
+    assert "分公司" in result["stock_seat_buy"][0]["broker_tags"]
     assert result["stock_seat_sell"][0]["net_amount"] == -2534400
+    assert "知名游资" in result["stock_seat_sell"][0]["broker_tags"]
+    assert result["broker_tag_summary"]["营业部"] >= 2
 
 
 def test_sec_reveal_active_broker():
@@ -63,6 +66,7 @@ def test_sec_reveal_active_broker():
         result = uc.execute(req)
     assert result["active_broker_count"] == 1
     assert result["active_broker"][0]["broker_name"] == "深股通专用"
+    assert result["active_broker"][0]["broker_tags"] == ["陆股通"]
 
 
 def test_sec_reveal_institution_detail_and_trace():

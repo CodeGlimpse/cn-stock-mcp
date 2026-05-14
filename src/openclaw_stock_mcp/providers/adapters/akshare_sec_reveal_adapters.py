@@ -6,6 +6,7 @@ from openclaw_stock_mcp.app.models.sec_reveal import (
     InstitutionTraceItem,
     SeatDetailItem,
 )
+from openclaw_stock_mcp.providers.adapters.broker_tags import broker_tags, summarize_broker_tags
 
 
 def _to_float(value):
@@ -34,9 +35,11 @@ def _clean_str(value):
 
 
 def adapt_seat_detail_row(row: dict, side: str | None = None) -> SeatDetailItem:
+    broker_name = _clean_str(row.get("交易营业部名称"))
     return SeatDetailItem(
         rank=_to_int(row.get("序号")),
-        broker_name=_clean_str(row.get("交易营业部名称")),
+        broker_name=broker_name,
+        broker_tags=broker_tags(broker_name),
         buy_amount=_to_float(row.get("买入金额")),
         buy_ratio=_to_float(row.get("买入金额-占总成交比例")),
         sell_amount=_to_float(row.get("卖出金额")),
@@ -48,9 +51,11 @@ def adapt_seat_detail_row(row: dict, side: str | None = None) -> SeatDetailItem:
 
 
 def adapt_active_broker_row(row: dict) -> ActiveBrokerItem:
+    broker_name = _clean_str(row.get("营业部名称"))
     return ActiveBrokerItem(
         rank=_to_int(row.get("序号")),
-        broker_name=_clean_str(row.get("营业部名称")),
+        broker_name=broker_name,
+        broker_tags=broker_tags(broker_name),
         trade_date=_clean_str(row.get("上榜日")),
         buy_stock_count=_to_int(row.get("买入个股数")),
         sell_stock_count=_to_int(row.get("卖出个股数")),
@@ -91,6 +96,7 @@ def adapt_institution_trace_row(row: dict) -> InstitutionTraceItem:
 
 def build_sec_reveal_summary(stock_buy, stock_sell, active, inst_detail, inst_trace) -> str:
     parts = []
+    tag_summary = summarize_broker_tags([*stock_buy, *stock_sell, *active])
     if stock_buy or stock_sell:
         buy_net = sum((i.net_amount or 0.0) for i in stock_buy)
         sell_net = sum((i.net_amount or 0.0) for i in stock_sell)
@@ -104,4 +110,7 @@ def build_sec_reveal_summary(stock_buy, stock_sell, active, inst_detail, inst_tr
     if inst_trace:
         pos = [i for i in inst_trace if i.net_amount is not None and i.net_amount > 0]
         parts.append(f"机构追踪{len(inst_trace)}只，净买入{len(pos)}只")
+    if tag_summary:
+        top_tags = "、".join(f"{k}{v}" for k, v in sorted(tag_summary.items(), key=lambda x: x[1], reverse=True)[:3])
+        parts.append(f"席位标签：{top_tags}")
     return "；".join(parts) if parts else "无席位数据"

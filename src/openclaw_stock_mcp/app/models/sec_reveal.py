@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class SeatDetailItem(BaseModel):
     rank: int | None = None
     broker_name: str | None = None
+    broker_tags: list[str] = Field(default_factory=list)
     buy_amount: float | None = None
     buy_ratio: float | None = None
     sell_amount: float | None = None
@@ -19,6 +20,7 @@ class SeatDetailItem(BaseModel):
 class ActiveBrokerItem(BaseModel):
     rank: int | None = None
     broker_name: str | None = None
+    broker_tags: list[str] = Field(default_factory=list)
     trade_date: str | None = None
     buy_stock_count: int | None = None
     sell_stock_count: int | None = None
@@ -63,4 +65,5 @@ class SecRevealResult(BaseModel):
     institution_detail_count: int = 0
     institution_trace: list[InstitutionTraceItem] = Field(default_factory=list)
     institution_trace_count: int = 0
+    broker_tag_summary: dict[str, int] = Field(default_factory=dict)
     summary: str = ""
