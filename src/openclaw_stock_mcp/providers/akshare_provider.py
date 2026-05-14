@@ -1238,3 +1238,42 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare concept_summary failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Stock Warrant (权证/期权) ──────────────────────────
+
+    def get_etf_option(self, symbol: str = "50ETF期权") -> list[dict]:
+        """Fetch ETF option quotes from ak.option_sina_sse().
+
+        symbol: 50ETF期权/300ETF期权/500ETF期权/创业板ETF期权/科创50ETF期权
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.option_sina_sse, symbol=symbol, exchange="null")
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare etf_option failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_commodity_option(self, exchange: str = "郑商所") -> list[dict]:
+        """Fetch commodity option quotes from ak.option_sina_sse().
+
+        exchange: 郑商所/大商所/上期所/广期所
+        """
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.option_sina_sse, symbol="商品期权", exchange=exchange)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare commodity_option failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_index_option(self, date: str = "") -> list[dict]:
+        """Fetch CFFEX index option from ak.option_cffex_cks().
+
+        date: YYYYMMDD, e.g. "20260513"
+        """
+        lib = self._require_ak()
+        try:
+            kwargs = {"date": date} if date else {}
+            df = self._call_ak_quietly(lib.option_cffex_cks, **kwargs)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare index_option failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

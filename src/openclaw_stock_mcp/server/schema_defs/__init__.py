@@ -21,6 +21,7 @@ from ._macro import (
     InstituteHoldRequest,
     MacroIndicatorRequest,
     MoneyRateRequest,
+    StockWarrantRequest,
 )
 from ._market import (
     CapitalFlowRequest,
@@ -82,7 +83,7 @@ __all__ = [
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
     "ShareholderChangeRequest", "StockRepurchaseRequest", "StockCompareRequest",
-    "IndustryChainRequest",
+    "IndustryChainRequest", "StockWarrantRequest",
     # Market
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",

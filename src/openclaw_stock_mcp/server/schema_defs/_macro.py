@@ -181,5 +181,15 @@ class MoneyRateRequest(BaseModel):
 __all__ = [
     "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
     "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
-    "InstituteHoldRequest", "MoneyRateRequest",
+    "InstituteHoldRequest", "MoneyRateRequest", "StockWarrantRequest",
 ]
+
+
+class StockWarrantRequest(BaseModel):
+    include: list[Literal["etf_option", "commodity_option", "index_option"]] = Field(
+        default=["etf_option"]
+    )
+    etf_type: Literal["50ETF期权", "300ETF期权", "500ETF期权", "创业板ETF期权", "科创50ETF期权"] = "50ETF期权"
+    commodity_exchange: Literal["郑商所", "大商所", "上期所", "广期所"] = "郑商所"
+    top_n: int | None = Field(default=None, ge=1, le=500)
+    provider: Literal["akshare"] | None = "akshare"

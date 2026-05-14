@@ -35,6 +35,7 @@ from openclaw_stock_mcp.app.usecases.disclosure_calendar import DisclosureCalend
 from openclaw_stock_mcp.app.usecases.stock_repurchase import StockRepurchaseUseCase
 from openclaw_stock_mcp.app.usecases.stock_compare import StockCompareUseCase
 from openclaw_stock_mcp.app.usecases.industry_chain import IndustryChainUseCase
+from openclaw_stock_mcp.app.usecases.stock_warrant import StockWarrantUseCase
 from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 from openclaw_stock_mcp.app.usecases.provider_health import ProviderHealthUseCase
@@ -87,6 +88,7 @@ from openclaw_stock_mcp.server.schemas import (
     StockRepurchaseRequest,
     StockCompareRequest,
     IndustryChainRequest,
+    StockWarrantRequest,
     SectorLookupRequest,
     SectorQuoteRequest,
     SectorReviewRequest,
@@ -226,6 +228,7 @@ def create_server() -> MCPServerStub:
     stock_repurchase = StockRepurchaseUseCase()
     stock_compare = StockCompareUseCase()
     industry_chain = IndustryChainUseCase()
+    stock_warrant = StockWarrantUseCase()
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
@@ -275,5 +278,6 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="stock_repurchase", description="Get stock repurchase data (回购明细): company buyback plans with price range, quantity, progress, and actual repurchase amount. Filter by progress status (董事会预案/股东大会通过/实施中/完成实施).", input_model=StockRepurchaseRequest, handler=stock_repurchase.execute))
     server.register_tool(MCPTool(name="stock_compare", description="Compare multiple stocks side-by-side (多股横向对比): real-time quote, PE/PB/market_cap valuation, financial indicators (ROE/margin/debt), dividend yield. 2-10 symbols, layered data loading minimizes API calls.", input_model=StockCompareRequest, handler=stock_compare.execute))
     server.register_tool(MCPTool(name="industry_chain", description="Get industry chain data (产业链上下游): THS industry board summary with change/inflow/leaders, concept board summary with driver events/leaders. For understanding sector relationships and theme tracking.", input_model=IndustryChainRequest, handler=industry_chain.execute))
+    server.register_tool(MCPTool(name="stock_warrant", description="Get option/warrant data (权证/期权): ETF options (50ETF/300ETF/etc), commodity options (4 exchanges), CFFEX index options. Real-time quotes with price/volume/open_interest/strike.", input_model=StockWarrantRequest, handler=stock_warrant.execute))
 
     return server

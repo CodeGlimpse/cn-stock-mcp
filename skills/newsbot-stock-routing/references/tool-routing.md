@@ -44,6 +44,7 @@
 - 回购明细（公司回购计划/进度/已回购金额）→ `stock_repurchase`
 - 多股横向对比（行情+估值+财务+股息分层加载）→ `stock_compare`
 - 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
+- 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
 - MACD / MA / BOLL / KDJ → `technical_indicator`
 - 涨停 / 跌停 / 强势 / 次新 / 炸板股池 → `market_pool`
 - 指数概况 / 大盘概览 → `market_overview`
@@ -130,6 +131,7 @@
 - `stock_repurchase`：`akshare`
 - `stock_compare`：`zhitu` 主 + `akshare` 备
 - `industry_chain`：`akshare`
+- `stock_warrant`：`akshare`
 - `sector_quote`：板块指数行情走 `zhitu`
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
@@ -442,6 +444,21 @@
 ### 产业链（概念板块+驱动事件）
 ```json
 {"tool":"industry_chain","payload":{"include":["concept_list"],"top_n":30}}
+```
+
+### 期权（50ETF期权行情）
+```json
+{"tool":"stock_warrant","payload":{"include":["etf_option"],"etf_type":"50ETF期权","top_n":30}}
+```
+
+### 期权（商品期权，郑商所）
+```json
+{"tool":"stock_warrant","payload":{"include":["commodity_option"],"commodity_exchange":"郑商所"}}
+```
+
+### 期权（沪深300股指期权）
+```json
+{"tool":"stock_warrant","payload":{"include":["index_option"],"top_n":20}}
 ```
 
 

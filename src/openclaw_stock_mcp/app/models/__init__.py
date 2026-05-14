@@ -81,6 +81,7 @@ from .disclosure_calendar import DisclosureItem, DisclosureResult
 from .stock_repurchase import RepurchaseItem, RepurchaseResult
 from .stock_compare import StockCompareItem, StockCompareResult
 from .industry_chain import IndustryListItem, ConceptListItem, IndustryChainResult
+from .stock_warrant import OptionItem, StockWarrantResult
 
 __all__ = [
     "ToolError",
@@ -162,4 +163,6 @@ __all__ = [
     "IndustryListItem",
     "ConceptListItem",
     "IndustryChainResult",
+    "OptionItem",
+    "StockWarrantResult",
 ]
