@@ -136,6 +136,22 @@ class LimitUpPoolSentiment(BaseModel):
     ladder: dict[str, int] = Field(default_factory=dict)
 
 
+class LimitUpPoolIndustrySentimentItem(BaseModel):
+    industry: str
+    distinct_code_count: int = 0
+    limit_up_count: int = 0
+    multi_limit_count: int = 0
+    highest_consecutive_limit: int | None = None
+    strong_count: int = 0
+    previous_count: int = 0
+    previous_up_count: int = 0
+    sub_new_count: int = 0
+    broken_count: int = 0
+    limit_down_count: int = 0
+    limit_up_seal_amount_sum: float | None = None
+    limit_down_seal_amount_sum: float | None = None
+
+
 class LimitUpPoolResult(BaseModel):
     limit_up: list[LimitUpItem] = []
     limit_up_count: int = 0
@@ -150,4 +166,5 @@ class LimitUpPoolResult(BaseModel):
     broken: list[BrokenItem] = []
     broken_count: int = 0
     sentiment: LimitUpPoolSentiment | None = None
+    industry_sentiment: list[LimitUpPoolIndustrySentimentItem] = []
     summary: str = ""

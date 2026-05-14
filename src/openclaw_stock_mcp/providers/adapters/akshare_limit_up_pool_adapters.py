@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 from openclaw_stock_mcp.app.models.limit_up_pool import (
     BrokenItem,
     LimitDownItem,
     LimitUpItem,
+    LimitUpPoolIndustrySentimentItem,
     LimitUpPoolSentiment,
     PreviousItem,
     StrongItem,
@@ -34,6 +37,10 @@ def _clean_str(value):
         return None
     s = str(value).strip()
     return s if s and s != "NaN" and s != "NaT" and s != "--" and s != "-" else None
+
+
+def _industry_key(value: str | None) -> str:
+    return value.strip() if value and value.strip() else "unknown"
 
 
 def adapt_limit_up_row(row: dict) -> LimitUpItem:
@@ -195,6 +202,108 @@ def build_limit_up_sentiment(trade_date: str | None, lu, ld, strong, prev, sub, 
         avg_limit_up_turnover_rate=(sum(turnover_rates_up) / len(turnover_rates_up)) if turnover_rates_up else None,
         ladder=ladder,
     )
+
+
+def build_limit_up_industry_sentiment(lu, ld, strong, prev, sub, broken) -> list[LimitUpPoolIndustrySentimentItem]:
+    grouped: dict[str, dict] = defaultdict(lambda: {
+        "codes": set(),
+        "limit_up_count": 0,
+        "multi_limit_count": 0,
+        "highest_consecutive_limit": 0,
+        "strong_count": 0,
+        "previous_count": 0,
+        "previous_up_count": 0,
+        "sub_new_count": 0,
+        "broken_count": 0,
+        "limit_down_count": 0,
+        "limit_up_seal_amount_sum": 0.0,
+        "limit_down_seal_amount_sum": 0.0,
+        "has_limit_up_seal": False,
+        "has_limit_down_seal": False,
+    })
+
+    for item in lu:
+        key = _industry_key(item.industry)
+        row = grouped[key]
+        if item.code:
+            row["codes"].add(item.code)
+        row["limit_up_count"] += 1
+        if item.consecutive_limit is not None and item.consecutive_limit >= 2:
+            row["multi_limit_count"] += 1
+        row["highest_consecutive_limit"] = max(row["highest_consecutive_limit"], item.consecutive_limit or 0)
+        if item.seal_amount is not None:
+            row["limit_up_seal_amount_sum"] += float(item.seal_amount)
+            row["has_limit_up_seal"] = True
+
+    for item in ld:
+        key = _industry_key(item.industry)
+        row = grouped[key]
+        if item.code:
+            row["codes"].add(item.code)
+        row["limit_down_count"] += 1
+        if item.seal_amount is not None:
+            row["limit_down_seal_amount_sum"] += float(item.seal_amount)
+            row["has_limit_down_seal"] = True
+
+    for item in strong:
+        key = _industry_key(item.industry)
+        row = grouped[key]
+        if item.code:
+            row["codes"].add(item.code)
+        row["strong_count"] += 1
+
+    for item in prev:
+        key = _industry_key(item.industry)
+        row = grouped[key]
+        if item.code:
+            row["codes"].add(item.code)
+        row["previous_count"] += 1
+        if item.change_pct is not None and item.change_pct > 0:
+            row["previous_up_count"] += 1
+
+    for item in sub:
+        key = _industry_key(item.industry)
+        row = grouped[key]
+        if item.code:
+            row["codes"].add(item.code)
+        row["sub_new_count"] += 1
+
+    for item in broken:
+        key = _industry_key(item.industry)
+        row = grouped[key]
+        if item.code:
+            row["codes"].add(item.code)
+        row["broken_count"] += 1
+
+    result: list[LimitUpPoolIndustrySentimentItem] = []
+    for industry, row in grouped.items():
+        result.append(LimitUpPoolIndustrySentimentItem(
+            industry=industry,
+            distinct_code_count=len(row["codes"]),
+            limit_up_count=row["limit_up_count"],
+            multi_limit_count=row["multi_limit_count"],
+            highest_consecutive_limit=row["highest_consecutive_limit"] or None,
+            strong_count=row["strong_count"],
+            previous_count=row["previous_count"],
+            previous_up_count=row["previous_up_count"],
+            sub_new_count=row["sub_new_count"],
+            broken_count=row["broken_count"],
+            limit_down_count=row["limit_down_count"],
+            limit_up_seal_amount_sum=row["limit_up_seal_amount_sum"] if row["has_limit_up_seal"] else None,
+            limit_down_seal_amount_sum=row["limit_down_seal_amount_sum"] if row["has_limit_down_seal"] else None,
+        ))
+
+    result.sort(
+        key=lambda x: (
+            x.limit_up_count,
+            x.strong_count,
+            -x.limit_down_count,
+            x.broken_count,
+            x.previous_up_count,
+        ),
+        reverse=True,
+    )
+    return result
 
 
 def build_limit_up_summary(lu, ld, strong, prev, sub, broken, sentiment: LimitUpPoolSentiment | None = None) -> str:

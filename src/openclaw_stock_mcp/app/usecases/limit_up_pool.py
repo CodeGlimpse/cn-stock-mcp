@@ -13,6 +13,7 @@ from openclaw_stock_mcp.providers.adapters.akshare_limit_up_pool_adapters import
     adapt_previous_row,
     adapt_strong_row,
     adapt_sub_new_row,
+    build_limit_up_industry_sentiment,
     build_limit_up_sentiment,
     build_limit_up_summary,
 )
@@ -102,6 +103,14 @@ class LimitUpPoolUseCase:
             sub=sub_new_full,
             broken=broken_full,
         )
+        industry_sentiment = build_limit_up_industry_sentiment(
+            lu=limit_up_full,
+            ld=limit_down_full,
+            strong=strong_full,
+            prev=previous_full,
+            sub=sub_new_full,
+            broken=broken_full,
+        )
         summary = build_limit_up_summary(limit_up_full, limit_down_full, strong_full, previous_full, sub_new_full, broken_full, sentiment=sentiment)
 
         limit_up = limit_up_full[:top_n] if top_n and limit_up_full else limit_up_full
@@ -125,6 +134,7 @@ class LimitUpPoolUseCase:
             broken=broken,
             broken_count=len(broken),
             sentiment=sentiment,
+            industry_sentiment=industry_sentiment,
             summary=summary,
         )
         return result.model_dump()

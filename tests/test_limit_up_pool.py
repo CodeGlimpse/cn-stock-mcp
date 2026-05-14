@@ -10,6 +10,7 @@ def _make_limit_up_rows():
         {"代码": "001259", "名称": "利仁科技", "涨跌幅": 10.011, "最新价": 50.00, "成交额": 29975000, "流通市值": 2377225000, "总市值": 3679444000, "换手率": 1.2609, "封板资金": 187875000, "首次封板时间": "092500", "最后封板时间": "092500", "炸板次数": 0, "涨停统计": "3/3", "连板数": 3, "所属行业": "小家电"},
         {"代码": "300965", "名称": "恒宇信通", "涨跌幅": 20.0, "最新价": 79.20, "成交额": 43290245, "流通市值": 4284225000, "总市值": 4752000000, "换手率": 1.0104, "封板资金": 240673435, "首次封板时间": "092500", "最后封板时间": "092500", "炸板次数": 0, "涨停统计": "1/1", "连板数": 1, "所属行业": "航空装备"},
         {"代码": "603123", "名称": "示例五板", "涨跌幅": 10.0, "最新价": 21.0, "成交额": 100000000, "流通市值": 3000000000, "总市值": 5000000000, "换手率": 8.0, "封板资金": 10000000, "首次封板时间": "100000", "最后封板时间": "145500", "炸板次数": 1, "涨停统计": "5/5", "连板数": 5, "所属行业": "示例行业"},
+        {"代码": "605001", "名称": "行业缺失样本", "涨跌幅": 10.0, "最新价": 11.0, "成交额": 50000000, "流通市值": 1000000000, "总市值": 1500000000, "换手率": 5.0, "封板资金": 5000000, "首次封板时间": "093000", "最后封板时间": "145000", "炸板次数": 0, "涨停统计": "2/2", "连板数": 2, "所属行业": "--"},
     ]
 
 
@@ -23,6 +24,7 @@ def _make_strong_rows():
     return [
         {"代码": "300210", "名称": "森远股份", "涨跌幅": 20.02, "最新价": 12.05, "涨停价": 12.05, "成交额": 1227489408, "流通市值": 5834850000, "总市值": 5834850000, "换手率": 21.75, "涨速": 0.0, "是否新高": "是", "量比": 4.95, "涨停统计": "1/1", "入选理由": "60日新高", "所属行业": "环保设备"},
         {"代码": "300959", "名称": "线上线下", "涨跌幅": 20.00, "最新价": 133.79, "涨停价": 133.79, "成交额": 1463902560, "流通市值": 7000992000, "总市值": 10752410000, "换手率": 21.37, "涨速": 0.0, "是否新高": "是", "量比": 3.42, "涨停统计": "2/2", "入选理由": "60日新高且近期多次涨停", "所属行业": "通信服务"},
+        {"代码": "688001", "名称": "未知行业强势", "涨跌幅": 12.0, "最新价": 88.0, "涨停价": 90.0, "成交额": 500000000, "流通市值": 9000000000, "总市值": 12000000000, "换手率": 9.5, "涨速": 0.5, "是否新高": "否", "量比": 1.5, "涨停统计": "1/1", "入选理由": "放量反弹", "所属行业": ""},
     ]
 
 
@@ -52,7 +54,7 @@ def test_limit_up_pool_limit_up():
     with patch.object(uc.router, "get_provider", return_value=mock_provider):
         req = LimitUpPoolRequest(include=["limit_up"], trade_date="20260513")
         result = uc.execute(req)
-    assert result["limit_up_count"] == 3
+    assert result["limit_up_count"] == 4
     item = result["limit_up"][0]
     assert item["code"] == "001259"
     assert item["consecutive_limit"] == 3
@@ -71,9 +73,9 @@ def test_limit_up_pool_all_categories():
     with patch.object(uc.router, "get_provider", return_value=mock_provider):
         req = LimitUpPoolRequest(include=["limit_up", "limit_down", "strong", "previous", "sub_new", "broken"], trade_date="20260513")
         result = uc.execute(req)
-    assert result["limit_up_count"] == 3
+    assert result["limit_up_count"] == 4
     assert result["limit_down_count"] == 1
-    assert result["strong_count"] == 2
+    assert result["strong_count"] == 3
     assert result["previous_count"] == 2
     assert result["sub_new_count"] == 1
     assert result["broken_count"] == 1
@@ -88,7 +90,7 @@ def test_limit_up_pool_top_n():
         result = uc.execute(req)
     assert result["strong_count"] == 1
     assert result["strong"][0]["name"] == "森远股份"
-    assert result["sentiment"]["strong_total"] == 2
+    assert result["sentiment"]["strong_total"] == 3
 
 
 def test_limit_up_pool_uses_cache():
@@ -100,7 +102,7 @@ def test_limit_up_pool_uses_cache():
         req = LimitUpPoolRequest(include=["limit_up"], trade_date="20260513")
         result = uc.execute(req)
     mock_provider.get_limit_up_pool_raw.assert_not_called()
-    assert result["limit_up_count"] == 3
+    assert result["limit_up_count"] == 4
 
 
 def test_limit_up_pool_summary():
@@ -129,12 +131,40 @@ def test_limit_up_pool_sentiment_uses_full_data_not_top_n():
     assert result["previous_count"] == 1
     assert result["broken_count"] == 1
     sentiment = result["sentiment"]
-    assert sentiment["limit_up_total"] == 3
+    assert sentiment["limit_up_total"] == 4
     assert sentiment["previous_total"] == 2
     assert sentiment["broken_total"] == 1
-    assert sentiment["multi_limit_total"] == 2
+    assert sentiment["multi_limit_total"] == 3
     assert sentiment["highest_consecutive_limit"] == 5
     assert sentiment["previous_up_count"] == 1
     assert sentiment["previous_up_ratio"] == 0.5
-    assert sentiment["broken_rate"] == 0.25
-    assert sentiment["ladder"] == {"1": 1, "3": 1, "5+": 1}
+    assert sentiment["broken_rate"] == 0.2
+    assert sentiment["ladder"] == {"1": 1, "2": 1, "3": 1, "5+": 1}
+
+
+def test_limit_up_pool_industry_sentiment_uses_full_data_and_unknown_bucket():
+    uc = LimitUpPoolUseCase()
+    mock_provider = MagicMock()
+    mock_provider.get_limit_up_pool_raw.return_value = _make_limit_up_rows()
+    mock_provider.get_limit_down_pool.return_value = _make_limit_down_rows()
+    mock_provider.get_strong_pool.return_value = _make_strong_rows()
+    mock_provider.get_previous_limit_pool.return_value = _make_previous_rows()
+    mock_provider.get_sub_new_pool.return_value = _make_sub_new_rows()
+    mock_provider.get_broken_pool.return_value = _make_broken_rows()
+    with patch.object(uc.router, "get_provider", return_value=mock_provider):
+        req = LimitUpPoolRequest(include=["limit_up", "limit_down", "strong", "previous", "sub_new", "broken"], trade_date="20260513", top_n=1)
+        result = uc.execute(req)
+
+    rows = {row["industry"]: row for row in result["industry_sentiment"]}
+    assert rows["示例行业"]["limit_up_count"] == 1
+    assert rows["示例行业"]["multi_limit_count"] == 1
+    assert rows["示例行业"]["highest_consecutive_limit"] == 5
+    assert rows["示例行业"]["previous_count"] == 1
+    assert rows["示例行业"]["previous_up_count"] == 1
+    assert rows["unknown"]["limit_up_count"] == 1
+    assert rows["unknown"]["multi_limit_count"] == 1
+    assert rows["unknown"]["strong_count"] == 1
+    assert rows["unknown"]["distinct_code_count"] == 2
+    assert rows["塑料"]["broken_count"] == 1
+    assert rows["专用设备"]["limit_down_count"] == 1
+    assert result["limit_up_count"] == 1

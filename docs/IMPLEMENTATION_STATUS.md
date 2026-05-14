@@ -64,7 +64,7 @@
 - `industry_chain`
 - `stock_warrant`
 - `fund_flow`
-- `limit_up_pool`（含情绪指标汇总）
+- `limit_up_pool`（含情绪指标汇总、行业维度情绪汇总）
 - `sec_reveal`
 
 ### market_pool（股池）当前实现
