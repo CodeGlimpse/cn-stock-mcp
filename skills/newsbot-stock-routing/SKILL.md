@@ -46,6 +46,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - 披露日历（财报披露时间表/预约日/变更/实际披露日）→ `disclosure_calendar`
 - 回购明细（公司回购计划/进度/已回购金额）→ `stock_repurchase`
 - 多股横向对比（行情+估值+财务+股息分层加载）→ `stock_compare`
+- 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
 
 ## Operating rules
 

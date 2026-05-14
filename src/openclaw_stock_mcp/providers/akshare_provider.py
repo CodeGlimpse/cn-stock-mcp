@@ -1218,3 +1218,23 @@ class AKShareProvider:
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare financial_abstract failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
+
+    # ── Industry Chain (产业链上下游) ──────────────────────
+
+    def get_industry_summary(self) -> list[dict]:
+        """Fetch industry board summary from ak.stock_board_industry_summary_ths()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_board_industry_summary_ths)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare industry_summary failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")
+
+    def get_concept_summary(self) -> list[dict]:
+        """Fetch concept board summary from ak.stock_board_concept_summary_ths()."""
+        lib = self._require_ak()
+        try:
+            df = self._call_ak_quietly(lib.stock_board_concept_summary_ths)
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare concept_summary failed: {exc}", retryable=True) from exc
+        return df.to_dict(orient="records")

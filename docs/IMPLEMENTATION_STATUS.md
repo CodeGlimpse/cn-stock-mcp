@@ -60,6 +60,7 @@
 - `disclosure_calendar`
 - `stock_repurchase`
 - `stock_compare`
+- `industry_chain`
 
 ### market_pool（股池）当前实现
 - 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`

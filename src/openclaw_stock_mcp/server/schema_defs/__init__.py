@@ -36,6 +36,7 @@ from ._market import (
     TradingCalendarRequest,
 )
 from ._sector import (
+    IndustryChainRequest,
     IndustryValuationRankRequest,
     SectorLeadersRequest,
     SectorLookupRequest,
@@ -49,7 +50,6 @@ from ._stock import (
     DividendRankRequest,
     ShareholderChangeRequest,
     StockRepurchaseRequest,
-    StockCompareRequest,
     StockCompareRequest,
     StockFinancialRequest,
     StockHistoryRequest,
@@ -82,6 +82,7 @@ __all__ = [
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
     "ShareholderChangeRequest", "StockRepurchaseRequest", "StockCompareRequest",
+    "IndustryChainRequest",
     # Market
     "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
     "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",

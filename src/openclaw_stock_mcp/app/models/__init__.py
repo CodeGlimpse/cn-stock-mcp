@@ -80,6 +80,7 @@ from .shareholder_change import ShareholderTop10Item, ShareholderChangeItem, Sha
 from .disclosure_calendar import DisclosureItem, DisclosureResult
 from .stock_repurchase import RepurchaseItem, RepurchaseResult
 from .stock_compare import StockCompareItem, StockCompareResult
+from .industry_chain import IndustryListItem, ConceptListItem, IndustryChainResult
 
 __all__ = [
     "ToolError",
@@ -158,4 +159,7 @@ __all__ = [
     "RepurchaseResult",
     "StockCompareItem",
     "StockCompareResult",
+    "IndustryListItem",
+    "ConceptListItem",
+    "IndustryChainResult",
 ]

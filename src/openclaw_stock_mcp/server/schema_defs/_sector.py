@@ -172,5 +172,16 @@ SectorLookupRequest.model_rebuild(_types_namespace={"SectorLookupMode": SectorLo
 
 __all__ = [
     "SectorReviewRequest", "SectorRotationReviewRequest", "SectorLookupRequest",
-    "SectorQuoteRequest", "SectorLeadersRequest", "IndustryValuationRankRequest",
+    "SectorQuoteRequest", "SectorLeadersRequest", "SectorValuationRankRequest",
+    "IndustryChainRequest",
 ]
+
+
+class IndustryChainRequest(BaseModel):
+    include: list[Literal["industry_list", "concept_list"]] = Field(
+        default=["industry_list"]
+    )
+    sort_by: Literal["change_pct", "net_inflow", "turnover", "volume", "up_count"] = "change_pct"
+    descending: bool = True
+    top_n: int | None = Field(default=None, ge=1, le=200)
+    provider: Literal["akshare"] | None = "akshare"

@@ -285,6 +285,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | disclosure_calendar | disclosure_calendar.py | 1:1 |
 | stock_repurchase | stock_repurchase.py | 1:1 |
 | stock_compare | stock_compare.py | 1:1 |
+| industry_chain | industry_chain.py | 1:1 |
 
 ---
 
