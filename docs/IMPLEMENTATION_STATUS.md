@@ -42,7 +42,7 @@
 - `northbound`
 - `valuation_rank`
 - `index_compose`
-- `index_enhance`
+- `index_enhance`（含权重暴露、行业暴露）
 - `industry_valuation_rank`
 - `earnings_quality`
 - `macro_indicator`

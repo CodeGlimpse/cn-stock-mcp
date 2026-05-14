@@ -25,7 +25,7 @@
 - 北向资金流向 / 持股排行 → `northbound`
 - 估值排名（PE/PB + 市场估值温度）→ `valuation_rank`
 - 指数成分与权重分析 → `index_compose`
-- 指数增强组合对比（增强收益/基准收益/超额收益/成分贡献）→ `index_enhance`
+- 指数增强组合对比（增强收益/基准收益/超额收益/成分贡献/权重暴露/行业暴露）→ `index_enhance`
 - 行业估值分位（一级行业横向估值）→ `industry_valuation_rank`
 - 盈利质量评估（财报质量打分）→ `earnings_quality`
 - 宏观经济指标（CPI/PPI/PMI/GDP/LPR/M2/信贷/出口/非农/BDI/黄金等）→ `macro_indicator`

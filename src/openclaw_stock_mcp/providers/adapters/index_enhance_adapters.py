@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from openclaw_stock_mcp.app.models.index_enhance import IndexEnhanceMemberItem, IndexEnhanceSummary
+from collections import defaultdict
+
+from openclaw_stock_mcp.app.models.index_enhance import (
+    IndexEnhanceIndustryCoverage,
+    IndexEnhanceIndustryExposureItem,
+    IndexEnhanceMemberItem,
+    IndexEnhanceSummary,
+    IndexEnhanceWeightExposure,
+)
 
 
 def normalize_index_code(value: str) -> str:
@@ -44,8 +52,9 @@ def calc_index_return(history_items: list) -> float | None:
     return (float(close) - float(prev_close)) / float(prev_close) * 100.0
 
 
-def build_enhance_members(constituents: list, quotes: dict[str, object], benchmark_return: float | None) -> list[IndexEnhanceMemberItem]:
+def build_enhance_members(constituents: list, quotes: dict[str, object], benchmark_return: float | None, industries: dict[str, str | None] | None = None) -> list[IndexEnhanceMemberItem]:
     members = []
+    industries = industries or {}
     for c in constituents:
         raw_symbol = c.get("symbol") if isinstance(c, dict) else getattr(c, "symbol", "")
         raw_exchange = c.get("exchange") if isinstance(c, dict) else getattr(c, "exchange", None)
@@ -63,6 +72,7 @@ def build_enhance_members(constituents: list, quotes: dict[str, object], benchma
         members.append(IndexEnhanceMemberItem(
             symbol=symbol,
             name=raw_name or (getattr(q, "name", None) if q is not None else None),
+            industry=industries.get(symbol),
             weight=weight,
             price=price,
             change_percent=change_percent,
@@ -109,6 +119,62 @@ def build_index_enhance_summary(index_code: str, index_name: str | None, benchma
         underperform_count=underperform,
         method=f"top_weight_{weighting}_quote",
     )
+
+
+def build_weight_exposure(members: list[IndexEnhanceMemberItem]) -> IndexEnhanceWeightExposure:
+    weighted = [m for m in members if m.weight is not None]
+    weighted.sort(key=lambda x: float(x.weight or 0), reverse=True)
+    total_weight = sum(float(m.weight or 0) for m in weighted) if weighted else None
+
+    def _ratio(n: int):
+        if not weighted or not total_weight:
+            return None
+        return sum(float(m.weight or 0) for m in weighted[:n]) / total_weight * 100.0
+
+    return IndexEnhanceWeightExposure(
+        total_weight=total_weight,
+        top1_weight_percent=_ratio(1),
+        top3_weight_percent=_ratio(3),
+        top5_weight_percent=_ratio(5),
+        top10_weight_percent=_ratio(10),
+        top_members=weighted[:10],
+    )
+
+
+def build_industry_exposure(members: list[IndexEnhanceMemberItem]) -> tuple[list[IndexEnhanceIndustryExposureItem], IndexEnhanceIndustryCoverage]:
+    groups: dict[str, list[IndexEnhanceMemberItem]] = defaultdict(list)
+    known = 0
+    unknown = 0
+    for m in members:
+        industry = (m.industry or "").strip() or "unknown"
+        groups[industry].append(m)
+        if industry == "unknown":
+            unknown += 1
+        else:
+            known += 1
+
+    rows: list[IndexEnhanceIndustryExposureItem] = []
+    for industry, items in groups.items():
+        weights = [float(i.weight) for i in items if i.weight is not None]
+        changes = [float(i.change_percent) for i in items if i.change_percent is not None]
+        contribs = [float(i.weighted_contribution) for i in items if i.weighted_contribution is not None]
+        excess_contribs = [float(i.weight or 0) * float(i.excess_vs_index or 0) / 100.0 for i in items if i.weight is not None and i.excess_vs_index is not None]
+        rows.append(IndexEnhanceIndustryExposureItem(
+            industry=industry,
+            member_count=len(items),
+            weight_sum=sum(weights) if weights else None,
+            avg_change_percent=(sum(changes) / len(changes)) if changes else None,
+            contribution_sum=sum(contribs) if contribs else None,
+            excess_contribution_sum=sum(excess_contribs) if excess_contribs else None,
+        ))
+    rows.sort(key=lambda x: float(x.weight_sum or 0), reverse=True)
+    total = known + unknown
+    coverage = IndexEnhanceIndustryCoverage(
+        known_count=known,
+        unknown_count=unknown,
+        coverage_ratio=(known / total) if total else None,
+    )
+    return rows, coverage
 
 
 def build_index_enhance_summary_text(summary: IndexEnhanceSummary) -> str:
