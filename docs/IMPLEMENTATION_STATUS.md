@@ -1,6 +1,6 @@
 # 实现状态说明
 
-更新时间：2026-05-13
+更新时间：2026-05-15
 
 ## 已完成
 
@@ -11,6 +11,19 @@
 
 ### 基础代码结构
 - schema / models / providers / services / usecases / MCP Python SDK stdio transport
+
+### 测试与 CI（2026-05-15 新增）
+- live 用例已从 `tests/test_live.py` 拆分到 `tests/live/`：
+  - `test_smoke_transport.py`（transport/tool 冒烟）
+  - `test_smoke_provider.py`（provider 冒烟）
+  - `test_live_extended.py`（偏重/偏脆 live case）
+  - `conftest.py`（含 `recent_trade_date` fixture，统一交易日回退）
+- 新增 `scripts/smoke_live.sh`：统一本地 smoke live 入口。
+- 新增 `.github/workflows/live-smoke.yml`：独立 live smoke workflow。
+- pytest marker 已补齐：`live / smoke / slow / transport / provider`。
+- 本地验证：
+  - 非 live 全量：`456 passed, 16 deselected`
+  - smoke collect：`13/16 tests collected`（按 `live and smoke` 过滤）。
 
 ### 正式 MCP tool（项目内注册中心）
 - `stock_search`
@@ -514,7 +527,7 @@
 
 ## 仍待处理
 1. 增强 token alias / 多 token 选择策略
-2. 继续补自动化测试与发布前验收样例
+2. 继续补自动化测试与发布前验收样例（已补首轮 live smoke 拆分与独立 workflow，后续继续扩 coverage）
 3. 如有需要，继续增强 AKShare 股票历史字段完整度
 4. 如需继续增强 `sector_rotation_review` 的实用性，优先考虑更细粒度 benchmark 复用、轻量化个股复盘路径
 

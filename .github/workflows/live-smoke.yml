@@ -27,7 +27,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
 
+      - name: Check ZHITU_TOKEN
+        id: token_check
+        env:
+          ZHITU_TOKEN: ${{ secrets.ZHITU_TOKEN }}
+        run: |
+          if [ -n "$ZHITU_TOKEN" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ZHITU_TOKEN is missing; skipping live smoke tests."
+          fi
+
       - name: Run live smoke
+        if: steps.token_check.outputs.has_token == 'true'
         env:
           ZHITU_TOKEN: ${{ secrets.ZHITU_TOKEN }}
         run: |
