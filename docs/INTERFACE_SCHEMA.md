@@ -151,6 +151,11 @@ Last Updated: 2026-05-09
   - stock-bj：`zhitu` 主，`akshare` 备（AKShare 走 `stock_bj_a_spot_em()`，10s TTL 缓存）
   - index/fund：`zhitu` 主，`akshare` 备
   - stock-star：`zhitu`
+  - **单位/口径说明（保持原始返回数值，不做归一化）：**
+    - `volume`：Zhitu 股票实时行情口径为 **万手**；历史 K 线 `stock_history.items[].volume` 当前为 **手**，二者单位不同。
+    - `turnover`：成交额，单位为 **元**。
+    - `pe`：Zhitu 股票实时行情口径为 **动态市盈率**。
+    - `market_cap` / `float_market_cap`：Zhitu 股票实时行情口径为 **百元**（即 `元口径市值 / 100`）；例如返回 `16692135830.84` 表示约 `1,669,213,583,084` 元，即约 `1.67` 万亿元。
 - hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`
 
 > `stock_orderbook` 当前已支持：

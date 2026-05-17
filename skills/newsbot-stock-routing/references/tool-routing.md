@@ -101,6 +101,8 @@
 ## 3. 默认 provider 路由
 
 - `stock_quote(stock-main)`：`zhitu` 主，`akshare` 备；**批量请求自动走 `/hs/public/ssjymore`（最多 20 支）**
+  - Zhitu 股票实时行情保持原始数值口径：`volume` = **万手**，`turnover` = **元**，`pe` = **动态市盈率**，`market_cap` / `float_market_cap` = **百元**（即元口径市值 / 100）。
+  - 注意：`stock_history.items[].volume` 当前为 **手**，与 `stock_quote.volume` 的 **万手** 不同。
 - `stock_quote(index/fund)`：`zhitu` 主，`akshare` 备
 - `stock_quote(stock-bj)`：`zhitu` 主，`akshare` 备（AKShare 走 `stock_bj_a_spot_em()`，10s TTL 缓存）
 - `stock_quote(stock-star)`：`zhitu` 主，`akshare` 备（Sina `stock_zh_a_spot()` 源，缺 PE/PB/市值/换手率/振幅）

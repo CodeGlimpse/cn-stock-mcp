@@ -55,6 +55,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 ## Operating rules
 
 - 代码或名称不确定时，**先 `stock_search`，再 quote/history/review**。
+- 解释 `stock_quote` 股票实时行情时，必须说明 Zhitu 原始单位口径：`volume` 为**万手**、`turnover` 为**元**、`pe` 为**动态市盈率**、`market_cap/float_market_cap` 为**百元**（元口径市值 / 100）；不要自行归一化返回值。
 - 解释 `market_brief`、`sector_review`、`sector_rotation_review` 和 `hot_theme_tracker` 时，**优先使用统一公共字段 `review_envelope_v1`**。
 - `sentiment.score` 是统一情绪温度分；`rotation.score` 是轮动信号分，**不能混用**。
 - 若 `requested_trade_date != trade_date`，必须明确说明“已回退到有效交易日”。
