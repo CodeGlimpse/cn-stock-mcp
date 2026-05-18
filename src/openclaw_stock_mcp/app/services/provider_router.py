@@ -95,11 +95,15 @@ class ProviderRouter:
         sec_type: str | None,
         preferred: str | None,
     ) -> ProviderSelection:
-        # 1. Explicit preferred overrides everything
-        if preferred == "akshare":
-            return ProviderSelection(primary="akshare", fallback=["zhitu"])
-        if preferred == "zhitu":
-            return ProviderSelection(primary="zhitu", fallback=["akshare"])
+        # 1. Explicit preferred overrides primary choice, but preserve tool-level fallback policy
+        if preferred in {"akshare", "zhitu"}:
+            primary, fallback = _TOOL_ROUTES.get(tool_name, _DEFAULT_ROUTE)
+            providers = [preferred, primary, *fallback]
+            deduped: list[str] = []
+            for name in providers:
+                if name not in deduped:
+                    deduped.append(name)
+            return ProviderSelection(primary=deduped[0], fallback=deduped[1:])
 
         # 2. Symbol/sec_type overrides for specific tools
         override = self._apply_overrides(tool_name, symbol, sec_type)

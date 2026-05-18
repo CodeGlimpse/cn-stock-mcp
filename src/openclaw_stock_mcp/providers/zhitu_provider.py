@@ -395,6 +395,89 @@ class ZhituProvider:
         candidates.sort(key=_sort_key)
         return candidates[:max_candidates]
 
+    def _resolve_primary_sector_name(self, sector_name: str) -> str | None:
+        """Resolve a user-friendly primary sector name to a Zhitu-recognized sector identifier."""
+        raw = self._get_json("/hs/list/primary")
+        lower_input = sector_name.lower()
+        candidates: list[dict] = []
+
+        for item in raw:
+            mc = str(item.get("mc", "")).strip()
+            dm = str(item.get("dm", "")).strip()
+            if not mc and not dm:
+                continue
+
+            names = [value for value in (mc, dm) if value]
+            stripped_names: list[str] = []
+            for value in names:
+                stripped = value
+                for prefix in ("1000SW1", "300SW1", "500SW1", "SW1"):
+                    if stripped.startswith(prefix):
+                        stripped = stripped[len(prefix):]
+                        break
+                stripped_names.append(stripped)
+
+            exact = any(lower_input == value.lower() for value in [*names, *stripped_names])
+            contains = any(lower_input in value.lower() for value in [*names, *stripped_names])
+            if exact or contains:
+                candidates.append({
+                    "mc": mc,
+                    "dm": dm,
+                    "match": "exact" if exact else "substring",
+                    "is_sw1": mc.startswith("1000SW1") or dm.startswith("1000SW1"),
+                })
+
+        if not candidates:
+            return None
+
+        def _sort_key(c: dict) -> tuple:
+            match_rank = 0 if c["match"] == "exact" else 1
+            sw1_rank = 0 if c["is_sw1"] else 1
+            mc = c["mc"] or c["dm"]
+            return (match_rank, sw1_rank, len(mc), mc)
+
+        candidates.sort(key=_sort_key)
+        best = candidates[0]
+        return best["mc"] or best["dm"]
+
+    def _find_primary_sector_candidates(self, sector_name: str, max_candidates: int = 5) -> list[dict]:
+        raw = self._get_json("/hs/list/primary")
+        lower_input = sector_name.lower()
+        candidates: list[dict] = []
+
+        for item in raw:
+            mc = str(item.get("mc", "")).strip()
+            dm = str(item.get("dm", "")).strip()
+            if not mc and not dm:
+                continue
+
+            names = [value for value in (mc, dm) if value]
+            stripped_names: list[str] = []
+            for value in names:
+                stripped = value
+                for prefix in ("1000SW1", "300SW1", "500SW1", "SW1"):
+                    if stripped.startswith(prefix):
+                        stripped = stripped[len(prefix):]
+                        break
+                stripped_names.append(stripped)
+
+            exact = any(lower_input == value.lower() for value in [*names, *stripped_names])
+            contains = any(lower_input in value.lower() for value in [*names, *stripped_names])
+            if exact or contains:
+                candidates.append({
+                    "mc": mc,
+                    "dm": dm,
+                    "match": "exact" if exact else "substring",
+                })
+
+        def _sort_key(c: dict) -> tuple:
+            match_rank = 0 if c["match"] == "exact" else 1
+            name = c["mc"] or c["dm"]
+            return (match_rank, len(name), name)
+
+        candidates.sort(key=_sort_key)
+        return candidates[:max_candidates]
+
     def _extract_sector_children_items(self, raw):
         if isinstance(raw, dict):
             stocks = raw.get("stocks")
@@ -457,8 +540,24 @@ class ZhituProvider:
                         return []
                     raise
 
-            # Primary sector: use name directly (existing behavior)
-            raw = self._get_json(f"/hs/sectors/{sector_name}")
+            # Primary sector: resolve user-friendly name to zhitu-recognized primary identifier
+            resolved_primary = self._resolve_primary_sector_name(sector_name)
+            if resolved_primary is None:
+                candidates = self._find_primary_sector_candidates(sector_name)
+                if candidates:
+                    candidate_names = [c["mc"] or c["dm"] for c in candidates[:3]]
+                    raise ProviderError(
+                        "INVALID_ARGUMENT",
+                        f"Primary sector '{sector_name}' not found. Similar: {', '.join(candidate_names)}",
+                        retryable=False,
+                    )
+                raise ProviderError(
+                    "INVALID_ARGUMENT",
+                    f"Primary sector '{sector_name}' not found in primary sector list",
+                    retryable=False,
+                )
+
+            raw = self._get_json(f"/hs/sectors/{resolved_primary}")
             items = self._extract_sector_children_items(raw)
             return self._slice_items(items, limit)
 
