@@ -999,6 +999,12 @@ class ZhituProvider:
         raw = self._get_json(f"/hz/real/ssjy/{normalized}")
         if isinstance(raw, list):
             raw = raw[0]
+        if isinstance(raw, dict) and raw.get("error"):
+            raise ProviderError(
+                "PROVIDER_UNAVAILABLE",
+                f"Zhitu sector quote unavailable for {symbol}: {raw.get('error')}",
+                retryable=True,
+            )
         return adapt_zhitu_sector_quote(raw, normalized, sector_type)
 
     def get_sector_quotes(self, symbols: list[str], sector_type: str | None = None):
