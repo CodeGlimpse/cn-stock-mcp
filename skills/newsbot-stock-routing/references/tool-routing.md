@@ -150,6 +150,7 @@
 - `sector_rotation_review`：对多个 `sector_review` 结果做横向聚合；支持 `sector_type=primary` 和 `sector_type=concept`；较小 `limit` 起步
 - `hot_theme_tracker`：复用 `sector_rotation_review + market_pool` 做主线聚合
 - `market_overview` / `market_pool` / `stock_orderbook` / `sector_lookup`：`zhitu`
+  - `market_pool(limit_up)` 的 `extra.limit_count` 表示当前连续涨停板数/连板高度；`extra.stat` 通常为 `N/M`，表示 N 天 M 板（最近 N 个交易日内出现 M 次涨停）。
 
 补充：
 - `stock_orderbook(stock-main)`：当前走沪深主板五档接口 `/hs/real/five/{code}`
