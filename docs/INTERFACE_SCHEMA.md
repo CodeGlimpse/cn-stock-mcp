@@ -173,7 +173,7 @@ Last Updated: 2026-05-09
 - `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）；支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材）
 - `stock_profile`：公司基本面（profile/dividends/unlocks/quarter_profits/valuation/dividend_summary/unlock_risk）
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
-- `capital_flow`：资金流向（market/individual/industry/concept）
+- `capital_flow`：资金流向（market/individual/industry/concept）；其中 `mode=market` 返回 `records`（历史序列）和 `market_summary`（指定 trade_date 的当日摘要）。注意 `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，当前实际语义是 **当日主力资金净流入占比**，不是区间平均值。
 - `stock_financial`：财务数据三层视图（snapshot/history/details）
 - `limit_stat`：短线情绪统计（封板率/连板分布/炸板/昨涨停今继续率；返回 `partial_failure` + `errors` 标记跌停数据获取失败）
 - `market_pool(limit_up)`：轻量涨停池快照；`extra.limit_count` 为当前连续涨停板数/连板高度（1=首板，2=二连板）；`extra.stat` 为涨停统计，格式通常为 `N/M`，表示 **N 天 M 板**（最近 N 个交易日内出现 M 次涨停）。
