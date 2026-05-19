@@ -44,7 +44,6 @@
 - `multi_timeframe_review`
 - `hot_theme_tracker`
 - `stock_profile`
-- `sector_quote`
 - `sector_review`
 - `sector_leaders`
 - `market_brief`
@@ -152,19 +151,6 @@
   - `benchmark`（自动匹配指数基准）
   - `windows.daily / weekly / monthly`
   - 可直接阅读的 `summary` 文本
-
-### sector_quote（板块指数行情）
-- 新增 `sector_quote` tool
-- 当前 provider：`zhitu`
-- 支持板块指数实时行情
-- 输出包含：
-  - `symbol`：板块指数代码（如 `101076.BKZS`）
-  - `name`：板块名称
-  - `sector_type`：`primary`（一级行业）或 `concept`（概念题材）
-  - 价格字段：`price`、`open`、`high`、`low`、`prev_close`、`change`、`change_percent`
-  - 量能字段：`volume`、`turnover`、`turnover_rate`、`amplitude`
-  - 时间戳：`timestamp`
-- Zhitu API 路径：`/hz/real/ssjy/{symbol}`（复用指数行情接口）
 
 ### stock_review_batch（批量个股复盘）
 - 新增 `stock_review_batch` tool

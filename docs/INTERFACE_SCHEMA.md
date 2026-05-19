@@ -24,7 +24,6 @@ Last Updated: 2026-05-09
 - stock_orderbook
 - stock_candidate_scan
 - stock_profile
-- sector_quote
 - sector_lookup
 - sector_review
 - sector_rotation_review
@@ -171,7 +170,6 @@ Last Updated: 2026-05-09
 
 - `stock_review`：单股复盘摘要（latest_bar/stats/benchmark/windows/summary）
 - `stock_review_batch`：批量排序与分组（items/rankings/groups/summary）
-- `sector_quote`：板块指数实时行情（支持 `sector_type=primary` 和 `sector_type=concept`）
 - `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）；支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材）
 - `stock_profile`：公司基本面（profile/dividends/unlocks/quarter_profits/valuation/dividend_summary/unlock_risk）
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
@@ -261,7 +259,6 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | sector_review | sector_review.py | 1:1 |
 | sector_rotation_review | sector_rotation_review.py | 1:1 |
 | sector_lookup | sector_lookup.py | 1:1 |
-| sector_quote | sector_quote.py | 1:1 |
 | sector_leaders | sector_leaders.py | 1:1 |
 | watchlist_review | watchlist_review.py | 1:1 |
 | multi_timeframe_review | multi_timeframe_review.py | 1:1 |
@@ -314,6 +311,6 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 
 
 ## 榜单语义统一（v1）
-适用工具：`sector_quote`、`stock_candidate_scan`、`watchlist_review`、`sector_leaders`
+适用工具：`stock_candidate_scan`、`watchlist_review`、`sector_leaders`
 - 输入：`sort_by/descending/top_n/return_mode`
 - 输出 meta：`filtered_from/filtered_count/ranked_count`

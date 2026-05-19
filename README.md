@@ -42,7 +42,6 @@
 - `stock_orderbook(main)`
 - `stock_orderbook(star)`
 - `stock_profile()`（公司基本面：profile/dividends/unlocks/profits/valuation）
-- `sector_quote()`（板块指数行情：primary/concept）
 - `sector_leaders()`（板块龙头/跟风/拖累快照）
 - `event_calendar()`（事件时间轴：dividend/unlock/profit，支持 next_event_only 盘前提醒）
 
@@ -424,36 +423,6 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_review --payload 
   - `rankings`（收益/相对强弱/量比/回撤风险榜）
   - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates` 等分层）
 - `rotation.score` 通过 `meta.rotation_score_schema` 单独声明，不与 `sentiment.score` 混用
-
-### sector_quote 板块指数行情样例
-
-```bash
-# 获取概念板块指数行情（如人工智能概念）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS"],"sector_type":"concept"}'
-
-# 获取多个板块指数行情（按涨跌幅排序，取前 5）
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sector_type":"concept","sort_by":"change_percent","top_n":5}'
-
-# 榜单筛选：成交额>=2e8，按涨跌幅排序，仅返回 top_n
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool sector_quote --payload '{"symbols":["101076.BKZS","101077.BKZS"],"sort_by":"change_percent","top_n":3,"min_turnover":200000000,"return_mode":"ranked_only"}'
-```
-
-说明：
-- `symbols`：板块指数代码（如 `101076.BKZS`）
-- `sector_type`：可选 `primary`（一级行业）或 `concept`（概念题材）
-- `sort_by`：可选 `change_percent`（涨跌幅）或 `turnover`（成交额）
-- `descending`：是否降序，默认 `true`
-- `top_n`：可选，截取前 N 条（1~50）
-- `min_turnover`：可选，按最小成交额过滤
-- `min_change_percent`：可选，按最小涨跌幅过滤
-- `exclude_null_fields`：可选，剔除排序字段为空的项
-- `return_mode`：`full`（默认，返回过滤+排序后全量）或 `ranked_only`（只返回 top_n）
-- `provider`：仅支持 `zhitu`
-- 返回包含：
-  - `symbol`、`name`、`sector_type`
-  - 价格字段：`price`、`open`、`high`、`low`、`prev_close`、`change`、`change_percent`
-  - 量能字段：`volume`、`turnover`、`turnover_rate`、`amplitude`
-  - 时间戳：`timestamp`
 
 ### stock_profile 公司基本面样例
 
