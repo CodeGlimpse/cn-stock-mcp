@@ -150,14 +150,6 @@ def test_event_calendar_request_next_event_only():
     assert req.next_event_only is True
 
 
-def test_sector_quote_request_filter_fields():
-    from openclaw_stock_mcp.server.schemas import SectorQuoteRequest
-
-    req = SectorQuoteRequest(symbols=["101076.BKZS"], min_turnover=100, min_change_percent=1.5, exclude_null_fields=True, return_mode="ranked_only")
-    assert req.min_turnover == 100
-    assert req.return_mode == "ranked_only"
-
-
 def test_event_calendar_request_event_priority():
     req = EventCalendarRequest(symbols=["600519.SH"], event_priority=["unlock", "dividend", "unlock"])
     assert req.event_priority == ["unlock", "dividend"]

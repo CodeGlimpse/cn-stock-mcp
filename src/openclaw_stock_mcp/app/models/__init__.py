@@ -58,7 +58,6 @@ from .earnings_quality import (
     EarningsQualityMetrics,
     EarningsQualityResult,
 )
-from .sector_quote import SectorQuote
 from .block_trade import (
     BlockTradeDailyItem,
     BlockTradeDailyStatItem,
@@ -153,7 +152,6 @@ __all__ = [
     "UnlockRecord",
     "QuarterProfit",
     "ValuationSnapshot",
-    "SectorQuote",
     "BlockTradeDailyItem",
     "BlockTradeDailyStatItem",
     "BlockTradeIndustryItem",

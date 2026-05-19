@@ -14,7 +14,6 @@ from openclaw_stock_mcp.server.schemas import (
     SectorReviewRequest,
     SectorRotationReviewRequest,
     SectorLeadersRequest,
-    SectorQuoteRequest,
     StockHistoryRequest,
     StockOrderbookRequest,
     StockCandidateScanRequest,

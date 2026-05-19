@@ -109,19 +109,6 @@ class SectorLookupRequest(BaseModel):
         return self
 
 
-class SectorQuoteRequest(BaseModel):
-    symbols: list[str] = Field(min_length=1, max_length=50)
-    sector_type: Literal["primary", "concept"] | None = None
-    sort_by: Literal["change_percent", "turnover"] | None = None
-    descending: bool = True
-    top_n: int | None = Field(default=None, ge=1, le=50)
-    min_turnover: float | None = Field(default=None, ge=0)
-    min_change_percent: float | None = None
-    exclude_null_fields: bool = False
-    return_mode: Literal["full", "ranked_only"] = "full"
-    provider: Literal["zhitu"] | None = "zhitu"
-
-
 class SectorLeadersRequest(BaseModel):
     sector_name: str = Field(min_length=1)
     sector_type: Literal["primary", "concept"] = "primary"
@@ -172,7 +159,7 @@ SectorLookupRequest.model_rebuild(_types_namespace={"SectorLookupMode": SectorLo
 
 __all__ = [
     "SectorReviewRequest", "SectorRotationReviewRequest", "SectorLookupRequest",
-    "SectorQuoteRequest", "SectorLeadersRequest", "SectorValuationRankRequest",
+    "SectorLeadersRequest", "SectorValuationRankRequest",
     "IndustryChainRequest",
 ]
 

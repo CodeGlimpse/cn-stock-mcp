@@ -45,7 +45,6 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
     "market_pool":          ("zhitu", []),
     "stock_orderbook":      ("zhitu", []),
     "stock_profile":        ("zhitu", []),
-    "sector_quote":         ("zhitu", []),
     "event_calendar":       ("zhitu", []),
     "sector_lookup":        ("zhitu", []),
     # ── Zhitu primary, AKShare fallback ──

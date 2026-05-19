@@ -45,7 +45,6 @@ from ._sector import (
     IndustryValuationRankRequest,
     SectorLeadersRequest,
     SectorLookupRequest,
-    SectorQuoteRequest,
     SectorReviewRequest,
     SectorRotationReviewRequest,
 )
@@ -95,7 +94,7 @@ __all__ = [
     "DisclosureCalendarRequest",
     # Sector
     "SectorReviewRequest", "SectorRotationReviewRequest", "SectorLookupRequest",
-    "SectorQuoteRequest", "SectorLeadersRequest", "IndustryValuationRankRequest",
+    "SectorLeadersRequest", "IndustryValuationRankRequest",
     # Analytics
     "StockCandidateScanRequest", "WatchlistReviewRequest",
     "MultiTimeframeReviewRequest", "HotThemeTrackerRequest",
