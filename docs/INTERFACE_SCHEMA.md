@@ -177,7 +177,7 @@ Last Updated: 2026-05-09
 - `stock_financial`：财务数据三层视图（snapshot/history/details）
 - `limit_stat`：短线情绪统计（封板率/连板分布/炸板/昨涨停今继续率；返回 `partial_failure` + `errors` 标记跌停数据获取失败）
 - `market_pool(limit_up)`：轻量涨停池快照；`extra.limit_count` 为当前连续涨停板数/连板高度（1=首板，2=二连板）；`extra.stat` 为涨停统计，格式通常为 `N/M`，表示 **N 天 M 板**（最近 N 个交易日内出现 M 次涨停）。
-- `northbound`：北向资金（当日流向/历史/持股排行）
+- `northbound`：北向资金（当日流向/历史；持股排行因 AKShare/东方财富上游接口不可用已下线）
 - `valuation_rank`：估值排名（市场估值温度 + 个股 PE/PB 排名）
 - `index_compose`：指数成分与权重（支持集中度统计；返回 `used_fallback_endpoint` + `endpoint_note` 标记权重接口降级）
 - `industry_valuation_rank`：一级行业估值分位（成员股 PE/PB 聚合后横向排序）

@@ -30,7 +30,6 @@ from .limit_stat import (
 from .northbound import (
     NorthboundFlowRecord,
     NorthboundDailySummary,
-    NorthboundHoldItem,
     NorthboundResult,
 )
 from .valuation_rank import (
@@ -129,7 +128,6 @@ __all__ = [
     "LimitStatSummary",
     "NorthboundFlowRecord",
     "NorthboundDailySummary",
-    "NorthboundHoldItem",
     "NorthboundResult",
     "MarketValuationSnapshot",
     "StockValuationItem",

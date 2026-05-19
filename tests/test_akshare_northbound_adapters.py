@@ -2,13 +2,11 @@ import pytest
 from openclaw_stock_mcp.providers.adapters.akshare_northbound_adapters import (
     adapt_em_hist_row,
     build_daily_summary_from_flow_summary,
-    adapt_em_hold_item,
     build_northbound_summary_text,
 )
 from openclaw_stock_mcp.app.models.northbound import (
     NorthboundFlowRecord,
     NorthboundDailySummary,
-    NorthboundHoldItem,
 )
 
 
@@ -158,57 +156,6 @@ def test_build_daily_summary_north_only():
     assert summary.total_north_net_buy == pytest.approx(10.5)
 
 
-# ---- adapt_em_hold_item ----
-
-def test_adapt_hold_item_basic():
-    row = {
-        "序号": 1,
-        "代码": "600050",
-        "名称": "中国联通",
-        "今日收盘价": 4.73,
-        "今日涨跌幅": 4.42,
-        "今日持股-股数": 115290.52,
-        "今日持股-市值": 545324.17,
-        "今日持股-占流通股比": 3.72,
-        "今日持股-占总股本比": 3.63,
-        "今日增持估计-股数": 9170.78,
-        "今日增持估计-市值": 42969.67,
-        "今日增持估计-市值增幅": 8.64,
-        "今日增持估计-占流通股比": 3.06,
-        "今日增持估计-占总股本比": 2.98,
-        "所属板块": "通信服务",
-        "日期": "2024-08-16",
-    }
-    item = adapt_em_hold_item(row)
-
-    assert isinstance(item, NorthboundHoldItem)
-    assert item.symbol == "600050.SH"
-    assert item.name == "中国联通"
-    assert item.price == pytest.approx(4.73)
-    assert item.change_percent == pytest.approx(4.42)
-    assert item.hold_shares == pytest.approx(115290.52)
-    assert item.hold_market_cap == pytest.approx(545324.17)
-    assert item.hold_pct_float == pytest.approx(3.72)
-    assert item.increase_shares == pytest.approx(9170.78)
-    assert item.increase_market_cap == pytest.approx(42969.67)
-    assert item.increase_pct == pytest.approx(8.64)
-    assert item.sector == "通信服务"
-    assert item.date == "2024-08-16"
-
-
-def test_adapt_hold_item_sz_code():
-    row = {"代码": "000001", "名称": "平安银行"}
-    item = adapt_em_hold_item(row)
-    assert item.symbol == "000001.SZ"
-
-
-def test_adapt_hold_item_missing_fields():
-    row = {"代码": "600519"}
-    item = adapt_em_hold_item(row)
-    assert item.price is None
-    assert item.sector is None
-
-
 # ---- build_northbound_summary_text ----
 
 def test_summary_text_inflow():
@@ -221,7 +168,7 @@ def test_summary_text_inflow():
         sh_north_down_count=621,
     )
     history = [NorthboundFlowRecord(date="2026-05-08", hold_market_cap=2.1e12, leading_stock="贵州茅台")]
-    text = build_northbound_summary_text(daily, history, [])
+    text = build_northbound_summary_text(daily, history)
     assert "净流入24.00亿" in text
     assert "沪股通15.30亿" in text
     assert "深股通8.70亿" in text
@@ -235,24 +182,12 @@ def test_summary_text_outflow():
         sz_north_net_buy=-3.15,
         total_north_net_buy=-8.38,
     )
-    text = build_northbound_summary_text(daily, [], [])
+    text = build_northbound_summary_text(daily, [])
     assert "净流出" in text
 
 
-def test_summary_text_with_holdings():
-    daily = NorthboundDailySummary(trade_date="2026-05-08", total_north_net_buy=10.0)
-    holdings = [
-        NorthboundHoldItem(symbol="600519.SH", name="贵州茅台", increase_pct=3.5),
-        NorthboundHoldItem(symbol="000858.SZ", name="五粮液", increase_pct=2.1),
-        NorthboundHoldItem(symbol="600036.SH", name="招商银行", increase_pct=1.8),
-    ]
-    text = build_northbound_summary_text(daily, [], holdings)
-    assert "增持前列" in text
-    assert "贵州茅台" in text
-
-
 def test_summary_text_empty():
-    text = build_northbound_summary_text(None, [], [])
+    text = build_northbound_summary_text(None, [])
     assert "暂无" in text
 
 
@@ -262,10 +197,8 @@ def test_northbound_request_defaults():
     from openclaw_stock_mcp.server.schemas import NorthboundRequest
 
     req = NorthboundRequest()
-    assert req.include == ["daily_summary", "history", "holdings"]
+    assert req.include == ["daily_summary", "history"]
     assert req.history_n == 30
-    assert req.hold_indicator == "今日排行"
-    assert req.hold_top_n == 20
 
 
 def test_northbound_request_history_only():
@@ -286,5 +219,5 @@ def test_northbound_request_empty_include_fails():
 def test_northbound_request_dedup_include():
     from openclaw_stock_mcp.server.schemas import NorthboundRequest
 
-    req = NorthboundRequest(include=["daily_summary", "daily_summary", "holdings"])
-    assert req.include == ["daily_summary", "holdings"]
+    req = NorthboundRequest(include=["daily_summary", "daily_summary", "history"])
+    assert req.include == ["daily_summary", "history"]

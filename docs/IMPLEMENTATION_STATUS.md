@@ -51,7 +51,7 @@
 - `capital_flow`
 - `stock_financial`
 - `limit_stat`
-- `northbound`
+- `northbound`（当前仅保留当日流向/历史；持股排行已下线）
 - `valuation_rank`
 - `index_compose`
 - `index_enhance`（含权重暴露、行业暴露）

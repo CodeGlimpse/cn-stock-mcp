@@ -3,7 +3,6 @@ from __future__ import annotations
 from openclaw_stock_mcp.app.models.northbound import (
     NorthboundDailySummary,
     NorthboundFlowRecord,
-    NorthboundHoldItem,
 )
 
 
@@ -23,15 +22,6 @@ def _to_int(value) -> int | None:
         return int(float(value))
     except (TypeError, ValueError):
         return None
-
-
-def _format_symbol(code: str) -> str:
-    code = str(code).strip()
-    if len(code) != 6:
-        return code
-    if code.startswith("6"):
-        return f"{code}.SH"
-    return f"{code}.SZ"
 
 
 def adapt_em_hist_row(row: dict) -> NorthboundFlowRecord:
@@ -92,30 +82,9 @@ def build_daily_summary_from_flow_summary(rows: list[dict]) -> NorthboundDailySu
     return summary
 
 
-def adapt_em_hold_item(row: dict) -> NorthboundHoldItem:
-    """Adapt a row from ak.stock_hsgt_hold_stock_em() to NorthboundHoldItem."""
-    code = str(row.get("代码", ""))
-    return NorthboundHoldItem(
-        symbol=_format_symbol(code),
-        name=str(row.get("名称", "")),
-        price=_to_float(row.get("今日收盘价")),
-        change_percent=_to_float(row.get("今日涨跌幅")),
-        hold_shares=_to_float(row.get("今日持股-股数")),
-        hold_market_cap=_to_float(row.get("今日持股-市值")),
-        hold_pct_float=_to_float(row.get("今日持股-占流通股比")),
-        hold_pct_total=_to_float(row.get("今日持股-占总股本比")),
-        increase_shares=_to_float(row.get("今日增持估计-股数")),
-        increase_market_cap=_to_float(row.get("今日增持估计-市值")),
-        increase_pct=_to_float(row.get("今日增持估计-市值增幅")),
-        sector=str(row.get("所属板块", "")) or None,
-        date=str(row.get("日期", ""))[:10] or None,
-    )
-
-
 def build_northbound_summary_text(
     daily: NorthboundDailySummary | None,
     history: list[NorthboundFlowRecord],
-    holdings: list[NorthboundHoldItem],
 ) -> str:
     """Build readable Chinese summary."""
     parts = []
@@ -142,11 +111,5 @@ def build_northbound_summary_text(
             parts.append(f"持股市值{mc:.2f}{unit}")
         if latest.leading_stock:
             parts.append(f"领涨股{latest.leading_stock}")
-
-    if holdings:
-        top3 = holdings[:3]
-        hold_str = "，".join(f"{h.name}({h.increase_pct or 0:.1f}%)" for h in top3 if h.increase_pct is not None)
-        if hold_str:
-            parts.append(f"增持前列:{hold_str}")
 
     return "，".join(parts) if parts else "北向资金数据暂无"

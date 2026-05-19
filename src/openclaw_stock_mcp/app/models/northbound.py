@@ -39,28 +39,9 @@ class NorthboundDailySummary(BaseModel):
     sz_north_down_count: int | None = None
 
 
-class NorthboundHoldItem(BaseModel):
-    """A stock held by northbound capital."""
-
-    symbol: str
-    name: str
-    price: float | None = None
-    change_percent: float | None = None
-    hold_shares: float | None = None       # 持股数量（万股）
-    hold_market_cap: float | None = None   # 持股市值（万元）
-    hold_pct_float: float | None = None    # 占流通股比%
-    hold_pct_total: float | None = None    # 占总股本比%
-    increase_shares: float | None = None   # 增持股数（万股）
-    increase_market_cap: float | None = None  # 增持市值（万元）
-    increase_pct: float | None = None      # 增持市值增幅%
-    sector: str | None = None
-    date: str | None = None
-
-
 class NorthboundResult(BaseModel):
     """Full result for northbound tool."""
 
     daily_summary: NorthboundDailySummary | None = None
     history: list[NorthboundFlowRecord] = Field(default_factory=list)
-    holdings: list[NorthboundHoldItem] = Field(default_factory=list)
     source: str = "akshare"

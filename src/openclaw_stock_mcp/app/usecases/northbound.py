@@ -9,16 +9,12 @@ class NorthboundUseCase:
         self.router = ProviderRouter()
 
     def execute(self, request) -> dict:
-        include = getattr(request, "include", ["daily_summary", "history", "holdings"])
+        include = getattr(request, "include", ["daily_summary", "history"])
         history_n = getattr(request, "history_n", 30)
-        hold_indicator = getattr(request, "hold_indicator", "今日排行")
-        hold_top_n = getattr(request, "hold_top_n", 20)
-
         provider = self.router.get_provider("akshare")
 
         daily_summary = None
         history = []
-        holdings = []
 
         if "daily_summary" in include:
             daily_summary = provider.get_northbound_daily_summary()
@@ -26,10 +22,7 @@ class NorthboundUseCase:
         if "history" in include:
             history = provider.get_northbound_history(limit=history_n)
 
-        if "holdings" in include:
-            holdings = provider.get_northbound_holdings(indicator=hold_indicator, top_n=hold_top_n)
-
-        summary_text = build_northbound_summary_text(daily_summary, history, holdings)
+        summary_text = build_northbound_summary_text(daily_summary, history)
 
         result: dict = {
             "source": "akshare",
@@ -42,9 +35,5 @@ class NorthboundUseCase:
         if history:
             result["history"] = history
             result["history_count"] = len(history)
-
-        if holdings:
-            result["holdings"] = holdings
-            result["holdings_count"] = len(holdings)
 
         return result

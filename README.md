@@ -60,7 +60,7 @@
 - `capital_flow()` 资金流向可用（market/individual/industry/concept）
 - `stock_financial()` 财务三层数据可用（snapshot/history/details）
 - `limit_stat()` 短线情绪统计可用（封板率/连板分布/炸板/昨涨停今继续率）
-- `northbound()` 北向资金可用（当日流向/历史/持股排行）
+- `northbound()` 北向资金可用（当日流向/历史）
 - `valuation_rank()` 估值排名可用（市场估值温度 + 个股PE/PB排名）
 - `index_compose()` 指数组成可用（成分股/权重/集中度统计）
 - `industry_valuation_rank()` 行业估值分位可用（一级行业成员股 PE/PB 聚合与分位排序）

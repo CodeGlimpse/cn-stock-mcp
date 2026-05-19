@@ -22,7 +22,7 @@
 - 资金流向（大盘/个股/行业/概念）→ `capital_flow`
 - 财报核心面板 / 三表明细 → `stock_financial`
 - 短线情绪（封板率/连板/炸板）→ `limit_stat`
-- 北向资金流向 / 持股排行 → `northbound`
+- 北向资金流向 / 历史 → `northbound`
 - 估值排名（PE/PB + 市场估值温度）→ `valuation_rank`
 - 指数成分与权重分析 → `index_compose`
 - 指数增强组合对比（增强收益/基准收益/超额收益/成分贡献/权重暴露/行业暴露）→ `index_enhance`
@@ -119,7 +119,7 @@
   - `flow_type=industry/concept` 返回榜单型 `items`；其中 `rank` 是**上游原始涨跌幅排名**，不是当前按 `net_amount` 排序后的序号。
 - `stock_financial`：`akshare`
 - `limit_stat`：`akshare`（跌停数补充来自 zhitu market_pool）
-- `northbound`：`akshare`
+- `northbound`：`akshare`（当前仅支持 `daily_summary` / `history`）
 - `valuation_rank`：市场估值快照用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
 - `index_compose`：`akshare`
 - `index_enhance`：`akshare` + quote/history provider fallback
