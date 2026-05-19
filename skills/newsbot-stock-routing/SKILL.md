@@ -63,7 +63,7 @@ Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新
 - `hot_theme_tracker` 当前适合快速回答“主线是谁 / 是否扩散 / 哪些方向在退潮”，不是单板块深度复盘的替代品。
 - `limit_up_pool` 适合做结构化股池复盘、情绪指标汇总和行业维度情绪汇总；如果用户只要轻量实时池子快照，优先走 `market_pool`。
 - 解释 `market_pool(limit_up)` 时，`extra.limit_count` 表示当前连续涨停板数/连板高度；`extra.stat` 通常是 `N/M` 格式，表示 N 天 M 板（最近 N 个交易日内出现 M 次涨停）。
-- `capital_flow(mode=market)` 返回 `records`（历史资金流序列）和 `market_summary`（指定 `trade_date` 的当日摘要）；其中 `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，实际是**当日主力资金净流入占比**，不是区间平均值。
+- `capital_flow(flow_type=market)` 返回 `records`（历史资金流序列）和 `market_summary`（指定 `trade_date` 的当日摘要）；其中 `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，实际是**当日主力资金净流入占比**，不是区间平均值。`flow_type=industry/concept` 返回榜单型 `items`，其中 `rank` 表示**上游原始涨跌幅排名**，不是当前按 `net_amount` 重排后的序号。
 - `sector_rotation_review` live 路径仍偏重；默认先用较小 `limit`（如 3~5），需要更大覆盖时再逐步放大。设 `skip_member_detail=true` 可跳过个股展开、只做板块级聚合，大幅加速（适合仅需板块间对比的场景）。
 - `market_brief` 里的 `overview / index_ranking / highlights / pools` 是**兼容补充字段**，不要把它们当成主契约。
 - 当字段为 `null`、空数组，或 `applicable=false` 时，不要脑补结论。

@@ -113,8 +113,10 @@
 - `stock_review` / `stock_review_batch` / `trading_calendar`：`akshare`
 - `watchlist_review`：显式 symbols 池，成员复盘当前复用 `akshare`
 - `capital_flow`：`akshare`
-  - `mode=market` 返回 `records`（历史市场资金流序列）和 `market_summary`（指定 `trade_date` 的当日摘要）。
+  - 使用参数 `flow_type`，不是 `mode`。
+  - `flow_type=market` 返回 `records`（历史市场资金流序列）和 `market_summary`（指定 `trade_date` 的当日摘要）。
   - `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，当前实际语义是**当日主力资金净流入占比**，不是区间平均值。
+  - `flow_type=industry/concept` 返回榜单型 `items`；其中 `rank` 是**上游原始涨跌幅排名**，不是当前按 `net_amount` 排序后的序号。
 - `stock_financial`：`akshare`
 - `limit_stat`：`akshare`（跌停数补充来自 zhitu market_pool）
 - `northbound`：`akshare`
