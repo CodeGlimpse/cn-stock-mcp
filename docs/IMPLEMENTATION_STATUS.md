@@ -49,7 +49,7 @@
 - `market_brief`
 - `event_calendar`
 - `capital_flow`
-- `stock_financial`
+- `stock_financial`（`stock_financial_abstract_new_ths` 路径已恢复；`snapshot/history/details` 已验证通过）
 - `limit_stat`
 - `northbound`（当前仅保留当日流向/历史；持股排行已下线）
 - `valuation_rank`

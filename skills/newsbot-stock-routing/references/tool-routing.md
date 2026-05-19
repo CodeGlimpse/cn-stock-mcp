@@ -118,6 +118,8 @@
   - `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，当前实际语义是**当日主力资金净流入占比**，不是区间平均值。
   - `flow_type=industry/concept` 返回榜单型 `items`；其中 `rank` 是**上游原始涨跌幅排名**，不是当前按 `net_amount` 排序后的序号。
 - `stock_financial`：`akshare`
+  - 当前已恢复 `stock_financial_abstract_new_ths` 路径；`snapshot/history/details` 三层都已验证通过。
+  - 三表明细请显式传 `include=["details"]`，并使用 `statement=income|balance|cashflow`。
 - `limit_stat`：`akshare`（跌停数补充来自 zhitu market_pool）
 - `northbound`：`akshare`（当前仅支持 `daily_summary` / `history`）
 - `valuation_rank`：市场估值快照用 `akshare`；个股估值字段复用 `stock_quote`（`zhitu` 主，`akshare` 备）
