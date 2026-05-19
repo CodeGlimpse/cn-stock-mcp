@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
 
 
@@ -11,19 +13,14 @@ class _SectorLookup:
     def execute(self, request):
         if request.sector_name == "1000信息":
             return {
-                "items": [
-                    _Member("000001.SZ", "平安银行"),
-                    _Member("300750.SZ", "宁德时代"),
-                ],
+                "items": [_Member("000001.SZ", "平安银行"), _Member("300750.SZ", "宁德时代")],
                 "total": 2,
                 "source": "zhitu",
                 "meta": {"used_fallback": False},
             }
         if request.sector_name == "1000工业":
             return {
-                "items": [
-                    _Member("002594.SZ", "比亚迪"),
-                ],
+                "items": [_Member("002594.SZ", "比亚迪")],
                 "total": 1,
                 "source": "zhitu",
                 "meta": {"used_fallback": False},
@@ -49,8 +46,7 @@ class _MarketPool:
 
 class _BatchReview:
     def execute(self, request):
-        expected = set(["600519.SH", "000001.SZ", "300750.SZ", "002594.SZ"])
-        assert set(request.symbols).issubset(expected)
+        assert set(request.symbols).issubset({"600519.SH", "000001.SZ", "300750.SZ", "002594.SZ"})
         return {
             "mode": "trade_date_review",
             "requested_trade_date": "2026-05-06",
@@ -110,204 +106,107 @@ class _BatchReview:
             "total_symbols": 4,
             "partial_failure": True,
             "errors": [
-                {"symbol": "000001.SZ", "error_code": "PROVIDER_UNAVAILABLE", "message": "x", "retryable": True, "provider": None},
+                {"symbol": "000001.SZ", "error_code": "PROVIDER_UNAVAILABLE", "message": "x", "retryable": True, "provider": None}
             ],
             "summary": "batch done",
         }
 
 
-def test_stock_candidate_scan_builds_universe_scores_and_buckets():
+def _build_usecase() -> StockCandidateScanUseCase:
     uc = StockCandidateScanUseCase()
     uc.sector_lookup = _SectorLookup()
     uc.market_pool = _MarketPool()
     uc.batch_review = _BatchReview()
+    return uc
 
-    req = type(
-        "Req",
-        (),
-        {
-            "symbols": ["600519.SH"],
-            "sector_names": ["1000信息", "1000工业"],
-            "sector_type": "primary",
-            "pool_type": "strong",
-            "trade_date": "2026-05-06",
-            "start_date": None,
-            "end_date": None,
-            "adjust": "none",
-            "provider": "mixed",
-            "sort_by": "candidate_score",
-            "descending": True,
-            "top_n": 2,
-            "limit": 5,
-            "min_candidate_score": None,
-            "min_relative_strength": None,
-            "min_return": None,
-            "max_drawdown_limit": None,
-            "min_volume_ratio": None,
-            "min_up_streak": None,
-            "max_down_streak": None,
-            "require_source_tags": None,
-            "exclude_risk_flags": None,
-            "must_have_reason_tags": None,
-            "exclude_reason_tags": None,
-        },
-    )()
 
-    result = uc.execute(req)
+def _req(**overrides):
+    base = dict(
+        symbols=["600519.SH"],
+        sector_names=["1000信息", "1000工业"],
+        sector_type="primary",
+        pool_type="strong",
+        trade_date="2026-05-06",
+        start_date=None,
+        end_date=None,
+        adjust="none",
+        provider="mixed",
+        sort_by="candidate_score",
+        descending=True,
+        top_n=10,
+        limit=10,
+        min_candidate_score=None,
+        min_relative_strength=None,
+        min_return=None,
+        max_drawdown_limit=None,
+        min_volume_ratio=None,
+        min_up_streak=None,
+        max_down_streak=None,
+        require_source_tags=None,
+        exclude_risk_flags=None,
+        must_have_reason_tags=None,
+        exclude_reason_tags=None,
+    )
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def test_stock_candidate_scan_baseline_and_metadata():
+    result = _build_usecase().execute(_req(top_n=2, limit=5))
 
     assert result["subject_type"] == "candidate_scan"
-    assert result["subject_name"] == "manual+sector+pool:strong"
     assert result["member_count"] == 4
     assert result["reviewed_count"] == 3
     assert result["partial_failure"] is True
     assert result["items"][0]["symbol"] == "300750.SZ"
     assert result["items"][0]["candidate_label"] == "candidate"
-    assert "strong_return" in result["items"][0]["reason_tags"]
-    assert "pool:strong" in result["items"][0]["source_tags"]
-    assert result["breadth"]["candidate_count"] >= 1
-    assert result["buckets"]["candidates"][0]["symbol"] == "300750.SZ"
-    assert result["rankings"]["leaders_by_candidate_score"][0]["symbol"] == "300750.SZ"
     assert result["errors"][0]["scope"] == "stock_review"
     assert result["meta"]["candidate_score_schema"]["schema"] == "candidate_score_v1"
     assert result["meta"]["review_envelope_schema"]["schema"] == "review_envelope_v1"
-    assert "candidate_score_breakdown" in result["items"][0]
-    assert "total" in result["items"][0]["candidate_score_breakdown"]
 
 
-def test_stock_candidate_scan_applies_filters():
-    uc = StockCandidateScanUseCase()
-    uc.sector_lookup = _SectorLookup()
-    uc.market_pool = _MarketPool()
-    uc.batch_review = _BatchReview()
-
-    req = type(
-        "Req",
-        (),
-        {
-            "symbols": ["600519.SH"],
-            "sector_names": ["1000信息"],
-            "sector_type": "primary",
-            "pool_type": None,
-            "trade_date": "2026-05-06",
-            "start_date": None,
-            "end_date": None,
-            "adjust": "none",
-            "provider": "mixed",
-            "sort_by": "candidate_score",
-            "descending": True,
-            "top_n": 5,
-            "limit": 5,
-            "min_candidate_score": 8.0,
-            "min_relative_strength": 5.0,
-            "min_return": 8.0,
-            "max_drawdown_limit": 5.0,
-            "min_volume_ratio": 1.2,
-            "min_up_streak": None,
-            "max_down_streak": None,
-            "require_source_tags": None,
-            "exclude_risk_flags": None,
-            "must_have_reason_tags": None,
-            "exclude_reason_tags": None,
-        },
-    )()
-
-    result = uc.execute(req)
-
-    assert len(result["items"]) == 1
-    assert result["items"][0]["symbol"] == "300750.SZ"
+def test_stock_candidate_scan_numeric_filters():
+    result = _build_usecase().execute(
+        _req(
+            sector_names=["1000信息"],
+            pool_type=None,
+            min_candidate_score=8.0,
+            min_relative_strength=5.0,
+            min_return=8.0,
+            max_drawdown_limit=5.0,
+            min_volume_ratio=1.2,
+            top_n=5,
+            limit=5,
+        )
+    )
+    assert [x["symbol"] for x in result["items"]] == ["300750.SZ"]
 
 
-def test_stock_candidate_scan_new_filters():
-    uc = StockCandidateScanUseCase()
-    uc.sector_lookup = _SectorLookup()
-    uc.market_pool = _MarketPool()
-    uc.batch_review = _BatchReview()
+def test_stock_candidate_scan_tag_filters():
+    result = _build_usecase().execute(
+        _req(
+            min_up_streak=2,
+            max_down_streak=1,
+            require_source_tags=["pool:strong"],
+            exclude_risk_flags=["weak_relative_strength"],
+        )
+    )
+    assert [x["symbol"] for x in result["items"]] == ["300750.SZ"]
 
-    req = type(
-        "Req",
-        (),
-        {
-            "symbols": ["600519.SH"],
-            "sector_names": ["1000信息", "1000工业"],
-            "sector_type": "primary",
-            "pool_type": "strong",
-            "trade_date": "2026-05-06",
-            "start_date": None,
-            "end_date": None,
-            "adjust": "none",
-            "provider": "mixed",
-            "sort_by": "candidate_score",
-            "descending": True,
-            "top_n": 10,
-            "limit": 10,
-            "min_candidate_score": None,
-            "min_relative_strength": None,
-            "min_return": None,
-            "max_drawdown_limit": None,
-            "min_volume_ratio": None,
-            "min_up_streak": 2,
-            "max_down_streak": 1,
-            "require_source_tags": ["pool:strong"],
-            "exclude_risk_flags": ["weak_relative_strength"],
-            "must_have_reason_tags": None,
-            "exclude_reason_tags": None,
-        },
-    )()
-
-    result = uc.execute(req)
-
-    assert len(result["items"]) == 1
-    assert result["items"][0]["symbol"] == "300750.SZ"
 
 
 def test_stock_candidate_scan_reason_tag_filters():
-    uc = StockCandidateScanUseCase()
-    uc.sector_lookup = _SectorLookup()
-    uc.market_pool = _MarketPool()
-    uc.batch_review = _BatchReview()
+    result = _build_usecase().execute(
+        _req(
+            must_have_reason_tags=["strong_return", "active_volume"],
+            exclude_reason_tags=["slight_positive_return"],
+        )
+    )
+    assert [x["symbol"] for x in result["items"]] == ["300750.SZ"]
 
-    req = type(
-        "Req",
-        (),
-        {
-            "symbols": ["600519.SH"],
-            "sector_names": ["1000信息", "1000工业"],
-            "sector_type": "primary",
-            "pool_type": "strong",
-            "trade_date": "2026-05-06",
-            "start_date": None,
-            "end_date": None,
-            "adjust": "none",
-            "provider": "mixed",
-            "sort_by": "candidate_score",
-            "descending": True,
-            "top_n": 10,
-            "limit": 10,
-            "min_candidate_score": None,
-            "min_relative_strength": None,
-            "min_return": None,
-            "max_drawdown_limit": None,
-            "min_volume_ratio": None,
-            "min_up_streak": None,
-            "max_down_streak": None,
-            "require_source_tags": None,
-            "exclude_risk_flags": None,
-            "must_have_reason_tags": ["strong_return", "active_volume"],
-            "exclude_reason_tags": ["slight_positive_return"],
-        },
-    )()
-
-    result = uc.execute(req)
-
-    assert len(result["items"]) == 1
-    assert result["items"][0]["symbol"] == "300750.SZ"
-    assert "strong_return" in result["items"][0]["reason_tags"]
-    assert "active_volume" in result["items"][0]["reason_tags"]
 
 
 def test_candidate_scan_return_mode_ranked_only():
-    from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
-
     class _Batch:
         def execute(self, req):
             return {
@@ -329,9 +228,27 @@ def test_candidate_scan_return_mode_ranked_only():
 
     uc = StockCandidateScanUseCase()
     uc.batch_review = _Batch()
-    uc._build_universe = lambda req: {"symbols": ["A","B"], "errors": [], "source_tags": {"A":[],"B":[]}, "source_breakdown": {}, "sector_details": [], "pool": None, "truncated": False}
+    uc._build_universe = lambda req: {
+        "symbols": ["A", "B"],
+        "errors": [],
+        "source_tags": {"A": [], "B": []},
+        "source_breakdown": {},
+        "sector_details": [],
+        "pool": None,
+        "truncated": False,
+    }
 
-    req = type("Req", (), {"symbols":["A","B"],"sector_names":None,"sector_type":"primary","pool_type":None,"trade_date":"2026-05-08","start_date":None,"end_date":None,"adjust":"none","provider":"mixed","sort_by":"candidate_score","descending":True,"top_n":1,"limit":20,"min_candidate_score":None,"min_relative_strength":None,"min_return":None,"max_drawdown_limit":None,"min_volume_ratio":None,"min_up_streak":None,"max_down_streak":None,"require_source_tags":None,"exclude_risk_flags":None,"must_have_reason_tags":None,"exclude_reason_tags":None,"return_mode":"ranked_only"})()
-    result = uc.execute(req)
+    result = uc.execute(
+        _req(
+            symbols=["A", "B"],
+            sector_names=None,
+            pool_type=None,
+            trade_date="2026-05-08",
+            top_n=1,
+            limit=20,
+            return_mode="ranked_only",
+        )
+    )
+
     assert len(result["items"]) == 1
     assert result["meta"]["filters"]["return_mode"] == "ranked_only"

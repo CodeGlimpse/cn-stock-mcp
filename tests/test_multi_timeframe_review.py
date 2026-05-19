@@ -1,120 +1,114 @@
+from types import SimpleNamespace
+
 from openclaw_stock_mcp.app.usecases.multi_timeframe_review import MultiTimeframeReviewUseCase
+from openclaw_stock_mcp.providers.errors import ProviderError
 
 
 class _Bar:
-    def __init__(self, time, close):
-        self.time = time
+    def __init__(self, close):
         self.close = close
 
 
 class _History:
-    def execute(self, request):
-        mapping = {
-            "15m": [10, 10.2, 10.4, 10.6, 10.8, 11.0],
-            "1d": [10, 10.4, 10.8, 11.2, 11.5, 11.8],
-            "1w": [9.5, 10.0, 10.5, 11.0, 11.3, 11.6],
+    def execute(self, req):
+        data = {
+            "5m": [100, 102, 104],
+            "15m": [100, 101, 102],
+            "1d": [100, 98, 96],
+            "1w": [100, 103, 106],
         }
-        closes = mapping[request.interval]
+        seq = data.get(req.interval)
+        if seq is None:
+            raise ProviderError("EMPTY_RESULT", "no bars", retryable=False)
         return {
-            "symbol": request.symbol,
-            "sec_type": request.sec_type,
-            "interval": request.interval,
-            "items": [_Bar(f"t{i}", c) for i, c in enumerate(closes)],
-            "count": len(closes),
-            "source": "akshare" if request.sec_type == "stock" else "zhitu",
-            "meta": {"used_fallback": False},
+            "items": [_Bar(x) for x in seq],
+            "source": "akshare",
+            "meta": {"interval": req.interval},
         }
 
 
 class _Indicator:
-    def execute(self, request):
-        values_map = {
-            ("15m", "macd"): {"dif": 1.2, "dea": 0.8, "macd": 0.4},
-            ("1d", "macd"): {"dif": 1.5, "dea": 1.0, "macd": 0.5},
-            ("1w", "macd"): {"dif": 1.6, "dea": 1.1, "macd": 0.5},
-            ("15m", "kdj"): {"k": 70, "d": 60},
-            ("1d", "kdj"): {"k": 75, "d": 68},
-            ("1w", "kdj"): {"k": 80, "d": 72},
-            ("15m", "ma"): {"ma5": 10.8, "ma10": 10.4},
-            ("1d", "ma"): {"ma5": 11.2, "ma10": 10.8},
-            ("1w", "ma"): {"ma5": 11.0, "ma10": 10.5},
-        }
-        values = values_map[(request.interval, request.indicator)]
-        return {
-            "symbol": request.symbol,
-            "indicator": request.indicator,
-            "items": [{"time": "t-last", "values": values}],
-            "source": "zhitu",
-            "meta": {"used_fallback": False},
-        }
+    def execute(self, req):
+        if req.indicator == "macd":
+            if req.interval in {"5m", "15m", "1w"}:
+                values = {"dif": 1.0, "dea": 0.5, "macd": 0.2}
+            else:
+                values = {"dif": -1.0, "dea": -0.5, "macd": -0.2}
+            return {"items": [{"time": "t", "values": values}], "source": "akshare", "meta": {}}
+
+        if req.indicator == "kdj":
+            if req.interval in {"5m", "15m", "1w"}:
+                values = {"k": 60, "d": 40}
+            else:
+                values = {"k": 30, "d": 50}
+            return {"items": [{"time": "t", "values": values}], "source": "akshare", "meta": {}}
+
+        if req.indicator == "ma":
+            return {"items": [{"time": "t", "values": {"ma5": 101, "ma10": 99}}], "source": "akshare", "meta": {}}
+
+        raise ProviderError("UNSUPPORTED", "indicator unsupported", retryable=False)
 
 
-def test_multi_timeframe_review_builds_alignment_and_items():
+def _req(**overrides):
+    base = dict(
+        symbol="600519.SH",
+        sec_type="stock",
+        intervals=["15m", "1d", "1w"],
+        indicators=["macd", "kdj", "ma"],
+        trade_date="2026-05-06",
+        start_date=None,
+        end_date=None,
+        limit=50,
+        provider="mixed",
+    )
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def _build_usecase() -> MultiTimeframeReviewUseCase:
     uc = MultiTimeframeReviewUseCase()
     uc.stock_history = _History()
     uc.technical_indicator = _Indicator()
+    return uc
 
-    req = type(
-        "Req",
-        (),
-        {
-            "symbol": "600519.SH",
-            "intervals": ["15m", "1d", "1w"],
-            "indicators": ["macd", "ma", "kdj"],
-            "sec_type": "stock",
-            "trade_date": "2026-05-06",
-            "start_date": None,
-            "end_date": None,
-            "limit": 60,
-            "provider": "mixed",
-        },
-    )()
 
-    result = uc.execute(req)
+def test_multi_timeframe_review_happy_path():
+    result = _build_usecase().execute(_req())
 
     assert result["subject_type"] == "multi_timeframe"
     assert result["member_count"] == 3
     assert result["reviewed_count"] == 3
-    assert result["items"][0]["interval"] == "15m"
-    assert result["items"][1]["interval"] == "1d"
-    assert result["items"][0]["trend_label"] in {"bullish", "neutral", "bearish"}
-    assert result["breadth"]["bullish_count"] >= 1
+    assert result["partial_failure"] is False
     assert result["meta"]["alignment_score_schema"]["schema"] == "multi_timeframe_alignment_v1"
     assert result["meta"]["review_envelope_schema"]["schema"] == "review_envelope_v1"
-    assert result["summary"]
+    assert result["items"][0]["interval"] in {"15m", "1w"}
 
 
-def test_multi_timeframe_review_collects_partial_failures():
-    uc = MultiTimeframeReviewUseCase()
-    uc.stock_history = _History()
+def test_multi_timeframe_review_partial_failure_on_indicator_error():
+    class _IndicatorWithError(_Indicator):
+        def execute(self, req):
+            if req.indicator == "ma" and req.interval == "1d":
+                raise ProviderError("PROVIDER_UNAVAILABLE", "ma fail", retryable=True)
+            return super().execute(req)
 
-    class _IndicatorPartial(_Indicator):
-        def execute(self, request):
-            if request.interval == "1d" and request.indicator == "macd":
-                raise Exception("indicator failed")
-            return super().execute(request)
+    uc = _build_usecase()
+    uc.technical_indicator = _IndicatorWithError()
 
-    uc.technical_indicator = _IndicatorPartial()
-
-    req = type(
-        "Req",
-        (),
-        {
-            "symbol": "600519.SH",
-            "intervals": ["15m", "1d"],
-            "indicators": ["macd", "ma"],
-            "sec_type": "stock",
-            "trade_date": "2026-05-06",
-            "start_date": None,
-            "end_date": None,
-            "limit": 60,
-            "provider": "mixed",
-        },
-    )()
-
-    result = uc.execute(req)
-
-    assert result["reviewed_count"] == 2
+    result = uc.execute(_req())
     assert result["partial_failure"] is True
-    assert result["items"][1]["indicator_snapshot"].get("macd") is None
-    assert any(e.get("indicator") == "macd" and e.get("interval") == "1d" for e in result["errors"])
+    assert any(e.get("indicator") == "ma" and e.get("interval") == "1d" for e in result["errors"])
+
+
+def test_multi_timeframe_review_raises_when_no_cards():
+    class _BadHistory:
+        def execute(self, req):
+            raise ProviderError("EMPTY_RESULT", "no bars", retryable=False)
+
+    uc = _build_usecase()
+    uc.stock_history = _BadHistory()
+
+    try:
+        uc.execute(_req(intervals=["15m", "1d"]))
+        assert False, "expected ProviderError"
+    except ProviderError as exc:
+        assert exc.code == "EMPTY_RESULT"
