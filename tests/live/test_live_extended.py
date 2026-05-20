@@ -12,7 +12,7 @@ def test_sector_lookup_children_live(app):
     primary = assert_success(app.call_tool("sector_lookup", {"mode": "list", "sector_type": "primary", "limit": 5}))
     assert len(primary["items"]) >= 1
     sector_name = primary["items"][0]["name"]
-    children = assert_success(app.call_tool("sector_lookup", {"mode": "children", "sector_name": sector_name, "limit": 5}))
+    children = assert_success(app.call_tool("sector_lookup", {"mode": "children", "sector_type": "primary", "sector_name": sector_name, "limit": 5}))
     assert isinstance(children, dict)
 
 

@@ -102,6 +102,7 @@ def test_sector_review_defaults_to_primary():
         "end_date": None,
         "adjust": "none",
         "provider": None,
+        "sector_type": "primary",
         "sort_by": "relative_strength",
         "descending": True,
         "top_n": 5,

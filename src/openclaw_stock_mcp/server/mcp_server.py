@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Callable
 
@@ -121,6 +122,11 @@ class EmptyRequest(BaseModel):
     pass
 
 
+def _validation_error_details(exc: ValidationError) -> list[dict[str, Any]]:
+    """Return JSON-safe validation error details for envelopes/stdio."""
+    return json.loads(exc.json())
+
+
 class MCPTool(BaseModel):
     name: str
     description: str
@@ -159,14 +165,15 @@ class MCPServerStub(BaseModel):
         try:
             request = tool.input_model(**payload)
         except ValidationError as exc:
-            log_event(logger, "tool_validation_error", request_id=request_id, tool=name, errors=exc.errors())
+            details = _validation_error_details(exc)
+            log_event(logger, "tool_validation_error", request_id=request_id, tool=name, errors=details)
             return error_response(
                 {
                     "error_code": "INVALID_ARGUMENT",
                     "message": "Invalid request payload",
                     "retryable": False,
                     "provider": None,
-                    "details": exc.errors(),
+                    "details": details,
                 },
                 meta={"tool": name},
                 request_id=request_id,

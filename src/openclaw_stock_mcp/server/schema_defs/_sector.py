@@ -102,8 +102,8 @@ class SectorLookupRequest(BaseModel):
         from ._types import SectorLookupMode
         if self.mode == "list" and self.sector_type is None:
             self.sector_type = "concept"
-        if self.mode == "children" and self.sector_type is None:
-            self.sector_type = "primary"
+        if self.mode in {"members", "children"} and self.sector_type is None:
+            raise ValueError("sector_type is required when mode=members/children; use primary or concept explicitly")
         if self.mode in {"members", "children"} and not self.sector_name:
             raise ValueError("sector_name is required when mode=members/children")
         return self

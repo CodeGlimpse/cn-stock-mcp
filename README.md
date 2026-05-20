@@ -764,8 +764,11 @@ openclaw skills info newsbot-stock-routing
 ### sector_lookup 当前语义
 - `mode=list, sector_type=concept`：概念板块列表
 - `mode=list, sector_type=primary`：一级板块列表
-- `mode=children`（或兼容 `members`）：按一级板块名称查询**股票成员列表**
-- `children/members` 的 `sector_name` 需要传入真实可用的一级板块名称，例如：`TFG板块趋势`
+- `mode=children`（或兼容 `members`）：查询板块成员股
+  - **必须显式传 `sector_type`**
+  - `sector_type=primary`：按一级板块语义解析后查询
+  - `sector_type=concept`：按概念板块语义解析后查询
+- 因此，`children/members` 查询“医药 / 人工智能 / 银行”这类人类友好名称时，必须显式传 `sector_type`
 
 ### Transport 状态
 当前已切换为 **MCP Python SDK（FastMCP）stdio transport**。

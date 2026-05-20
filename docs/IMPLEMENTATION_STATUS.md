@@ -127,10 +127,12 @@
 - 输入模式：`list | children | members(兼容别名)`
 - `list + concept`：调用 `/hs/list/sectors`（概念板块列表）
 - `list + primary`：调用 `/hs/list/primary`（一级板块列表）
-- `children` / `members`：调用 `/hs/sectors/{sector_name}`（按一级板块名称查询股票成员列表）
-- `SectorLookupRequest` 增加参数校验：
+- `children` / `members`：必须显式传 `sector_type`
+  - `sector_type=primary`：先解析一级板块名，再调用 `/hs/sectors/{resolved_primary}`
+  - `sector_type=concept`：先解析概念板块名，再调用 `/hs/sectors/{resolved_concept}`
+- `SectorLookupRequest` 参数校验：
   - `mode=list` 默认 `sector_type=concept`
-  - `mode=children` 默认 `sector_type=primary`
+  - `mode in {members, children}` 时强制要求 `sector_type`
   - `mode in {members, children}` 时强制要求 `sector_name`
 
 ### stock_review（个股复盘摘要）

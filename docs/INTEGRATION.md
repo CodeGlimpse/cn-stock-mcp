@@ -115,7 +115,7 @@ bash scripts/smoke_live.sh
 2. `stock_quote`（stock-main / index / BJ）
 3. `stock_history`（stock）
 4. `market_overview`
-5. `sector_lookup`（先 list，不要写死脆弱 sector_name）
+5. `sector_lookup`（先 list；`children/members` 现在要求显式传 `sector_type=primary|concept`，缺少参数会直接报错，不会请求上游）
 6. `stock_review`（优先使用最近有效交易日，不要长期写死旧 `trade_date`）
 7. `market_pool` 或 provider 直连最小路径
 8. 更重的 `sector_review` / `sector_rotation_review` / `stock_candidate_scan` / `watchlist_review` / `multi_timeframe_review` 放到 extended live 回归

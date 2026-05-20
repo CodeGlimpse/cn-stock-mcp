@@ -493,6 +493,11 @@ class ZhituProvider:
             return items
         return []
 
+    def _get_sector_children_by_raw_name(self, sector_name: str, limit: int) -> list:
+        raw = self._get_json(f"/hs/sectors/{sector_name}")
+        items = self._extract_sector_children_items(raw)
+        return self._slice_items(items, limit)
+
     def get_sector_lookup(self, mode: str, sector_type: str | None = None, sector_name: str | None = None, limit: int = 100):
         normalized_mode = self._normalize_sector_mode(mode)
 
@@ -507,6 +512,12 @@ class ZhituProvider:
             return self._slice_items(items, limit)
 
         if normalized_mode == "children":
+            if sector_type is None:
+                raise ProviderError(
+                    "INVALID_ARGUMENT",
+                    "sector_type is required when mode=children; use primary or concept explicitly",
+                    retryable=False,
+                )
             if not sector_name:
                 raise ProviderError("INVALID_ARGUMENT", "sector_name is required when mode=children", retryable=False)
 
