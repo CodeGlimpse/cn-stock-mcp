@@ -17,6 +17,7 @@
 ## 文档导航
 
 - `docs/README_DOCS.md`：文档总览与阅读顺序
+- `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的最短接入说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口
 - `docs/EXAMPLES_MINIMAL.md`：最小可工作的调用示例
 - `docs/EXAMPLES_FULL.md`：完整调用样例（按需展开）
