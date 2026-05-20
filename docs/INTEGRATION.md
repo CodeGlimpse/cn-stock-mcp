@@ -1,6 +1,6 @@
 # Integration Guide (`openclaw-stock-mcp`)
 
-Last Updated: 2026-05-15
+Last Updated: 2026-05-20
 
 ## 1) 本地运行与自检
 
@@ -45,7 +45,7 @@ bash scripts/smoke_live.sh
 
 ---
 
-## 2) OpenClaw 挂载配置
+## 2) 通用 MCP 挂载配置
 
 ### 方案 A：项目虚拟环境 Python（推荐）
 
@@ -89,7 +89,7 @@ bash scripts/smoke_live.sh
 
 ## 3) 联调清单
 
-目标：确认 OpenClaw 能拉起服务、识别 tools、完成核心调用。
+目标：确认宿主能拉起服务、识别 tools、完成核心调用。
 
 ### Step 1 - 识别工具
 至少应看到：

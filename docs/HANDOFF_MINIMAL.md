@@ -35,6 +35,9 @@ PYTHONPATH=src .venv/bin/python -m openclaw_stock_mcp.main --tool provider_healt
 - `cwd`: 仓库根目录
 - `env.PYTHONPATH=src`
 
+本页假设你的宿主只需要 MCP 接入；如果宿主还支持 rules / instructions / skills，再看：
+- `docs/COMPATIBILITY.md`
+
 ## 4) 最小验收顺序
 
 1. `provider_health {}`

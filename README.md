@@ -1,6 +1,6 @@
 # openclaw-stock-mcp
 
-面向 OpenClaw Agent 的中国证券市场行情 MCP 服务。
+中国证券市场行情 MCP 服务。核心交付物是**通用 MCP server**；OpenClaw skill 只是仓库内附带的一个平台适配层。
 
 > **给 AI agent：** 不要默认通读本 README。先读 `docs/AGENT_MINIMAL.md`，需要最小示例时再读 `docs/EXAMPLES_MINIMAL.md`；只有在需要完整背景、长样例或发布说明时再展开本文件。
 
@@ -18,13 +18,15 @@
 
 - `docs/README_DOCS.md`：文档总览与阅读顺序
 - `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的最短接入说明
+- `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口
 - `docs/EXAMPLES_MINIMAL.md`：最小可工作的调用示例
 - `docs/EXAMPLES_FULL.md`：完整调用样例（按需展开）
 - `docs/IMPLEMENTATION_STATUS.md`：当前实现状态与限制（事实源）
 - `docs/INTERFACE_SCHEMA.md`：对外输入/输出契约与路由约束
 - `docs/ERROR_MODEL.md`：统一错误码与 retry/fallback 语义
-- `docs/INTEGRATION.md`：本地启动、OpenClaw 挂载与联调清单
+- `docs/INTEGRATION.md`：通用 MCP 挂载、自检与联调清单
+- `docs/OPENCLAW_INTEGRATION.md`：OpenClaw 专属适配说明
 
 ## 快速开始
 
@@ -134,32 +136,23 @@ PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payloa
 
 更多自检/挂载说明见：`docs/INTEGRATION.md`
 
-## 正式发布模式（OpenClaw 挂载）
+## 通用 MCP 接入
 
 最小 MCP 配置示例见：
 - `.mcp.sample.json`
+- `docs/HANDOFF_MINIMAL.md`
 - `docs/INTEGRATION.md`
 
-挂载后的联调与验收顺序见：`docs/INTEGRATION.md`
+如果宿主还支持 rules / instructions / skills，再看：
+- `docs/COMPATIBILITY.md`
 
-## OpenClaw news agent integration
+## OpenClaw adapter
 
-本仓库内置 `news` agent 的 repo-managed skill：
-
+仓库内附带 OpenClaw skill adapter：
 - `skills/newsbot-stock-routing/`
 
-最小配置要点：
-- OpenClaw 用 `skills.load.extraDirs` 挂载本仓库 `skills/`
-- 修改 skill / schema / provider 路由 / payload 校验时，同步审阅该 skill
-
-最小验证命令：
-
-```bash
-openclaw skills list --eligible
-openclaw skills info newsbot-stock-routing
-```
-
-如果需要完整迁移背景，再看：
+OpenClaw 专属加载与验证说明见：
+- `docs/OPENCLAW_INTEGRATION.md`
 - `skills/MIGRATION_NEWSBOT_SKILL.md`
 
 ## 说明
