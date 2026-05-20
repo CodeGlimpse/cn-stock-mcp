@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
+from cn_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 
 
 class _Item:
@@ -21,7 +21,7 @@ class _Provider:
     def get_market_pool(self, **kwargs):
         self.pool_calls.append(kwargs)
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "pool failed", retryable=True)
         pool_type = kwargs.get("pool_type")
@@ -69,7 +69,7 @@ class _Router:
         }
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=["akshare"])
 

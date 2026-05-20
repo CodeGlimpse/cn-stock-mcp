@@ -1,8 +1,8 @@
 """Tests for stock_warrant usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.stock_warrant import StockWarrantUseCase
-from openclaw_stock_mcp.server.schemas import StockWarrantRequest
+from cn_stock_mcp.app.usecases.stock_warrant import StockWarrantUseCase
+from cn_stock_mcp.server.schemas import StockWarrantRequest
 
 
 def _make_etf_rows():

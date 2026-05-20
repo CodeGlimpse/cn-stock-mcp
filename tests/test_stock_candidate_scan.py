@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from openclaw_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
+from cn_stock_mcp.app.usecases.stock_candidate_scan import StockCandidateScanUseCase
 
 
 class _Member:

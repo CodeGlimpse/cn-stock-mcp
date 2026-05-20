@@ -1,8 +1,8 @@
 """Tests for money_rate usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.money_rate import MoneyRateUseCase
-from openclaw_stock_mcp.server.schemas import MoneyRateRequest
+from cn_stock_mcp.app.usecases.money_rate import MoneyRateUseCase
+from cn_stock_mcp.server.schemas import MoneyRateRequest
 
 
 def _make_shibor_rows():

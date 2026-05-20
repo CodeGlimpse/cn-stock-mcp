@@ -1,8 +1,8 @@
 """Tests for shareholder_change usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.shareholder_change import ShareholderChangeUseCase
-from openclaw_stock_mcp.server.schemas import ShareholderChangeRequest
+from cn_stock_mcp.app.usecases.shareholder_change import ShareholderChangeUseCase
+from cn_stock_mcp.server.schemas import ShareholderChangeRequest
 
 
 def _make_top10_rows():

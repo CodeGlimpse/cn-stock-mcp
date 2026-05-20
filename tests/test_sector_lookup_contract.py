@@ -1,8 +1,8 @@
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schema_defs._sector import SectorLookupRequest
-from openclaw_stock_mcp.providers.errors import ProviderError
-from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
+from cn_stock_mcp.server.schema_defs._sector import SectorLookupRequest
+from cn_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 
 class _StrictZhitu(ZhituProvider):

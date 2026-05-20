@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.providers.adapters.zhitu_profile_adapters import (
+from cn_stock_mcp.providers.adapters.zhitu_profile_adapters import (
     adapt_zhitu_profile,
     adapt_zhitu_dividend,
     adapt_zhitu_unlock,
@@ -154,7 +154,7 @@ def test_build_unlock_risk_empty():
 
 
 def test_stock_profile_valuation_snapshot_fields():
-    from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
+    from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
 
     provider = ZhituProvider.__new__(ZhituProvider)
     # monkeypatch minimal internals for deterministic valuation mapping

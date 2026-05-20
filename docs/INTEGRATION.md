@@ -1,4 +1,4 @@
-# Integration Guide (`openclaw-stock-mcp`)
+# Integration Guide (`cn-stock-mcp`)
 
 Last Updated: 2026-05-20
 
@@ -6,36 +6,36 @@ Last Updated: 2026-05-20
 
 > AI agent 建议先读 `docs/AGENT_MINIMAL.md` 与 `docs/EXAMPLES_MINIMAL.md`，再决定是否需要展开本页的完整联调说明。
 
-项目目录：`/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp`
+项目目录：`/home/openclaw/桌面/openclaw/codes/cn-stock-mcp`
 
 ### 列出 tools
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
-PYTHONPATH=src python -m openclaw_stock_mcp.main --list-tools
+cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
+PYTHONPATH=src python -m cn_stock_mcp.main --list-tools
 ```
 
 ### provider 健康检查
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
+cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 HTTP_PROXY= HTTPS_PROXY= ALL_PROXY= http_proxy= https_proxy= all_proxy= \
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payload '{}'
+PYTHONPATH=src python -m cn_stock_mcp.main --tool provider_health --payload '{}'
 ```
 
 ### 启动 stdio MCP 服务
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
-PYTHONPATH=src python -m openclaw_stock_mcp.main --stdio
+cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
+PYTHONPATH=src python -m cn_stock_mcp.main --stdio
 ```
 
 ### 非 live 稳定回归
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
+cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 .venv/bin/python -m pytest -q -m "not live"
 ```
 
 ### live smoke（推荐）
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp
+cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 bash scripts/smoke_live.sh
 ```
 
@@ -51,9 +51,9 @@ bash scripts/smoke_live.sh
 
 ```json
 {
-  "command": "/tmp/openclaw-stock-mcp-venv/bin/python",
-  "args": ["-m", "openclaw_stock_mcp.main", "--stdio"],
-  "cwd": "/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp",
+  "command": "/tmp/cn-stock-mcp-venv/bin/python",
+  "args": ["-m", "cn_stock_mcp.main", "--stdio"],
+  "cwd": "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp",
   "env": {
     "PYTHONPATH": "src",
     "HTTP_PROXY": "",
@@ -71,8 +71,8 @@ bash scripts/smoke_live.sh
 ```json
 {
   "command": "python3",
-  "args": ["-m", "openclaw_stock_mcp.main", "--stdio"],
-  "cwd": "/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp",
+  "args": ["-m", "cn_stock_mcp.main", "--stdio"],
+  "cwd": "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp",
   "env": {
     "PYTHONPATH": "src",
     "HTTP_PROXY": "",

@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.stock_search import StockSearchUseCase
+from cn_stock_mcp.app.usecases.stock_search import StockSearchUseCase
 
 
 class _Provider:
@@ -8,7 +8,7 @@ class _Provider:
 
     def search_instruments(self, **kwargs):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "search failed", retryable=True)
         return self.result
@@ -22,7 +22,7 @@ class _Router:
         }
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="akshare", fallback=["zhitu"])
 

@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.stock_review_batch import StockReviewBatchUseCase
+from cn_stock_mcp.app.usecases.stock_review_batch import StockReviewBatchUseCase
 
 
 class _Single:

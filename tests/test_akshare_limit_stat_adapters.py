@@ -1,12 +1,12 @@
 import pytest
-from openclaw_stock_mcp.providers.adapters.akshare_limit_stat_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_limit_stat_adapters import (
     adapt_em_limit_up_item,
     adapt_em_broken_limit_item,
     adapt_em_previous_limit_item,
     build_limit_stat_summary,
     build_limit_stat_summary_text,
 )
-from openclaw_stock_mcp.app.models.limit_stat import (
+from cn_stock_mcp.app.models.limit_stat import (
     LimitUpItem,
     BrokenLimitItem,
     PreviousDayLimitItem,
@@ -224,7 +224,7 @@ def test_summary_text_no_data():
 # ---- Schema validation ----
 
 def test_limit_stat_request_defaults():
-    from openclaw_stock_mcp.server.schemas import LimitStatRequest
+    from cn_stock_mcp.server.schemas import LimitStatRequest
 
     req = LimitStatRequest()
     assert req.include == ["summary", "limit_up", "broken_limit", "previous_day"]
@@ -233,28 +233,28 @@ def test_limit_stat_request_defaults():
 
 
 def test_limit_stat_request_with_date():
-    from openclaw_stock_mcp.server.schemas import LimitStatRequest
+    from cn_stock_mcp.server.schemas import LimitStatRequest
 
     req = LimitStatRequest(trade_date="2026-05-08")
     assert req.trade_date == "2026-05-08"
 
 
 def test_limit_stat_request_invalid_date():
-    from openclaw_stock_mcp.server.schemas import LimitStatRequest
+    from cn_stock_mcp.server.schemas import LimitStatRequest
 
     with pytest.raises(ValueError):
         LimitStatRequest(trade_date="not-a-date")
 
 
 def test_limit_stat_request_empty_include_fails():
-    from openclaw_stock_mcp.server.schemas import LimitStatRequest
+    from cn_stock_mcp.server.schemas import LimitStatRequest
 
     with pytest.raises(ValueError, match="at least one"):
         LimitStatRequest(include=[])
 
 
 def test_limit_stat_request_dedup_include():
-    from openclaw_stock_mcp.server.schemas import LimitStatRequest
+    from cn_stock_mcp.server.schemas import LimitStatRequest
 
     req = LimitStatRequest(include=["summary", "summary", "limit_up"])
     assert req.include == ["summary", "limit_up"]

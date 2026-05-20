@@ -1,5 +1,5 @@
 [project]
-name = "openclaw-stock-mcp"
+name = "cn-stock-mcp"
 version = "0.1.0"
 description = "MCP server for Chinese market data via AKShare and Zhitu"
 readme = "README.md"

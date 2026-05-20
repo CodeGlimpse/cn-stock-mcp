@@ -1,7 +1,7 @@
 import pandas as pd
 
-import openclaw_stock_mcp.providers.akshare_provider as akp
-from openclaw_stock_mcp.providers.akshare_provider import AKShareProvider
+import cn_stock_mcp.providers.akshare_provider as akp
+from cn_stock_mcp.providers.akshare_provider import AKShareProvider
 
 
 class _FakeAK:

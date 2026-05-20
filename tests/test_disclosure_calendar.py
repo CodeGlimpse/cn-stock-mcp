@@ -1,8 +1,8 @@
 """Tests for disclosure_calendar usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.disclosure_calendar import DisclosureCalendarUseCase
-from openclaw_stock_mcp.server.schemas import DisclosureCalendarRequest
+from cn_stock_mcp.app.usecases.disclosure_calendar import DisclosureCalendarUseCase
+from cn_stock_mcp.server.schemas import DisclosureCalendarRequest
 
 
 def _make_rows():

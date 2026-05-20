@@ -1,4 +1,4 @@
-# OpenClaw Integration (`openclaw-stock-mcp`)
+# OpenClaw Integration (`cn-stock-mcp`)
 
 本页只保留 **OpenClaw 专属适配说明**。
 
@@ -11,7 +11,7 @@
 
 OpenClaw 侧可直接使用 `.mcp.sample.json` 的配置思路，核心字段：
 - `command`
-- `args=["-m", "openclaw_stock_mcp.main", "--stdio"]`
+- `args=["-m", "cn_stock_mcp.main", "--stdio"]`
 - `cwd`
 - `env.PYTHONPATH=src`
 
@@ -27,7 +27,7 @@ OpenClaw 侧可直接使用 `.mcp.sample.json` 的配置思路，核心字段：
   skills: {
     load: {
       extraDirs: [
-        "/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp/skills"
+        "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp/skills"
       ]
     },
     entries: {

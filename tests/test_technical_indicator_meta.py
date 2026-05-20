@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
+from cn_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
 
 
 class _Series:
@@ -13,7 +13,7 @@ class _Provider:
 
     def get_indicator(self, **kwargs):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "indicator failed", retryable=True)
         return _Series()
@@ -27,7 +27,7 @@ class _Router:
         }
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=["akshare"])
 

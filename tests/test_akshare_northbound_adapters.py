@@ -1,10 +1,10 @@
 import pytest
-from openclaw_stock_mcp.providers.adapters.akshare_northbound_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_northbound_adapters import (
     adapt_em_hist_row,
     build_daily_summary_from_flow_summary,
     build_northbound_summary_text,
 )
-from openclaw_stock_mcp.app.models.northbound import (
+from cn_stock_mcp.app.models.northbound import (
     NorthboundFlowRecord,
     NorthboundDailySummary,
 )
@@ -194,7 +194,7 @@ def test_summary_text_empty():
 # ---- Schema validation ----
 
 def test_northbound_request_defaults():
-    from openclaw_stock_mcp.server.schemas import NorthboundRequest
+    from cn_stock_mcp.server.schemas import NorthboundRequest
 
     req = NorthboundRequest()
     assert req.include == ["daily_summary", "history"]
@@ -202,7 +202,7 @@ def test_northbound_request_defaults():
 
 
 def test_northbound_request_history_only():
-    from openclaw_stock_mcp.server.schemas import NorthboundRequest
+    from cn_stock_mcp.server.schemas import NorthboundRequest
 
     req = NorthboundRequest(include=["history"], history_n=60)
     assert req.include == ["history"]
@@ -210,14 +210,14 @@ def test_northbound_request_history_only():
 
 
 def test_northbound_request_empty_include_fails():
-    from openclaw_stock_mcp.server.schemas import NorthboundRequest
+    from cn_stock_mcp.server.schemas import NorthboundRequest
 
     with pytest.raises(ValueError, match="at least one"):
         NorthboundRequest(include=[])
 
 
 def test_northbound_request_dedup_include():
-    from openclaw_stock_mcp.server.schemas import NorthboundRequest
+    from cn_stock_mcp.server.schemas import NorthboundRequest
 
     req = NorthboundRequest(include=["daily_summary", "daily_summary", "history"])
     assert req.include == ["daily_summary", "history"]

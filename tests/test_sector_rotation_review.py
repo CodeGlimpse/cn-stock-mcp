@@ -1,5 +1,5 @@
-from openclaw_stock_mcp.app.usecases.sector_rotation_review import SectorRotationReviewUseCase
-from openclaw_stock_mcp.server.schemas import SectorRotationReviewRequest
+from cn_stock_mcp.app.usecases.sector_rotation_review import SectorRotationReviewUseCase
+from cn_stock_mcp.server.schemas import SectorRotationReviewRequest
 
 
 class _SectorReview:
@@ -308,7 +308,7 @@ def test_sector_rotation_review_raises_when_all_sectors_fail():
         },
     )()
 
-    from openclaw_stock_mcp.providers.errors import ProviderError
+    from cn_stock_mcp.providers.errors import ProviderError
 
     try:
         uc.execute(req)

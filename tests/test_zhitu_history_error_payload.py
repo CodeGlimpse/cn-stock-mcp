@@ -1,7 +1,7 @@
 import pytest
 
-from openclaw_stock_mcp.providers.errors import ProviderError
-from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
+from cn_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 
 class _Zhitu(ZhituProvider):

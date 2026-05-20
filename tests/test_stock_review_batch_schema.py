@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.server.schemas import StockReviewBatchRequest
+from cn_stock_mcp.server.schemas import StockReviewBatchRequest
 
 
 def test_stock_review_batch_request_defaults_trade_date_when_empty():

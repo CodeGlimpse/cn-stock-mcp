@@ -1,8 +1,8 @@
 """Tests for provider enabled/disabled switch."""
 import pytest
 
-from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
-from openclaw_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.providers.errors import ProviderError
 
 
 def test_default_both_enabled():

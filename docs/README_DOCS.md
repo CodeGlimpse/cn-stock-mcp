@@ -1,4 +1,4 @@
-# Docs Guide (`openclaw-stock-mcp`)
+# Docs Guide (`cn-stock-mcp`)
 
 Last Updated: 2026-05-06
 

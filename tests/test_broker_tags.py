@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.providers.adapters.broker_tags import broker_tags, summarize_broker_tags
+from cn_stock_mcp.providers.adapters.broker_tags import broker_tags, summarize_broker_tags
 
 
 def test_broker_tags_institution_and_connect():

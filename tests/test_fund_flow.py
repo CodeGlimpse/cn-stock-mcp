@@ -2,8 +2,8 @@
 from unittest.mock import MagicMock, patch
 import pytest
 
-from openclaw_stock_mcp.app.usecases.fund_flow import FundFlowUseCase
-from openclaw_stock_mcp.server.schemas import FundFlowRequest
+from cn_stock_mcp.app.usecases.fund_flow import FundFlowUseCase
+from cn_stock_mcp.server.schemas import FundFlowRequest
 
 
 def _make_market_rows():

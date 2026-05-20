@@ -1,8 +1,8 @@
 """Tests for industry_chain usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.industry_chain import IndustryChainUseCase
-from openclaw_stock_mcp.server.schemas import IndustryChainRequest
+from cn_stock_mcp.app.usecases.industry_chain import IndustryChainUseCase
+from cn_stock_mcp.server.schemas import IndustryChainRequest
 
 
 def _make_industry_rows():

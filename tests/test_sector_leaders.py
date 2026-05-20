@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.sector_leaders import SectorLeadersUseCase
+from cn_stock_mcp.app.usecases.sector_leaders import SectorLeadersUseCase
 
 
 class _Item:

@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
-from openclaw_stock_mcp.app.models.quote import Quote
-from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
-from openclaw_stock_mcp.server.schemas import StockQuoteRequest
+from cn_stock_mcp.app.models.quote import Quote
+from cn_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
+from cn_stock_mcp.server.schemas import StockQuoteRequest
 
 
 class _MockBatchProvider:

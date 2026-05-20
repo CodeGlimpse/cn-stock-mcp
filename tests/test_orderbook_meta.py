@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
+from cn_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
 
 
 class _Orderbook:
@@ -12,7 +12,7 @@ class _Provider:
 
     def get_orderbook(self, **kwargs):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "orderbook failed", retryable=True)
         return _Orderbook()
@@ -26,7 +26,7 @@ class _Router:
         }
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=["akshare"])
 

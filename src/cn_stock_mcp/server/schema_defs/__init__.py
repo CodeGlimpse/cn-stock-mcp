@@ -1,0 +1,106 @@
+"""Schema definitions split into domain modules.
+
+This package replaces the former monolithic schemas.py.
+All classes are re-exported via ``cn_stock_mcp.server.schemas`` for backward compatibility.
+"""
+
+from ._analytics import (
+    EventCalendarRequest,
+    HotThemeTrackerRequest,
+    IndexComposeRequest,
+    IndexEnhanceRequest,
+    MultiTimeframeReviewRequest,
+    StockCandidateScanRequest,
+    WatchlistReviewRequest,
+)
+from ._macro import (
+    BlockTradeRequest,
+    ConvertibleBondRequest,
+    DerivativesDataRequest,
+    DragonTigerRequest,
+    ETFSnapshotRequest,
+    InstituteHoldRequest,
+    MacroIndicatorRequest,
+    MoneyRateRequest,
+    StockWarrantRequest,
+    SecRevealRequest,
+)
+from ._market import (
+    CapitalFlowRequest,
+    FundFlowRequest,
+    LimitUpPoolRequest,
+    LimitStatRequest,
+    MarginTradingRequest,
+    MarketBriefRequest,
+    MarketOverviewRequest,
+    MarketPoolRequest,
+    NorthboundRequest,
+    StockScreenRequest,
+    DisclosureCalendarRequest,
+    TechnicalIndicatorRequest,
+    TradingCalendarRequest,
+)
+from ._sector import (
+    IndustryChainRequest,
+    IndustryValuationRankRequest,
+    SectorLeadersRequest,
+    SectorLookupRequest,
+    SectorReviewRequest,
+    SectorRotationReviewRequest,
+)
+from ._stock import (
+    EarningsQualityRequest,
+    InsiderTradeRequest,
+    DividendRankRequest,
+    ShareholderChangeRequest,
+    StockRepurchaseRequest,
+    StockCompareRequest,
+    StockFinancialRequest,
+    StockHistoryRequest,
+    StockOrderbookRequest,
+    StockProfileRequest,
+    StockQuoteRequest,
+    StockReviewBatchRequest,
+    StockReviewRequest,
+    StockSearchRequest,
+    ValuationRankRequest,
+)
+from ._types import (
+    AdjustType,
+    IndicatorType,
+    Interval,
+    PoolType,
+    ProviderName,
+    SecType,
+    SectorLookupMode,
+    SectorType,
+)
+
+__all__ = [
+    # Types
+    "SecType", "ProviderName", "Interval", "AdjustType",
+    "IndicatorType", "PoolType", "SectorLookupMode", "SectorType",
+    # Stock
+    "StockSearchRequest", "StockQuoteRequest", "StockHistoryRequest",
+    "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
+    "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
+    "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
+    "ShareholderChangeRequest", "StockRepurchaseRequest", "StockCompareRequest",
+    "IndustryChainRequest", "StockWarrantRequest", "SecRevealRequest", "FundFlowRequest", "LimitUpPoolRequest",
+    # Market
+    "TradingCalendarRequest", "MarketOverviewRequest", "MarketBriefRequest",
+    "TechnicalIndicatorRequest", "MarketPoolRequest", "CapitalFlowRequest",
+    "LimitStatRequest", "NorthboundRequest", "MarginTradingRequest", "StockScreenRequest",
+    "DisclosureCalendarRequest",
+    # Sector
+    "SectorReviewRequest", "SectorRotationReviewRequest", "SectorLookupRequest",
+    "SectorLeadersRequest", "IndustryValuationRankRequest",
+    # Analytics
+    "StockCandidateScanRequest", "WatchlistReviewRequest",
+    "MultiTimeframeReviewRequest", "HotThemeTrackerRequest",
+    "EventCalendarRequest", "IndexComposeRequest", "IndexEnhanceRequest",
+    # Macro
+    "MacroIndicatorRequest", "DragonTigerRequest", "ETFSnapshotRequest",
+    "ConvertibleBondRequest", "DerivativesDataRequest", "BlockTradeRequest",
+    "InstituteHoldRequest", "MoneyRateRequest",
+]

@@ -1,6 +1,6 @@
-from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
-from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
-from openclaw_stock_mcp.app.models.quote import Quote
+from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
+from cn_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
+from cn_stock_mcp.app.models.quote import Quote
 
 
 class _ResolverBackedProvider:
@@ -18,7 +18,7 @@ class _ResolverBackedProvider:
 
 class _Router:
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=[])
 

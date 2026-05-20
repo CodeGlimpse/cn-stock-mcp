@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from openclaw_stock_mcp.infra.config import Settings
+from cn_stock_mcp.infra.config import Settings
 
 
 def test_resolve_zhitu_tokens_reads_default_first_and_keeps_others(tmp_path: Path):

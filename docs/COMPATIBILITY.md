@@ -1,4 +1,4 @@
-# Compatibility (`openclaw-stock-mcp`)
+# Compatibility (`cn-stock-mcp`)
 
 本项目的核心交付物是 **MCP server**。只要宿主支持 MCP（stdio transport），就可以接入。
 

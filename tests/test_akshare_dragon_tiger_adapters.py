@@ -4,14 +4,14 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from openclaw_stock_mcp.app.models.dragon_tiger import (
+from cn_stock_mcp.app.models.dragon_tiger import (
     ActiveBrokerItem,
     BrokerRankItem,
     DailyDetailItem,
     InstitutionItem,
     StockStatItem,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_dragon_tiger_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_dragon_tiger_adapters import (
     adapt_active_broker_row,
     adapt_broker_rank_row,
     adapt_daily_detail_row,

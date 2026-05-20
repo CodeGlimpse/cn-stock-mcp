@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.server.schemas import TradingCalendarRequest
+from cn_stock_mcp.server.schemas import TradingCalendarRequest
 
 
 def test_trading_calendar_request_defaults_date_when_empty():

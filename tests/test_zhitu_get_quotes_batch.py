@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
+from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 
 class _MockZhitu(ZhituProvider):

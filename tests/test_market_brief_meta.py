@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
+from cn_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
 
 
 class _Bar:
@@ -20,14 +20,14 @@ class _Provider:
 
     def get_market_overview(self, market):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "overview failed", retryable=True)
         return {"market": market, "indices": []}
 
     def get_market_pool(self, pool_type, trade_date):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "pool failed", retryable=True)
         mapping = {
@@ -50,7 +50,7 @@ class _Provider:
 
     def get_history(self, symbol, sec_type, interval, start=None, end=None, limit=None, adjust=None):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "history failed", retryable=True)
         close_map = {
@@ -74,7 +74,7 @@ class _Router:
         }
 
     def choose_provider(self, tool_name, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         if tool_name in {"market_overview", "stock_history", "market_pool"}:
             return ProviderSelection(primary="zhitu", fallback=["akshare"])

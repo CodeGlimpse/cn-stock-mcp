@@ -1,8 +1,8 @@
 """Tests for institute_hold usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.institute_hold import InstituteHoldUseCase
-from openclaw_stock_mcp.server.schemas import InstituteHoldRequest
+from cn_stock_mcp.app.usecases.institute_hold import InstituteHoldUseCase
+from cn_stock_mcp.server.schemas import InstituteHoldRequest
 
 
 def _make_summary_rows():

@@ -1,6 +1,6 @@
-from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
-from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
-from openclaw_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
+from cn_stock_mcp.app.services.provider_types import ProviderSelection
+from cn_stock_mcp.providers.errors import ProviderError
 
 
 class _Provider:

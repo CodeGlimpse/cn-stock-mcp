@@ -1,4 +1,4 @@
-# openclaw-stock-mcp
+# cn-stock-mcp
 
 中国证券市场行情 MCP 服务。核心交付物是**通用 MCP server**；OpenClaw skill 只是仓库内附带的一个平台适配层。
 
@@ -88,13 +88,13 @@ cp .env.example .env
 ### 列出已注册 tools
 
 ```bash
-PYTHONPATH=src python -m openclaw_stock_mcp.main --list-tools
+PYTHONPATH=src python -m cn_stock_mcp.main --list-tools
 ```
 
 ### 调用单个 tool
 
 ```bash
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
+PYTHONPATH=src python -m cn_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
 ```
 
 ### 返回结构（统一 envelope）
@@ -131,7 +131,7 @@ bash scripts/smoke_live.sh
 ### 运行 provider 自检
 
 ```bash
-PYTHONPATH=src python -m openclaw_stock_mcp.main --tool provider_health --payload '{}'
+PYTHONPATH=src python -m cn_stock_mcp.main --tool provider_health --payload '{}'
 ```
 
 更多自检/挂载说明见：`docs/INTEGRATION.md`

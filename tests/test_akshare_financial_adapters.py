@@ -1,11 +1,11 @@
 import pytest
-from openclaw_stock_mcp.providers.adapters.akshare_financial_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_financial_adapters import (
     build_financial_snapshot_from_abstract,
     build_financial_history_from_abstract,
     adapt_akshare_financial_detail_row,
     build_financial_summary_text,
 )
-from openclaw_stock_mcp.app.models.financial import (
+from cn_stock_mcp.app.models.financial import (
     FinancialSnapshot,
     FinancialHistoryPoint,
     FinancialDetailItem,
@@ -243,7 +243,7 @@ def test_summary_text_no_report_date():
 # ---- Schema validation ----
 
 def test_stock_financial_request_defaults():
-    from openclaw_stock_mcp.server.schemas import StockFinancialRequest
+    from cn_stock_mcp.server.schemas import StockFinancialRequest
 
     req = StockFinancialRequest(symbol="000001.SZ")
     assert req.symbol == "000001.SZ"
@@ -253,7 +253,7 @@ def test_stock_financial_request_defaults():
 
 
 def test_stock_financial_request_details_only():
-    from openclaw_stock_mcp.server.schemas import StockFinancialRequest
+    from cn_stock_mcp.server.schemas import StockFinancialRequest
 
     req = StockFinancialRequest(symbol="000001.SZ", include=["details"], statement="balance")
     assert req.include == ["details"]
@@ -261,21 +261,21 @@ def test_stock_financial_request_details_only():
 
 
 def test_stock_financial_request_empty_include_fails():
-    from openclaw_stock_mcp.server.schemas import StockFinancialRequest
+    from cn_stock_mcp.server.schemas import StockFinancialRequest
 
     with pytest.raises(ValueError, match="at least one"):
         StockFinancialRequest(symbol="000001.SZ", include=[])
 
 
 def test_stock_financial_request_invalid_report_date():
-    from openclaw_stock_mcp.server.schemas import StockFinancialRequest
+    from cn_stock_mcp.server.schemas import StockFinancialRequest
 
     with pytest.raises(ValueError):
         StockFinancialRequest(symbol="000001.SZ", report_date="not-a-date")
 
 
 def test_stock_financial_request_dedup_include():
-    from openclaw_stock_mcp.server.schemas import StockFinancialRequest
+    from cn_stock_mcp.server.schemas import StockFinancialRequest
 
     req = StockFinancialRequest(symbol="000001.SZ", include=["snapshot", "snapshot", "history"])
     assert req.include == ["snapshot", "history"]

@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.server.transport import TransportApp
+from cn_stock_mcp.server.transport import TransportApp
 
 
 def test_sector_lookup_missing_sector_type_returns_json_safe_invalid_argument_envelope():

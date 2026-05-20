@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
+from cn_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
 
 
 class _BatchReview:
@@ -161,7 +161,7 @@ def test_watchlist_review_applies_filters():
 
 
 def test_watchlist_return_mode_ranked_only():
-    from openclaw_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
+    from cn_stock_mcp.app.usecases.watchlist_review import WatchlistReviewUseCase
 
     class _Batch:
         def execute(self, req):

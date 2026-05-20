@@ -1,11 +1,11 @@
 import pytest
 
-from openclaw_stock_mcp.app.models.valuation_rank import (
+from cn_stock_mcp.app.models.valuation_rank import (
     MarketValuationSnapshot,
     StockValuationItem,
     ValuationRankSummary,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_valuation_rank_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_valuation_rank_adapters import (
     build_market_valuation_snapshot,
     rank_stock_valuation_items,
     build_valuation_summary,
@@ -102,7 +102,7 @@ def test_build_valuation_summary_and_text():
 
 
 def test_valuation_rank_request_schema():
-    from openclaw_stock_mcp.server.schemas import ValuationRankRequest
+    from cn_stock_mcp.server.schemas import ValuationRankRequest
 
     req = ValuationRankRequest(symbols=["000001.SZ", "000001.SZ", "600519.SH"], top_n=2)
     assert req.symbols == ["000001.SZ", "600519.SH"]

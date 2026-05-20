@@ -1,11 +1,11 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from openclaw_stock_mcp.app.models.index_compose import IndexComposeSummary, IndexConstituentItem
-from openclaw_stock_mcp.app.models.profile import StockProfile, StockProfileDetail
-from openclaw_stock_mcp.app.models.quote import Quote
-from openclaw_stock_mcp.app.usecases.index_enhance import IndexEnhanceUseCase
-from openclaw_stock_mcp.server.schemas import IndexEnhanceRequest
+from cn_stock_mcp.app.models.index_compose import IndexComposeSummary, IndexConstituentItem
+from cn_stock_mcp.app.models.profile import StockProfile, StockProfileDetail
+from cn_stock_mcp.app.models.quote import Quote
+from cn_stock_mcp.app.usecases.index_enhance import IndexEnhanceUseCase
+from cn_stock_mcp.server.schemas import IndexEnhanceRequest
 
 
 class _Compose:

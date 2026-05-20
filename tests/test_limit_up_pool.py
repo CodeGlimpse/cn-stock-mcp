@@ -1,8 +1,8 @@
 """Tests for limit_up_pool usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.limit_up_pool import LimitUpPoolUseCase
-from openclaw_stock_mcp.server.schemas import LimitUpPoolRequest
+from cn_stock_mcp.app.usecases.limit_up_pool import LimitUpPoolUseCase
+from cn_stock_mcp.server.schemas import LimitUpPoolRequest
 
 
 def _make_limit_up_rows():

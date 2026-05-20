@@ -4,14 +4,14 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from openclaw_stock_mcp.app.models.macro import (
+from cn_stock_mcp.app.models.macro import (
     INDICATOR_REGISTRY,
     MacroDataFormat,
     MacroDataPoint,
     MacroEntry,
     OVERVIEW_PRESETS,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_macro_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_macro_adapters import (
     build_calendar_items,
     build_macro_summary_text,
     build_overview_item,
@@ -247,7 +247,7 @@ class TestBuildMacroSummaryText:
         assert "↑" in text
 
     def test_overview_items(self):
-        from openclaw_stock_mcp.app.models.macro import MacroOverviewItem
+        from cn_stock_mcp.app.models.macro import MacroOverviewItem
         items = {
             "cpi": MacroOverviewItem(indicator="cpi", indicator_name="中国CPI年率", date="2025-03-09",
                                      actual=0.7, unit="%", surprise="beat"),

@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.stock_review import StockReviewUseCase
+from cn_stock_mcp.app.usecases.stock_review import StockReviewUseCase
 
 
 class _Bar:
@@ -49,7 +49,7 @@ class _Provider:
 
 class _Router:
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="akshare", fallback=[])
 
@@ -140,7 +140,7 @@ class _CountingRouter:
         self.provider = _CountingProvider()
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="akshare", fallback=[])
 

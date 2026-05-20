@@ -1,8 +1,8 @@
 """Tests for insider_trade usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.insider_trade import InsiderTradeUseCase
-from openclaw_stock_mcp.server.schemas import InsiderTradeRequest
+from cn_stock_mcp.app.usecases.insider_trade import InsiderTradeUseCase
+from cn_stock_mcp.server.schemas import InsiderTradeRequest
 
 
 def _make_top10_rows():

@@ -1,4 +1,4 @@
-# Agent Minimal Guide (`openclaw-stock-mcp`)
+# Agent Minimal Guide (`cn-stock-mcp`)
 
 给 AI agent 的最小入口。目标：**少读文档、少试错、少放大 payload、少浪费 token。**
 

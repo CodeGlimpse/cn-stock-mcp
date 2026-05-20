@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from openclaw_stock_mcp.server.mcp_server import MCPServerStub, MCPTool
+from cn_stock_mcp.server.mcp_server import MCPServerStub, MCPTool
 
 
 class _Req(BaseModel):

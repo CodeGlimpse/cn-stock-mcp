@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from openclaw_stock_mcp.app.models.derivatives_data import (
+from cn_stock_mcp.app.models.derivatives_data import (
     FuturesHistItem,
     FuturesSpotItem,
     OptionContractItem,
     QVIXItem,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_derivatives_data_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_derivatives_data_adapters import (
     adapt_futures_hist_row,
     adapt_futures_spot_row,
     adapt_option_sse_row,

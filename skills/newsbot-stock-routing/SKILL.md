@@ -1,15 +1,15 @@
 ---
 name: newsbot-stock-routing
-description: Route news agent CN market requests to openclaw-stock-mcp tools. Use for China market briefings, hot-theme tracking, sector rotation, stock review, market pool, technical indicator, trading-day, and symbol lookup tasks. Do not use for general non-market news research.
+description: Route news agent CN market requests to cn-stock-mcp tools. Use for China market briefings, hot-theme tracking, sector rotation, stock review, market pool, technical indicator, trading-day, and symbol lookup tasks. Do not use for general non-market news research.
 user-invocable: false
-metadata: {"openclaw":{"skillKey":"newsbot-stock-routing","requires":{"config":["mcp.servers.openclaw-stock-mcp"]}}}
+metadata: {"openclaw":{"skillKey":"newsbot-stock-routing","requires":{"config":["mcp.servers.cn-stock-mcp"]}}}
 ---
 
 # newsbot-stock-routing
 
 Use this skill when the **news** agent receives CN market data / 复盘类请求：A 股、指数、基金、市场简报、热点主线、板块强弱、板块轮动、龙头跟风拖累、交易日判断、技术指标、涨停跌停股池、代码检索。
 
-Do **not** use this skill for 一般宏观新闻、国际政治新闻、公司新闻核验等**不需要** `openclaw-stock-mcp` 数据工具的任务。
+Do **not** use this skill for 一般宏观新闻、国际政治新闻、公司新闻核验等**不需要** `cn-stock-mcp` 数据工具的任务。
 
 ## Token-saving default
 

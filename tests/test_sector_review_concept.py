@@ -1,5 +1,5 @@
-from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
-from openclaw_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
+from cn_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
+from cn_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 
 
 class _MockSectorItem:

@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.trading_calendar import TradingCalendarUseCase
+from cn_stock_mcp.app.usecases.trading_calendar import TradingCalendarUseCase
 
 
 class _Provider:
@@ -16,7 +16,7 @@ class _Provider:
 
 class _Router:
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="akshare", fallback=[])
 

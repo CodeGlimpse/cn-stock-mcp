@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
-from openclaw_stock_mcp.app.usecases.multi_timeframe_review import MultiTimeframeReviewUseCase
-from openclaw_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.app.usecases.multi_timeframe_review import MultiTimeframeReviewUseCase
+from cn_stock_mcp.providers.errors import ProviderError
 
 
 class _Bar:

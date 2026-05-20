@@ -736,7 +736,7 @@
 |---|---|---|---|
 | `app_env` | dev | 否 | — |
 | `log_level` | INFO | **是** | main.py → setup_logging() |
-| `mcp_server_name` | openclaw-stock-mcp | 是 | mcp_server.py |
+| `mcp_server_name` | cn-stock-mcp | 是 | mcp_server.py |
 | `mcp_server_version` | 0.1.0 | 是 | mcp_server.py |
 | `default_market` | CN | 否 | — |
 | `default_provider_order` | akshare,zhitu | 是 | provider_router.py |
@@ -791,4 +791,4 @@
   - `_macro.py` — 宏观/衍生品相关 schema（5 个 Request）
   - `__init__.py` — 统一 re-export
 - `server/schemas.py` 保留为向后兼容的 re-export facade（`from ... import *`）
-- 所有现有 `from openclaw_stock_mcp.server.schemas import X` 不受影响
+- 所有现有 `from cn_stock_mcp.server.schemas import X` 不受影响

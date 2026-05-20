@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.event_calendar import EventCalendarUseCase
+from cn_stock_mcp.app.usecases.event_calendar import EventCalendarUseCase
 
 
 class _Record:
@@ -29,7 +29,7 @@ class _Provider:
 
 class _Router:
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=[])
 

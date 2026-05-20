@@ -1,7 +1,7 @@
 import pytest
 
-from openclaw_stock_mcp.app.models.industry_valuation_rank import IndustryValuationItem
-from openclaw_stock_mcp.providers.adapters.industry_valuation_rank_adapters import (
+from cn_stock_mcp.app.models.industry_valuation_rank import IndustryValuationItem
+from cn_stock_mcp.providers.adapters.industry_valuation_rank_adapters import (
     build_sector_item,
     rank_items,
     build_summary,
@@ -57,7 +57,7 @@ def test_build_summary_and_text():
 
 
 def test_request_schema():
-    from openclaw_stock_mcp.server.schemas import IndustryValuationRankRequest
+    from cn_stock_mcp.server.schemas import IndustryValuationRankRequest
 
     req = IndustryValuationRankRequest(sector_names=["1000金融", "1000金融", "1000医药"], top_n=2)
     assert req.sector_names == ["1000金融", "1000医药"]
@@ -69,8 +69,8 @@ def test_request_schema():
 
 def test_industry_valuation_rank_uses_request_sector_type():
     from unittest.mock import MagicMock, patch
-    from openclaw_stock_mcp.app.usecases.industry_valuation_rank import IndustryValuationRankUseCase
-    from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+    from cn_stock_mcp.app.usecases.industry_valuation_rank import IndustryValuationRankUseCase
+    from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
     uc = IndustryValuationRankUseCase()
     captured_sector_type = []

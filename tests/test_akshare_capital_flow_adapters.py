@@ -1,11 +1,11 @@
 import pytest
-from openclaw_stock_mcp.providers.adapters.akshare_capital_flow_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_capital_flow_adapters import (
     adapt_akshare_market_fund_flow,
     adapt_akshare_individual_fund_flow,
     adapt_akshare_sector_fund_flow,
     build_market_fund_flow_summary,
 )
-from openclaw_stock_mcp.app.models.capital_flow import (
+from cn_stock_mcp.app.models.capital_flow import (
     CapitalFlowRecord,
     MarketFundFlowSummary,
     SectorFundFlowItem,
@@ -187,7 +187,7 @@ def test_build_summary_empty():
 # ---- Schema validation ----
 
 def test_capital_flow_request_market_default():
-    from openclaw_stock_mcp.server.schemas import CapitalFlowRequest
+    from cn_stock_mcp.server.schemas import CapitalFlowRequest
 
     req = CapitalFlowRequest()
     assert req.flow_type == "market"
@@ -196,14 +196,14 @@ def test_capital_flow_request_market_default():
 
 
 def test_capital_flow_request_individual_requires_symbol():
-    from openclaw_stock_mcp.server.schemas import CapitalFlowRequest
+    from cn_stock_mcp.server.schemas import CapitalFlowRequest
 
     with pytest.raises(ValueError, match="symbol is required"):
         CapitalFlowRequest(flow_type="individual")
 
 
 def test_capital_flow_request_individual_with_symbol():
-    from openclaw_stock_mcp.server.schemas import CapitalFlowRequest
+    from cn_stock_mcp.server.schemas import CapitalFlowRequest
 
     req = CapitalFlowRequest(flow_type="individual", symbol="000001.SZ")
     assert req.flow_type == "individual"
@@ -211,14 +211,14 @@ def test_capital_flow_request_individual_with_symbol():
 
 
 def test_capital_flow_request_date_validation():
-    from openclaw_stock_mcp.server.schemas import CapitalFlowRequest
+    from cn_stock_mcp.server.schemas import CapitalFlowRequest
 
     with pytest.raises(ValueError, match="start_date must be"):
         CapitalFlowRequest(start_date="2026-05-10", end_date="2026-05-01")
 
 
 def test_capital_flow_request_industry():
-    from openclaw_stock_mcp.server.schemas import CapitalFlowRequest
+    from cn_stock_mcp.server.schemas import CapitalFlowRequest
 
     req = CapitalFlowRequest(flow_type="industry", top_n=10)
     assert req.flow_type == "industry"
@@ -226,7 +226,7 @@ def test_capital_flow_request_industry():
 
 
 def test_capital_flow_request_concept():
-    from openclaw_stock_mcp.server.schemas import CapitalFlowRequest
+    from cn_stock_mcp.server.schemas import CapitalFlowRequest
 
     req = CapitalFlowRequest(flow_type="concept", sort_by="inflow", descending=False)
     assert req.flow_type == "concept"

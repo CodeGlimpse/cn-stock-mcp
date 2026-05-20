@@ -1,11 +1,11 @@
-# Handoff Minimal (`openclaw-stock-mcp`)
+# Handoff Minimal (`cn-stock-mcp`)
 
 给最终用户 / 本地 AI agent 的最短接入说明。
 
 ## 1) 安装
 
 ```bash
-cd /path/to/openclaw-stock-mcp
+cd /path/to/cn-stock-mcp
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -e .
@@ -19,8 +19,8 @@ cp .env.example .env
 ## 2) 本地自检
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m openclaw_stock_mcp.main --list-tools
-PYTHONPATH=src .venv/bin/python -m openclaw_stock_mcp.main --tool provider_health --payload '{}'
+PYTHONPATH=src .venv/bin/python -m cn_stock_mcp.main --list-tools
+PYTHONPATH=src .venv/bin/python -m cn_stock_mcp.main --tool provider_health --payload '{}'
 .venv/bin/python -m pytest -q -m "not live"
 ```
 
@@ -31,7 +31,7 @@ PYTHONPATH=src .venv/bin/python -m openclaw_stock_mcp.main --tool provider_healt
 
 核心字段：
 - `command`: Python 解释器
-- `args`: `['-m', 'openclaw_stock_mcp.main', '--stdio']`
+- `args`: `['-m', 'cn_stock_mcp.main', '--stdio']`
 - `cwd`: 仓库根目录
 - `env.PYTHONPATH=src`
 

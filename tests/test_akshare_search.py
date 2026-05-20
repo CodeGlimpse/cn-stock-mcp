@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.providers.akshare_provider import AKShareProvider
+from cn_stock_mcp.providers.akshare_provider import AKShareProvider
 
 
 class _DF:

@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_batch_quote
+from cn_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_batch_quote
 
 
 def test_adapt_zhitu_batch_quote():

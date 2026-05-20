@@ -1,8 +1,8 @@
 """Tests for stock_screen usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
-from openclaw_stock_mcp.server.schemas import StockScreenRequest
+from cn_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
+from cn_stock_mcp.server.schemas import StockScreenRequest
 
 
 def _make_spot_rows():

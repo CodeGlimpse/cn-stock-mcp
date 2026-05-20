@@ -1,5 +1,5 @@
-from openclaw_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
-from openclaw_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
+from cn_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
+from cn_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
 
 
 class _Bar:
@@ -18,7 +18,7 @@ class _ProviderHistory:
 
     def get_history(self, **kwargs):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "history failed", retryable=True)
         return [_Bar("2026-05-07 09:35:00"), _Bar("2026-05-07 09:40:00")]
@@ -30,7 +30,7 @@ class _ProviderIndicator:
 
     def get_indicator(self, **kwargs):
         if self.should_fail:
-            from openclaw_stock_mcp.providers.errors import ProviderError
+            from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "indicator failed", retryable=True)
         return _Series()
@@ -44,7 +44,7 @@ class _RouterHistory:
         }
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=["akshare"])
 
@@ -60,7 +60,7 @@ class _RouterIndicator:
         }
 
     def choose_provider(self, **kwargs):
-        from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+        from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
         return ProviderSelection(primary="zhitu", fallback=["akshare"])
 

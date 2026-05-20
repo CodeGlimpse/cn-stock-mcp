@@ -1,6 +1,6 @@
 # ERROR_MODEL.md
 
-`openclaw-stock-mcp` 的 tool 调用统一返回 envelope：
+`cn-stock-mcp` 的 tool 调用统一返回 envelope：
 
 ```json
 {

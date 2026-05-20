@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.providers.adapters.akshare_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_fund_list_row,
     adapt_akshare_index_list_row,
 )

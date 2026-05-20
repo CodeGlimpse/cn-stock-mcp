@@ -1,6 +1,6 @@
-from openclaw_stock_mcp.app.usecases.hot_theme_tracker import HotThemeTrackerUseCase
-from openclaw_stock_mcp.providers.errors import ProviderError
-from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest
+from cn_stock_mcp.app.usecases.hot_theme_tracker import HotThemeTrackerUseCase
+from cn_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.server.schemas import HotThemeTrackerRequest
 
 
 class _SectorLookup:

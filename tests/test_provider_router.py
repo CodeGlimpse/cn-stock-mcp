@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.app.services.provider_router import ProviderRouter
 
 
 def test_stock_quote_stock_main_route_defaults_to_zhitu_primary():

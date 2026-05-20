@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import traceback
 
-from openclaw_stock_mcp.infra.config import get_settings
-from openclaw_stock_mcp.server.transport import TransportApp
-from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
+from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.server.transport import TransportApp
+from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
 
 
 TEST_CASES = [

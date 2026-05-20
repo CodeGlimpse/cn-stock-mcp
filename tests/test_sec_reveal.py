@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openclaw_stock_mcp.app.usecases.sec_reveal import SecRevealUseCase
-from openclaw_stock_mcp.server.schemas import SecRevealRequest
+from cn_stock_mcp.app.usecases.sec_reveal import SecRevealUseCase
+from cn_stock_mcp.server.schemas import SecRevealRequest
 
 
 def _make_buy_rows():

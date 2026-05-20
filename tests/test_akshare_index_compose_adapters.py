@@ -1,7 +1,7 @@
 import pytest
 
-from openclaw_stock_mcp.app.models.index_compose import IndexConstituentItem
-from openclaw_stock_mcp.providers.adapters.akshare_index_compose_adapters import (
+from cn_stock_mcp.app.models.index_compose import IndexConstituentItem
+from cn_stock_mcp.providers.adapters.akshare_index_compose_adapters import (
     adapt_index_compose_rows,
     build_index_compose_summary,
     build_index_compose_summary_text,
@@ -70,7 +70,7 @@ def test_build_index_compose_summary_text():
 
 
 def test_index_compose_request_schema():
-    from openclaw_stock_mcp.server.schemas import IndexComposeRequest
+    from cn_stock_mcp.server.schemas import IndexComposeRequest
 
     req = IndexComposeRequest(index_code="000300.SH", top_n=20)
     assert req.index_code == "000300.SH"

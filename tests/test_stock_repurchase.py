@@ -1,8 +1,8 @@
 """Tests for stock_repurchase usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.stock_repurchase import StockRepurchaseUseCase
-from openclaw_stock_mcp.server.schemas import StockRepurchaseRequest
+from cn_stock_mcp.app.usecases.stock_repurchase import StockRepurchaseUseCase
+from cn_stock_mcp.server.schemas import StockRepurchaseRequest
 
 
 def _make_rows():

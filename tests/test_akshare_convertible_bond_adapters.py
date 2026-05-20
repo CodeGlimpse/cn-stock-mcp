@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from openclaw_stock_mcp.app.models.convertible_bond import (
+from cn_stock_mcp.app.models.convertible_bond import (
     CBIndexPoint,
     CBRedeemItem,
     CBSpotItem,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_convertible_bond_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_convertible_bond_adapters import (
     adapt_cb_index_row,
     adapt_cb_redeem_row,
     adapt_cb_spot_row,

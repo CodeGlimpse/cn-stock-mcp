@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from openclaw_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest, EventCalendarRequest, SectorLeadersRequest
+from cn_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest, EventCalendarRequest, SectorLeadersRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -95,7 +95,7 @@ def test_multi_timeframe_review_requires_two_distinct_intervals():
 
 
 def test_stock_candidate_scan_request_new_filter_fields():
-    from openclaw_stock_mcp.server.schemas import StockCandidateScanRequest
+    from cn_stock_mcp.server.schemas import StockCandidateScanRequest
 
     req = StockCandidateScanRequest(
         symbols=["600519.SH"],
@@ -110,7 +110,7 @@ def test_stock_candidate_scan_request_new_filter_fields():
 
 
 def test_stock_candidate_scan_request_reason_tag_filters():
-    from openclaw_stock_mcp.server.schemas import StockCandidateScanRequest
+    from cn_stock_mcp.server.schemas import StockCandidateScanRequest
 
     req = StockCandidateScanRequest(
         symbols=["600519.SH"],

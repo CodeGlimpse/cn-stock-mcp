@@ -5,10 +5,10 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from openclaw_stock_mcp.app.services.provider_router import ProviderRouter
-from openclaw_stock_mcp.app.services.symbol_resolver import SymbolResolver
-from openclaw_stock_mcp.providers.akshare_provider import AKShareProvider
-from openclaw_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
+from cn_stock_mcp.providers.akshare_provider import AKShareProvider
+from cn_stock_mcp.providers.errors import ProviderError
 
 
 def _make_bj_spot_df(rows: list[dict] | None = None) -> pd.DataFrame:
@@ -176,8 +176,8 @@ def test_provider_router_stock_quote_bj_prefix_has_akshare_fallback():
 
 def test_stock_quote_bj_fallback_from_zhitu_to_akshare():
     """Integration: zhitu fails -> akshare BJ spot fallback works."""
-    from openclaw_stock_mcp.app.services.fallback import run_with_fallback_meta
-    from openclaw_stock_mcp.app.services.provider_types import ProviderSelection
+    from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
+    from cn_stock_mcp.app.services.provider_types import ProviderSelection
 
     router = ProviderRouter()
     selection = ProviderSelection(primary="zhitu", fallback=["akshare"])

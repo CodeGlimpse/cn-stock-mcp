@@ -1,5 +1,5 @@
 {
-  "openclaw-stock-mcp": {
+  "cn-stock-mcp": {
     "defaultLimits": {
       "limit": 5,
       "top_n": 3

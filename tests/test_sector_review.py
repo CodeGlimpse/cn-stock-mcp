@@ -1,4 +1,4 @@
-from openclaw_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
+from cn_stock_mcp.app.usecases.sector_review import SectorReviewUseCase
 
 
 class _Member:
@@ -329,7 +329,7 @@ def test_sector_review_raises_when_no_members_found():
         },
     )()
 
-    from openclaw_stock_mcp.providers.errors import ProviderError
+    from cn_stock_mcp.providers.errors import ProviderError
 
     try:
         uc.execute(req)

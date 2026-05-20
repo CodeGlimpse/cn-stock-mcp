@@ -1,8 +1,8 @@
 """Tests for dividend_rank usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.dividend_rank import DividendRankUseCase
-from openclaw_stock_mcp.server.schemas import DividendRankRequest
+from cn_stock_mcp.app.usecases.dividend_rank import DividendRankUseCase
+from cn_stock_mcp.server.schemas import DividendRankRequest
 
 
 def _make_rank_rows():

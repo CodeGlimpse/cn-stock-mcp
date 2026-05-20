@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from openclaw_stock_mcp.app.models.etf_snapshot import (
+from cn_stock_mcp.app.models.etf_snapshot import (
     ETFNAVItem,
     ETFScaleItem,
     ETFSpotItem,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_etf_snapshot_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_etf_snapshot_adapters import (
     adapt_etf_nav_row,
     adapt_etf_scale_row,
     adapt_etf_spot_row,

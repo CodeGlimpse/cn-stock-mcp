@@ -1,8 +1,8 @@
 """Tests for stock_compare usecase with mocked providers."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.stock_compare import StockCompareUseCase
-from openclaw_stock_mcp.server.schemas import StockCompareRequest
+from cn_stock_mcp.app.usecases.stock_compare import StockCompareUseCase
+from cn_stock_mcp.server.schemas import StockCompareRequest
 
 
 def _make_sina_rows():
@@ -13,7 +13,7 @@ def _make_sina_rows():
 
 
 def _make_zhitu_quotes():
-    from openclaw_stock_mcp.app.models.quote import Quote
+    from cn_stock_mcp.app.models.quote import Quote
     return {
         "600519.SH": Quote(symbol="600519.SH", name="贵州茅台", sec_type="stock", source="zhitu", price=1800.0, change_percent=0.56, pe=32.5, pb=10.1, market_cap=2.26e12, float_market_cap=1.8e12, turnover_rate=0.35, volume=5000000, turnover=9e9),
         "000858.SZ": Quote(symbol="000858.SZ", name="五粮液", sec_type="stock", source="zhitu", price=140.5, change_percent=1.52, pe=22.1, pb=6.3, market_cap=5.5e11, float_market_cap=4.2e11, turnover_rate=0.82, volume=30000000, turnover=4.2e9),
@@ -33,7 +33,7 @@ def _make_financial_rows():
 def test_stock_compare_quote():
     uc = StockCompareUseCase()
     # Pre-fill stock_screen cache
-    from openclaw_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
+    from cn_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
     screen_uc = StockScreenUseCase()
     screen_uc.spot_cache.set("screen:spot_all", _make_sina_rows())
 
@@ -85,7 +85,7 @@ def test_stock_compare_financial():
 def test_stock_compare_combined():
     uc = StockCompareUseCase()
     # Fill Sina cache
-    from openclaw_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
+    from cn_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
     screen_uc = StockScreenUseCase()
     screen_uc.spot_cache.set("screen:spot_all", _make_sina_rows())
 

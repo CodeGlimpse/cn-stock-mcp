@@ -1,6 +1,6 @@
-from openclaw_stock_mcp.providers.errors import ProviderError
-from openclaw_stock_mcp.providers.zhitu_provider import ZhituProvider
-from openclaw_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_quote
+from cn_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
+from cn_stock_mcp.providers.adapters.zhitu_market_adapters import adapt_zhitu_quote
 
 
 class _UnexpectedBatchZhitu(ZhituProvider):

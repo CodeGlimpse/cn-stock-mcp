@@ -1,4 +1,4 @@
-# Interface Schema (`openclaw-stock-mcp`)
+# Interface Schema (`cn-stock-mcp`)
 
 Last Updated: 2026-05-09
 

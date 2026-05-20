@@ -1,43 +1,43 @@
 """Tests for usecase-level caching in stock_quote, market_overview, technical_indicator, orderbook, market_pool."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
-from openclaw_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
-from openclaw_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
-from openclaw_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
-from openclaw_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
+from cn_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
+from cn_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
+from cn_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
+from cn_stock_mcp.app.usecases.stock_orderbook import OrderbookUseCase
+from cn_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 
 
 def _make_quote_request(**overrides):
-    from openclaw_stock_mcp.server.schemas import StockQuoteRequest
+    from cn_stock_mcp.server.schemas import StockQuoteRequest
     defaults = {"symbols": ["600519.SH"], "sec_type": "stock"}
     defaults.update(overrides)
     return StockQuoteRequest(**defaults)
 
 
 def _make_overview_request(**overrides):
-    from openclaw_stock_mcp.server.schemas import MarketOverviewRequest
+    from cn_stock_mcp.server.schemas import MarketOverviewRequest
     defaults = {"market": "CN"}
     defaults.update(overrides)
     return MarketOverviewRequest(**defaults)
 
 
 def _make_indicator_request(**overrides):
-    from openclaw_stock_mcp.server.schemas import TechnicalIndicatorRequest
+    from cn_stock_mcp.server.schemas import TechnicalIndicatorRequest
     defaults = {"symbol": "000001.SH", "interval": "1d", "indicator": "macd", "sec_type": "index"}
     defaults.update(overrides)
     return TechnicalIndicatorRequest(**defaults)
 
 
 def _make_orderbook_request(**overrides):
-    from openclaw_stock_mcp.server.schemas import StockOrderbookRequest
+    from cn_stock_mcp.server.schemas import StockOrderbookRequest
     defaults = {"symbol": "600519.SH", "sec_type": "stock"}
     defaults.update(overrides)
     return StockOrderbookRequest(**defaults)
 
 
 def _make_pool_request(**overrides):
-    from openclaw_stock_mcp.server.schemas import MarketPoolRequest
+    from cn_stock_mcp.server.schemas import MarketPoolRequest
     defaults = {"pool_type": "limit_up", "trade_date": "2026-05-06"}
     defaults.update(overrides)
     return MarketPoolRequest(**defaults)

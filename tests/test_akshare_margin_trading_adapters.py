@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from openclaw_stock_mcp.app.models.margin_trading import (
+from cn_stock_mcp.app.models.margin_trading import (
     MarginDetailItem,
     MarginSummaryItem,
 )
-from openclaw_stock_mcp.providers.adapters.akshare_margin_trading_adapters import (
+from cn_stock_mcp.providers.adapters.akshare_margin_trading_adapters import (
     adapt_margin_sse_detail_row,
     adapt_margin_sse_summary_row,
     adapt_margin_szse_detail_row,
@@ -150,7 +150,7 @@ class TestBuildMarginSummaryText:
 class TestMarginTradingUseCasePartialFailure:
     def test_partial_failure_when_sse_summary_fails(self):
         from unittest.mock import MagicMock
-        from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+        from cn_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
 
         uc = MarginTradingUseCase()
         provider = MagicMock()
@@ -177,7 +177,7 @@ class TestMarginTradingUseCasePartialFailure:
 
     def test_no_errors_when_all_succeed(self):
         from unittest.mock import MagicMock
-        from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+        from cn_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
 
         uc = MarginTradingUseCase()
         provider = MagicMock()
@@ -202,7 +202,7 @@ class TestMarginTradingUseCasePartialFailure:
 
     def test_partial_failure_when_detail_exchange_fails(self):
         from unittest.mock import MagicMock
-        from openclaw_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
+        from cn_stock_mcp.app.usecases.margin_trading import MarginTradingUseCase
 
         uc = MarginTradingUseCase()
         provider = MagicMock()

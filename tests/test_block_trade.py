@@ -1,8 +1,8 @@
 """Tests for block_trade usecase with mocked provider."""
 from unittest.mock import MagicMock, patch
 
-from openclaw_stock_mcp.app.usecases.block_trade import BlockTradeUseCase
-from openclaw_stock_mcp.server.schemas import BlockTradeRequest
+from cn_stock_mcp.app.usecases.block_trade import BlockTradeUseCase
+from cn_stock_mcp.server.schemas import BlockTradeRequest
 
 
 def _make_daily_detail_rows():

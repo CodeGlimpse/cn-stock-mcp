@@ -1,7 +1,7 @@
 import pytest
 
-from openclaw_stock_mcp.app.models.financial import FinancialSnapshot
-from openclaw_stock_mcp.providers.adapters.earnings_quality_adapters import (
+from cn_stock_mcp.app.models.financial import FinancialSnapshot
+from cn_stock_mcp.providers.adapters.earnings_quality_adapters import (
     build_metrics,
     score_earnings_quality,
 )
@@ -77,7 +77,7 @@ def test_score_missing_profit_data():
 
 
 def test_earnings_quality_request_schema():
-    from openclaw_stock_mcp.server.schemas import EarningsQualityRequest
+    from cn_stock_mcp.server.schemas import EarningsQualityRequest
 
     req = EarningsQualityRequest(symbol="000001.SZ")
     assert req.symbol == "000001.SZ"
