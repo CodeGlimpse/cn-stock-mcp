@@ -4,6 +4,8 @@ Last Updated: 2026-05-15
 
 ## 1) 本地运行与自检
 
+> AI agent 建议先读 `docs/AGENT_MINIMAL.md` 与 `docs/EXAMPLES_MINIMAL.md`，再决定是否需要展开本页的完整联调说明。
+
 项目目录：`/home/openclaw/桌面/openclaw/codes/openclaw-stock-mcp`
 
 ### 列出 tools

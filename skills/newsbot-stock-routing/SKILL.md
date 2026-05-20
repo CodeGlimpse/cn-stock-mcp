@@ -7,71 +7,39 @@ metadata: {"openclaw":{"skillKey":"newsbot-stock-routing","requires":{"config":[
 
 # newsbot-stock-routing
 
-Use this skill when the **news** agent receives CN market data or复盘类请求：A 股/指数/基金行情、市场简报、热点主线、板块强弱、板块轮动、龙头/跟风/拖累、交易日判断、技术指标、涨停跌停股池、代码检索。
+Use this skill when the **news** agent receives CN market data / 复盘类请求：A 股、指数、基金、市场简报、热点主线、板块强弱、板块轮动、龙头跟风拖累、交易日判断、技术指标、涨停跌停股池、代码检索。
 
-Do **not** use this skill for一般宏观新闻、国际政治新闻、公司新闻核验等**不需要** `openclaw-stock-mcp` 数据工具的任务。
+Do **not** use this skill for 一般宏观新闻、国际政治新闻、公司新闻核验等**不需要** `openclaw-stock-mcp` 数据工具的任务。
 
-## Quick routing
+## Token-saving default
 
-- 市场整体 / 收盘简报 / 情绪温度 → `market_brief`
-- 热点主线 / 次主线 / 风险主题 → `hot_theme_tracker`
-- 单板块 / 行业 / 概念复盘 → `sector_review`
-- 多板块横向比较 / 板块轮动 → `sector_rotation_review`
-- 单股复盘 → `stock_review`
-- 股票池批量对比 → `stock_review_batch`
-- 候选扫描 / 找值得继续跟踪的票 → `stock_candidate_scan`
-- 固定观察池 / 自选池持续跟踪 → `watchlist_review`
-- 实时价格 / 涨跌快照 → `stock_quote`
-- 历史走势 / K 线 / 分时 → `stock_history`
-- 单只标的跨周期共振 / 冲突 → `multi_timeframe_review`
-- MACD / MA / BOLL / KDJ → `technical_indicator`
-- 涨停/跌停/强势/次新/炸板股池 → `limit_up_pool`（深度历史分析，含情绪指标汇总与行业维度情绪汇总）或 `market_pool`（轻量快照）
-- 是否交易日 / 上下个交易日 → `trading_calendar`
-- 板块列表 / 板块成员 → `sector_lookup`
-- 代码不确定 / 名称歧义 → `stock_search`
-- 上游健康检查 → `provider_health`
-- 宏观经济指标（CPI/PMI/GDP/LPR/M2等）→ `macro_indicator`
-- 龙虎榜明细（游资/机构/营业部胜率）→ `dragon_tiger`; 机构席位深度/单股席位 → `sec_reveal`
-- 指数成分 / 指数增强组合对比（收益、超额、权重暴露、行业暴露）→ `index_compose` / `index_enhance`
-- 可转债（双低/溢价率/YTM/强赎监控）→ `convertible_bond`
-- 期货/期权（期货实时+历史/期权合约/QVIX隐含波动率）→ `derivatives_data`
-- 融资融券（两市汇总+个股明细/融资买入排序）→ `margin_trading`
-- 大宗交易（每日明细+个股汇总+行业统计+营业部排行+活跃个股）→ `block_trade`
-- 机构持仓（季度汇总+个股明细/增减持变动）→ `institute_hold`
-- 货币市场利率（SHIBOR曲线+银行间拆借+回购定盘利率）→ `money_rate`
-- 选股筛选（市场/价格/涨跌幅/成交量/成交额/振幅多条件组合）→ `stock_screen`
-- 高管增减持（十大流通股东变动+高管/股东增减持历史）→ `insider_trade`
-- 股息率/分红排名（历史分红排名+分红方案+单股分红明细）→ `dividend_rank`
-- 股东变动（十大股东变动+全市场股东持股汇总/按类型筛选）→ `shareholder_change`
-- 披露日历（财报披露时间表/预约日/变更/实际披露日）→ `disclosure_calendar`
-- 回购明细（公司回购计划/进度/已回购金额）→ `stock_repurchase`
-- 多股横向对比（行情+估值+财务+股息分层加载）→ `stock_compare`
-- 产业链上下游（行业涨跌/资金流入+概念板块驱动事件/龙头股）→ `industry_chain`
-- 权证/期权（ETF期权+商品期权+股指期权）→ `stock_warrant`
-- 主力资金流向（全市场/行业/个股）→ `fund_flow`
-- 涨停/跌停股池历史分析（涨停/跌停/强势/昨涨停/次新/炸板，含情绪指标汇总与行业维度情绪汇总）→ `limit_up_pool`
-- 龙虎榜机构席位深度（单股买卖席位/活跃营业部/机构明细/机构追踪/席位标签）→ `sec_reveal`
+先用最轻 tool，先用最小 payload，够回答就停：
 
-## Operating rules
+- 默认 `limit/top_n` 先用 `3~5`
+- 名称/代码不确定先 `stock_search`
+- 常规回答不要先跑 `provider_health`
+- 单板块优先 `sector_review`；多板块比较才用 `sector_rotation_review`
+- 轻量池子快照优先 `market_pool`；更深短线情绪/历史结构再用 `limit_up_pool`
 
-- 代码或名称不确定时，**先 `stock_search`，再 quote/history/review**。
-- 解释 `stock_quote` 股票实时行情时，必须说明 Zhitu 原始单位口径：`volume` 为**万手**、`turnover` 为**元**、`pe` 为**动态市盈率**、`market_cap/float_market_cap` 为**百元**（元口径市值 / 100）；不要自行归一化返回值。
-- 解释 `market_brief`、`sector_review`、`sector_rotation_review` 和 `hot_theme_tracker` 时，**优先使用统一公共字段 `review_envelope_v1`**。
-- `sentiment.score` 是统一情绪温度分；`rotation.score` 是轮动信号分，**不能混用**。
-- 若 `requested_trade_date != trade_date`，必须明确说明“已回退到有效交易日”。
-- `sector_rotation_review` 支持多板块横向比较 / 板块轮动（`sector_type=primary` 和 `sector_type=concept` 均已验证通过）；若用户给的是单个板块，优先走 `sector_review`。
-- `hot_theme_tracker` 当前适合快速回答“主线是谁 / 是否扩散 / 哪些方向在退潮”，不是单板块深度复盘的替代品。
-- `limit_up_pool` 适合做结构化股池复盘、情绪指标汇总和行业维度情绪汇总；如果用户只要轻量实时池子快照，优先走 `market_pool`。
-- 解释 `market_pool(limit_up)` 时，`extra.limit_count` 表示当前连续涨停板数/连板高度；`extra.stat` 通常是 `N/M` 格式，表示 N 天 M 板（最近 N 个交易日内出现 M 次涨停）。
-- `capital_flow(flow_type=market)` 返回 `records`（历史资金流序列）和 `market_summary`（指定 `trade_date` 的当日摘要）；其中 `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，实际是**当日主力资金净流入占比**，不是区间平均值。`flow_type=industry/concept` 返回榜单型 `items`，其中 `rank` 表示**上游原始涨跌幅排名**，不是当前按 `net_amount` 重排后的序号。
-- `northbound` 当前仅支持 `daily_summary` / `history`；原先的 `holdings`（北向持股排行）因 AKShare / 东方财富上游接口不可用已下线，不要再路由或解释为可用能力。
-- `stock_financial` 当前已恢复到 `stock_financial_abstract_new_ths` 路径；`snapshot/history/details` 三层都已验证通过。若用户要三表明细，使用 `include=["details"]` 并显式传 `statement=income|balance|cashflow`。
-- `sector_rotation_review` live 路径仍偏重；默认先用较小 `limit`（如 3~5），需要更大覆盖时再逐步放大。设 `skip_member_detail=true` 可跳过个股展开、只做板块级聚合，大幅加速（适合仅需板块间对比的场景）。
-- `market_brief` 里的 `overview / index_ranking / highlights / pools` 是**兼容补充字段**，不要把它们当成主契约。
-- 当字段为 `null`、空数组，或 `applicable=false` 时，不要脑补结论。
+## High-frequency routing
 
-## Read references when needed
+先读：`{baseDir}/references/quick-routing-core.md`
 
-- Envelope 字段与评分语义：`{baseDir}/references/review-envelope-v1.md`
-- Tool 路由、参数和 provider 规则：`{baseDir}/references/tool-routing.md`
-- 输出组织与失败处理：`{baseDir}/references/output-rules.md`
+它只覆盖高频场景，足够回答大部分市场简报 / 复盘问题。
+
+## Hard rules
+
+- `sector_lookup(mode=children|members)` **必须显式传** `sector_type=primary|concept`
+- `sector_lookup(children)` 表示**成员股**，不是子板块
+- 若 `requested_trade_date != trade_date`，必须说明已回退到有效交易日
+- `rotation.score` 是轮动/结构信号分，**不是** 情绪温度分
+- 遇到 `null` / `[]` / `applicable=false`，不要脑补结论
+
+## Read references only when needed
+
+- 高频最短路由：`{baseDir}/references/quick-routing-core.md`
+- 高频/常规工具的详细参数与 provider 路由：`{baseDir}/references/tool-routing.md`
+- 长尾工具（宏观、龙虎榜、ETF、可转债、期货/期权等）：`{baseDir}/references/tool-routing-extended.md`
+- 需要 payload 示例时：`{baseDir}/references/tool-examples.md`
+- 统一 envelope 字段与评分语义：`{baseDir}/references/review-envelope-v1.md`
+- 输出组织、失败处理、表达优先级：`{baseDir}/references/output-rules.md`

@@ -2,19 +2,25 @@
 
 Last Updated: 2026-05-06
 
-本目录只保留当前有效的运行文档。阅读顺序：
+本目录只保留当前有效的运行文档。**给 AI agent 的最短阅读顺序：**
 
-1. `IMPLEMENTATION_STATUS.md`
-   - 看当前已经实现了什么、验证到什么程度、有哪些限制。
+1. `AGENT_MINIMAL.md`
+   - 先看最小路由、最小 payload、最容易踩坑的契约。
 
-2. `INTERFACE_SCHEMA.md`
-   - 看 tool 的输入输出契约、枚举、symbol/interval 约束、provider 路由规则。
+2. `EXAMPLES_MINIMAL.md`
+   - 只看最小可工作的调用示例，不必先读 README 长样例。
 
-3. `ERROR_MODEL.md`
-   - 看统一错误模型、错误码语义、retry/fallback 建议。
-
-4. `INTEGRATION.md`
+3. `INTEGRATION.md`
    - 看如何本地启动 stdio、如何挂载到 OpenClaw、如何联调与验收。
+
+4. `INTERFACE_SCHEMA.md`
+   - 需要详细输入输出契约、枚举、symbol/interval 约束时再看。
+
+5. `IMPLEMENTATION_STATUS.md`
+   - 需要确认当前实现状态、验证范围、限制时再看。
+
+6. `ERROR_MODEL.md`
+   - 需要统一错误码、retry/fallback 语义时再看。
 
 ---
 

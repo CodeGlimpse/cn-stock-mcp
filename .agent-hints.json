@@ -1,0 +1,16 @@
+{
+  "openclaw-stock-mcp": {
+    "defaultLimits": {
+      "limit": 5,
+      "top_n": 3
+    },
+    "rules": [
+      "Prefer the lightest tool that answers the question.",
+      "Use stock_search first when code/name is ambiguous.",
+      "Do not call provider_health unless diagnosing upstream issues.",
+      "For sector_lookup with mode=children or members, require explicit sector_type=primary|concept.",
+      "Use market_pool for light snapshots; only use limit_up_pool for deeper short-term sentiment/history.",
+      "Start sector_rotation_review with small limit and prefer skip_member_detail=true when stock-level detail is unnecessary."
+    ]
+  }
+}
