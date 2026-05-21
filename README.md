@@ -5,7 +5,8 @@
 > **给最终用户：** 不要先通读整个仓库。优先按下面顺序阅读：
 > 1. `docs/HANDOFF_MINIMAL.md`
 > 2. `docs/HOST_CONFIG_TEMPLATES.md`
-> 3. `docs/FAQ.md`
+> 3. `docs/OPENCLAW_HOST_TEMPLATE.md` / `docs/CLAUDE_DESKTOP_TEMPLATE.md` / `docs/CLAUDE_CODE_TEMPLATE.md` / `docs/CONTINUE_TEMPLATE.md` / `docs/VSCODE_TEMPLATE.md` / `docs/CURSOR_TEMPLATE.md` / `docs/CLINE_TEMPLATE.md` / `docs/WINDSURF_TEMPLATE.md` / `docs/HERMES_TEMPLATE.md` / `docs/CODEX_TEMPLATE.md`
+> 4. `docs/FAQ.md`
 
 > **给 AI agent：** 不要默认通读本 README。先读 `docs/AGENT_MINIMAL.md`，需要最小示例时再读 `docs/EXAMPLES_MINIMAL.md`。
 
@@ -13,7 +14,17 @@
 
 ### 最终用户 / 本地 AI agent
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
-- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的复制即用模板
+- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- `docs/OPENCLAW_HOST_TEMPLATE.md`：OpenClaw 单独最终配置块
+- `docs/CLAUDE_DESKTOP_TEMPLATE.md`：Claude Desktop 单独模板
+- `docs/CLAUDE_CODE_TEMPLATE.md`：Claude Code 单独模板
+- `docs/CONTINUE_TEMPLATE.md`：Continue 单独模板
+- `docs/VSCODE_TEMPLATE.md`：VS Code 单独模板
+- `docs/CURSOR_TEMPLATE.md`：Cursor 单独模板
+- `docs/CLINE_TEMPLATE.md`：Cline 单独模板
+- `docs/WINDSURF_TEMPLATE.md`：Windsurf 单独模板
+- `docs/HERMES_TEMPLATE.md`：Hermes 单独模板
+- `docs/CODEX_TEMPLATE.md`：Codex 单独模板
 - `docs/FAQ.md`：常见错误与排查
 
 ### AI agent
@@ -24,6 +35,7 @@
 ### 集成 / 联调 / 维护
 - `docs/INTEGRATION.md`：完整挂载、自检与联调清单
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
+- `docs/HOST_CONFIG_TEMPLATES.md`：已核实宿主模板总入口
 - `docs/IMPLEMENTATION_STATUS.md`：当前实现状态与限制
 - `docs/OPENCLAW_INTEGRATION.md`：OpenClaw 专属适配说明
 
@@ -62,6 +74,16 @@ cn-stock-mcp --doctor-network
 更多模板见：
 - `.mcp.sample.json`
 - `docs/HOST_CONFIG_TEMPLATES.md`
+- `docs/OPENCLAW_HOST_TEMPLATE.md`
+- `docs/CLAUDE_DESKTOP_TEMPLATE.md`
+- `docs/CLAUDE_CODE_TEMPLATE.md`
+- `docs/CONTINUE_TEMPLATE.md`
+- `docs/VSCODE_TEMPLATE.md`
+- `docs/CURSOR_TEMPLATE.md`
+- `docs/CLINE_TEMPLATE.md`
+- `docs/WINDSURF_TEMPLATE.md`
+- `docs/HERMES_TEMPLATE.md`
+- `docs/CODEX_TEMPLATE.md`
 
 ## 当前状态
 
@@ -77,7 +99,17 @@ cn-stock-mcp --doctor-network
 
 - `docs/README_DOCS.md`：文档总览与阅读顺序
 - `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的一页接入说明
-- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的复制即用模板
+- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- `docs/OPENCLAW_HOST_TEMPLATE.md`：OpenClaw 单独最终配置块
+- `docs/CLAUDE_DESKTOP_TEMPLATE.md`：Claude Desktop 单独模板
+- `docs/CLAUDE_CODE_TEMPLATE.md`：Claude Code 单独模板
+- `docs/CONTINUE_TEMPLATE.md`：Continue 单独模板
+- `docs/VSCODE_TEMPLATE.md`：VS Code 单独模板
+- `docs/CURSOR_TEMPLATE.md`：Cursor 单独模板
+- `docs/CLINE_TEMPLATE.md`：Cline 单独模板
+- `docs/WINDSURF_TEMPLATE.md`：Windsurf 单独模板
+- `docs/HERMES_TEMPLATE.md`：Hermes 单独模板
+- `docs/CODEX_TEMPLATE.md`：Codex 单独模板
 - `docs/FAQ.md`：常见错误与排查
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口

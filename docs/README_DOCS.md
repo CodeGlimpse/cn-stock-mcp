@@ -10,9 +10,12 @@ Last Updated: 2026-05-21
    - 一页安装与接入说明。
 
 2. `HOST_CONFIG_TEMPLATES.md`
-   - 按宿主类型直接复制配置模板。
+   - 按宿主类型选择模板入口。
 
-3. `FAQ.md`
+3. `OPENCLAW_HOST_TEMPLATE.md` / `CLAUDE_DESKTOP_TEMPLATE.md` / `CLAUDE_CODE_TEMPLATE.md` / `CONTINUE_TEMPLATE.md` / `VSCODE_TEMPLATE.md` / `CURSOR_TEMPLATE.md` / `CLINE_TEMPLATE.md` / `WINDSURF_TEMPLATE.md` / `HERMES_TEMPLATE.md` / `CODEX_TEMPLATE.md`
+   - 宿主专属的最终可复制配置块。
+
+4. `FAQ.md`
    - 常见错误与排查。
 
 ## 2) 给 AI agent 的最短阅读顺序
@@ -34,13 +37,16 @@ Last Updated: 2026-05-21
 2. `COMPATIBILITY.md`
    - MCP-only / rules-based / skill-based host 的适配边界。
 
-3. `IMPLEMENTATION_STATUS.md`
+3. `HOST_CONFIG_TEMPLATES.md`
+   - 已核实宿主模板总入口。
+
+4. `IMPLEMENTATION_STATUS.md`
    - 当前实现状态、验证范围、限制。
 
-4. `ERROR_MODEL.md`
+5. `ERROR_MODEL.md`
    - 统一错误码、retry/fallback 语义。
 
-5. `OPENCLAW_INTEGRATION.md`
+6. `OPENCLAW_INTEGRATION.md`
    - 仅在你使用 OpenClaw 时再看。
 
 ---
@@ -52,5 +58,6 @@ Last Updated: 2026-05-21
 - 错误语义：只在 `ERROR_MODEL.md` 维护。
 - 部署联调：只在 `INTEGRATION.md` 维护。
 - 最终用户快速入口：只在 `HANDOFF_MINIMAL.md` / `HOST_CONFIG_TEMPLATES.md` / `FAQ.md` 维护。
+- 宿主专属最终配置：只在各自的 `*_TEMPLATE.md` 维护。
 
 如果某条信息出现在多个文件，以以上“单一事实源”优先。

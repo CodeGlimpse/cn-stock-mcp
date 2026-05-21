@@ -9,7 +9,61 @@
 
 ---
 
-## 1) 通用 MCP host：已安装包（最推荐）
+## 1) 已核实可直接复制的宿主模板
+
+### OpenClaw
+- `docs/OPENCLAW_HOST_TEMPLATE.md`
+
+### Claude Desktop
+- `docs/CLAUDE_DESKTOP_TEMPLATE.md`
+
+### Claude Code
+- `docs/CLAUDE_CODE_TEMPLATE.md`
+
+### Continue
+- `docs/CONTINUE_TEMPLATE.md`
+
+### VS Code
+- `docs/VSCODE_TEMPLATE.md`
+
+### Cursor
+- `docs/CURSOR_TEMPLATE.md`
+
+### Cline
+- `docs/CLINE_TEMPLATE.md`
+
+### Windsurf
+- `docs/WINDSURF_TEMPLATE.md`
+
+### Hermes
+- `docs/HERMES_TEMPLATE.md`
+
+### Codex
+- `docs/CODEX_TEMPLATE.md`
+
+### 通用 `mcpServers` JSON 宿主
+如果你的宿主明确支持下面这种标准结构：
+
+```json
+{
+  "mcpServers": {
+    "cn-stock-mcp": {
+      "command": "cn-stock-mcp",
+      "args": ["--stdio"],
+      "env": {
+        "ZHITU_TOKEN": "replace-with-your-token"
+      }
+    }
+  }
+}
+```
+
+那就可以直接复用：
+- `.mcp.sample.json`
+
+---
+
+## 2) 通用 MCP host：已安装包（最推荐）
 
 适用：
 - 你的宿主支持 MCP
@@ -36,7 +90,7 @@
 
 ---
 
-## 2) 通用 MCP host：源码目录 / 虚拟环境方式
+## 3) 通用 MCP host：源码目录 / 虚拟环境方式
 
 适用：
 - 你拿到的是源码仓库
@@ -76,50 +130,6 @@
 
 ---
 
-## 3) OpenClaw：MCP 接入 + 可选 skill adapter
-
-### 3.1 仅接入 MCP server
-
-OpenClaw 如果使用通用 MCP 配置块，可以直接复用下面这一段：
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
-    }
-  }
-}
-```
-
-### 3.2 同时启用仓库内附带的 OpenClaw skill adapter
-
-如果你还想启用仓库内的 `skills/newsbot-stock-routing/`，再追加：
-
-```json5
-{
-  skills: {
-    load: {
-      extraDirs: [
-        "/path/to/cn-stock-mcp/skills"
-      ]
-    },
-    entries: {
-      "newsbot-stock-routing": { enabled: true }
-    }
-  }
-}
-```
-
-更多 OpenClaw 专属说明见：
-- `docs/OPENCLAW_INTEGRATION.md`
-
----
-
 ## 4) MCP + custom instructions / rules host
 
 适用：
@@ -142,10 +152,38 @@ OpenClaw 如果使用通用 MCP 配置块，可以直接复用下面这一段：
 
 ---
 
-## 5) 不确定该用哪种模板时
+## 5) 其他常见 MCP host：如何安全套用
+
+有些常见宿主也支持 MCP，但它们的文档页面、配置文件路径、或外围字段命名会变化很快。
+
+为了避免把“看起来像对、实际不能贴”的模板写死，这里给你的安全策略是：
+
+1. 先确认该宿主是否支持 **标准 `mcpServers` 结构** 或它自己的已核实 MCP 配置结构
+2. 如果支持标准 `mcpServers`，优先直接套用：
+   - `.mcp.sample.json`
+   - 或本页的“已安装包方式”模板
+3. 如果宿主使用自定义顶层字段（例如 VS Code 的 `servers`，Hermes 的 `mcp_servers`，Codex 的 `config.toml` 表结构），优先参考对应单独模板页
+4. 如果宿主还要求额外外层字段、特定配置文件路径、或 UI 导入方式，再把标准块嵌进去
+
+如果你不确定，优先回到：
+- `docs/HANDOFF_MINIMAL.md`
+- `docs/FAQ.md`
+
+---
+
+## 6) 不确定该用哪种模板时
 
 按这个顺序选：
-1. **能直接安装包** → 用“已安装包”模板
-2. **只能跑源码目录** → 用“源码目录 / 虚拟环境”模板
-3. **是 OpenClaw** → 用 OpenClaw 模板
-4. **宿主还支持 rules / instructions** → 在前面模板基础上再加 `.agent-hints.json` 的规则
+1. **是 OpenClaw** → 用 `docs/OPENCLAW_HOST_TEMPLATE.md`
+2. **是 Claude Desktop** → 用 `docs/CLAUDE_DESKTOP_TEMPLATE.md`
+3. **是 Claude Code** → 用 `docs/CLAUDE_CODE_TEMPLATE.md`
+4. **是 Continue** → 用 `docs/CONTINUE_TEMPLATE.md`
+5. **是 VS Code** → 用 `docs/VSCODE_TEMPLATE.md`
+6. **是 Cursor** → 用 `docs/CURSOR_TEMPLATE.md`
+7. **是 Cline** → 用 `docs/CLINE_TEMPLATE.md`
+8. **是 Windsurf** → 用 `docs/WINDSURF_TEMPLATE.md`
+9. **是 Hermes** → 用 `docs/HERMES_TEMPLATE.md`
+10. **是 Codex** → 用 `docs/CODEX_TEMPLATE.md`
+11. **能直接安装包且支持标准 `mcpServers`** → 用“已安装包”模板
+12. **只能跑源码目录** → 用“源码目录 / 虚拟环境”模板
+13. **宿主还支持 rules / instructions** → 在前面模板基础上再加 `.agent-hints.json` 的规则
