@@ -2,15 +2,20 @@
 
 中国证券市场行情 MCP 服务。核心交付物是 **通用 MCP server**；OpenClaw skill 只是仓库内附带的平台适配层。
 
-> **给最终用户：** 不要先通读整个仓库。优先按下面顺序阅读：
-> 1. `docs/HANDOFF_MINIMAL.md`
-> 2. `docs/HOST_CONFIG_TEMPLATES.md`
-> 3. `docs/OPENCLAW_HOST_TEMPLATE.md` / `docs/CLAUDE_DESKTOP_TEMPLATE.md` / `docs/CLAUDE_CODE_TEMPLATE.md` / `docs/CONTINUE_TEMPLATE.md` / `docs/VSCODE_TEMPLATE.md` / `docs/CURSOR_TEMPLATE.md` / `docs/CLINE_TEMPLATE.md` / `docs/WINDSURF_TEMPLATE.md` / `docs/HERMES_TEMPLATE.md` / `docs/CODEX_TEMPLATE.md`
-> 4. `docs/FAQ.md`
+> **如果你是人类用户：** 不要先通读整个仓库，先看 `docs/START_HERE.md`。
 
-> **给 AI agent：** 不要默认通读本 README。先读 `docs/AGENT_MINIMAL.md`，需要最小示例时再读 `docs/EXAMPLES_MINIMAL.md`。
+> **如果你在找“给各个 agent 用的 skill 在哪里”：** 先看 `docs/AGENT_AND_SKILL_MAP.md`。
+
+> **如果你是 AI agent：** 不要默认通读本 README。先读 `docs/AGENT_MINIMAL.md`，需要最小示例时再读 `docs/EXAMPLES_MINIMAL.md`。
 
 ## 最短开始路径
+
+### 人类用户 / 接收方
+- `docs/START_HERE.md`：最友好的仓库入口
+- `docs/HANDOFF_MINIMAL.md`：一页安装与接入
+- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 用什么、有没有 skill、skill 在哪里
+- `docs/FAQ.md`：常见错误与排查
 
 ### 最终用户 / 本地 AI agent
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
@@ -97,6 +102,8 @@ cn-stock-mcp --doctor-network
 
 ## 文档导航
 
+- `docs/START_HERE.md`：给人类用户的最友好入口
+- `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 的使用方式与 skill 对照
 - `docs/README_DOCS.md`：文档总览与阅读顺序
 - `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的一页接入说明
 - `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
@@ -120,23 +127,6 @@ cn-stock-mcp --doctor-network
 - `docs/ERROR_MODEL.md`：统一错误码与 retry/fallback 语义
 - `docs/INTEGRATION.md`：通用 MCP 挂载、自检与联调清单
 - `docs/OPENCLAW_INTEGRATION.md`：OpenClaw 专属适配说明
-
-## 开发与验证
-
-本地源码开发时：
-
-```bash
-python -m pip install -e .
-.venv/bin/python -m pytest -q -m "not live"
-bash scripts/smoke_live.sh
-```
-
-调试命令：
-
-```bash
-cn-stock-mcp --list-tools
-cn-stock-mcp --tool provider_health --payload '{}'
-```
 
 ## OpenClaw adapter
 
