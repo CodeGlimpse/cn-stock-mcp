@@ -1,7 +1,7 @@
 include README.md
 include .env.example
 include .mcp.sample.json
-recursive-include src/cn_stock_mcp *.py *.json
+recursive-include src/cn_stock_mcp *.py
 recursive-include skills *.md
 recursive-include docs *.md
 prune tests

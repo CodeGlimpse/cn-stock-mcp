@@ -1,31 +1,98 @@
-# 实现状态说明
+# Implementation Status (`cn-stock-mcp`)
 
-更新时间：2026-05-15
+Last Updated: 2026-05-21
 
-## 已完成
+这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
-### 架构与文档
-- `docs/design-v1.md`
-- `docs/interface-schema-v1.1.md`
-- `docs/provider-mapping.md`
+---
 
-### 基础代码结构
-- schema / models / providers / services / usecases / MCP Python SDK stdio transport
+## 1) 项目定位
 
-### 测试与 CI（2026-05-15 新增）
-- live 用例已从 `tests/test_live.py` 拆分到 `tests/live/`：
-  - `test_smoke_transport.py`（transport/tool 冒烟）
-  - `test_smoke_provider.py`（provider 冒烟）
-  - `test_live_extended.py`（偏重/偏脆 live case）
-  - `conftest.py`（含 `recent_trade_date` fixture，统一交易日回退）
-- 新增 `scripts/smoke_live.sh`：统一本地 smoke live 入口。
-- 新增 `.github/workflows/live-smoke.yml`：独立 live smoke workflow。
-- pytest marker 已补齐：`live / smoke / slow / transport / provider`。
-- 本地验证：
-  - 非 live 全量：`456 passed, 16 deselected`
-  - smoke collect：`13/16 tests collected`（按 `live and smoke` 过滤）。
+`cn-stock-mcp` 的核心交付物是：
+- **一个通用 MCP server**
 
-### 正式 MCP tool（项目内注册中心）
+仓库内另外附带：
+- 面向多种 AI agent / MCP host 的接入文档与配置模板
+- 一个 OpenClaw skill adapter（不是跨平台通用 skill 标准）
+
+---
+
+## 2) 当前已经具备的交付能力
+
+### 安装与命令入口
+项目现在已经具备真正的 console script，可直接运行：
+
+```bash
+cn-stock-mcp --stdio
+cn-stock-mcp --version
+cn-stock-mcp --doctor
+cn-stock-mcp --doctor-network
+cn-stock-mcp --list-tools
+cn-stock-mcp --tool provider_health --payload '{}'
+```
+
+### 自检能力
+当前 doctor 分为两层：
+
+- `--doctor`
+  - 本地基础检查
+  - 不默认联网
+  - 对本地源码环境缺 PATH 命令等情况返回 `WARN` 而不是误报 `FAIL`
+
+- `--doctor-network`
+  - 在本地基础检查之外
+  - 额外验证 token / provider / 上游连通性
+
+### 打包与发布物
+当前已经完成：
+- wheel / sdist 构建
+- console script 写入 `entry_points.txt`
+- `MANIFEST.in` 控制发布内容
+- sdist / wheel 不再携带 `tests/` 与 `.github/`
+
+### 文档与交付层
+当前已具备：
+- 人类入口：`docs/START_HERE.md`
+- 一页接入：`docs/HANDOFF_MINIMAL.md`
+- FAQ：`docs/FAQ.md`
+- host 模板总入口：`docs/HOST_CONFIG_TEMPLATES.md`
+- host-specific 模板：OpenClaw / Claude Desktop / Claude Code / Continue / VS Code / Cursor / Cline / Windsurf / Hermes / Codex
+- AI 集成说明：`docs/AI_ONBOARDING.md`
+- AI 最小规则：`docs/AGENT_MINIMAL.md`
+- agent / skill 对照：`docs/AGENT_AND_SKILL_MAP.md`
+
+---
+
+## 3) 当前测试与 CI 状态
+
+### 已验证
+- 非 live 回归：`461 passed, 16 deselected`
+- CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
+- `python -m build` 的 CI 失败根因已修复：`build` 已加入 `dev` 依赖
+- 干净 venv 下 `pip install -e .[dev]` 后，`python -m build` 可正常执行
+
+### CI
+当前保留：
+- `.github/workflows/ci.yml`
+- `.github/workflows/live-smoke.yml`
+
+说明：
+- `CI` 用于构建、非 live 测试、wheel 安装 smoke、CLI smoke
+- `Live Smoke` 当前已经收缩为 **manual only** 的诊断 workflow
+
+### Live Smoke 当前定位
+当前将 `Live Smoke` 视作：
+- **手动诊断 / 上游连通性验证 workflow**
+
+而不是基础质量门禁或定时巡检任务。
+
+---
+
+## 4) 当前可用工具（MCP tools）
+
+当前工具注册总数：**52**
+
+工具包括：
 - `stock_search`
 - `stock_quote`
 - `stock_history`
@@ -49,12 +116,12 @@
 - `market_brief`
 - `event_calendar`
 - `capital_flow`
-- `stock_financial`（`stock_financial_abstract_new_ths` 路径已恢复；`snapshot/history/details` 已验证通过）
+- `stock_financial`
 - `limit_stat`
-- `northbound`（当前仅保留当日流向/历史；持股排行已下线）
+- `northbound`
 - `valuation_rank`
 - `index_compose`
-- `index_enhance`（含权重暴露、行业暴露）
+- `index_enhance`
 - `industry_valuation_rank`
 - `earnings_quality`
 - `macro_indicator`
@@ -76,719 +143,87 @@
 - `industry_chain`
 - `stock_warrant`
 - `fund_flow`
-- `limit_up_pool`（含情绪指标汇总、行业维度情绪汇总）
+- `limit_up_pool`
 - `sec_reveal`
 
-### market_pool（股池）当前实现
-- 标准类型已扩展为：`limit_up / limit_down / strong / sub_new / broken_limit`
-- 当前别名映射：
-  - `ztgc / up / 涨停 -> limit_up`
-  - `dtgc / down / 跌停 -> limit_down`
-  - `qsgc / 强势 -> strong`
-  - `cxgc / 次新 -> sub_new`
-  - `zbgc / 炸板 -> broken_limit`
-- 当前 Zhitu 路径：
-  - `limit_up -> /hs/pool/ztgc/{trade_date}`
-  - `limit_down -> /hs/pool/dtgc/{trade_date}`
-  - `strong -> /hs/pool/qsgc/{trade_date}`
-  - `sub_new -> /hs/pool/cxgc/{trade_date}`
-  - `broken_limit -> /hs/pool/zbgc/{trade_date}`
-- 已补充统一 adapter：
-  - `adapt_zhitu_limit_up_item`
-  - `adapt_zhitu_limit_down_item`
-  - `adapt_zhitu_strong_item`
-  - `adapt_zhitu_sub_new_item`
-  - `adapt_zhitu_broken_limit_item`
+> 具体参数、输入/输出契约、字段说明，请看：`docs/INTERFACE_SCHEMA.md`
 
-### hot_theme_tracker（热点主线跟踪）
-- 已正式注册为 MCP tool：`hot_theme_tracker`
-- 当前输入契约：`HotThemeTrackerRequest`
-  - `sector_names[]` 可选
-  - `sector_type=primary`
-  - `watch_name`
-  - `trade_date` 或 `start_date + end_date`
-  - `top_n / sector_limit / member_limit / member_top_n / pool_top_n`
-  - `include_pool_snapshot`
-- 当前内部路径：
-  - `sector_lookup(list)`：解析候选板块
-  - `sector_rotation_review`：生成板块轮动卡片
-  - `market_pool(limit_up/strong)`：生成股池快照
-- 当前输出重点：
-  - `themes`（完整主题卡）
-  - `leaders / laggards`
-  - `buckets.mainline_themes / watchlist_themes / risk_themes`
-  - `pool_snapshot`
-  - `meta.theme_score_schema=schema:theme_score_v1`
-- 当前限制：
-  - ~~v1 先聚焦 `primary` 板块~~（已移除：concept 板块路径已完整验证通过）
-  - pool snapshot 当前只取 `limit_up + strong`
+---
 
-### sector_lookup（板块列表/成员股）当前实现
-- 输入模式：`list | children | members(兼容别名)`
-- `list + concept`：调用 `/hs/list/sectors`（概念板块列表）
-- `list + primary`：调用 `/hs/list/primary`（一级板块列表）
-- `children` / `members`：必须显式传 `sector_type`
-  - `sector_type=primary`：先解析一级板块名，再调用 `/hs/sectors/{resolved_primary}`
-  - `sector_type=concept`：先解析概念板块名，再调用 `/hs/sectors/{resolved_concept}`
-- `SectorLookupRequest` 参数校验：
-  - `mode=list` 默认 `sector_type=concept`
-  - `mode in {members, children}` 时强制要求 `sector_type`
-  - `mode in {members, children}` 时强制要求 `sector_name`
+## 5) 当前 AI / Host / Skill 分层
 
-### stock_review（个股复盘摘要）
-- 新增 `stock_review` tool
-- 当前 provider：`akshare`
-- 支持两种模式：
-  - `trade_date`：单日复盘（若为非交易日，自动回退到有效交易日）
-  - `start_date + end_date`：区间复盘
-- 输出包含：
-  - `latest_bar`
-  - `stats`（近5日/20日、4周、3月、区间收益、高低点、均量均额等）
-  - 增强指标：
-    - 波动率：`volatility_pct`
-    - 最大回撤：`max_drawdown_pct`
-    - 连涨/连跌：`up_streak / down_streak`
-    - 量能变化：`volume_ratio / turnover_ratio`
-    - 相对强弱：`relative_strength_pct`
-  - `benchmark`（自动匹配指数基准）
-  - `windows.daily / weekly / monthly`
-  - 可直接阅读的 `summary` 文本
+### 大多数 AI agent / host
+使用方式是：
+- 直接把 `cn-stock-mcp` 当作 **MCP server** 接入
+- 不需要仓库内专属 skill 文件
 
-### stock_review_batch（批量个股复盘）
-- 新增 `stock_review_batch` tool
-- 复用 `stock_review` 的单股能力，生成批量复盘卡片
-- 支持排序字段：
-  - `relative_strength`
-  - `return`
-  - `max_drawdown`
-  - `volume_ratio`
-- 支持筛选条件：
-  - `min_relative_strength`
-  - `min_return`
-  - `max_drawdown_limit`
-  - `min_volume_ratio`
-- 输出包含：
-  - `items`（批量卡片）
-  - `tags`（如 `stronger_than_benchmark / high_volume / drawdown_risk / up_streak / down_streak`）
-  - `groups`（强势候选 / 风险候选 / 放量关注）
-  - `partial_failure / errors`
-  - `summary`（批量筛查摘要）
+已提供模板的宿主包括：
+- OpenClaw
+- Claude Desktop
+- Claude Code
+- Continue
+- VS Code
+- Cursor
+- Cline
+- Windsurf
+- Hermes
+- Codex
 
-### sector_review（板块复盘 / 板块成员聚合分析）
-- 新增 `sector_review` tool
-- 当前路径：
-  - `sector_lookup(children)` 获取板块成员股（当前 provider：`zhitu`）
-  - `stock_review_batch` 对成员股做批量复盘（当前复用 `akshare` 路径）
-- **支持板块类型：**
-  - `sector_type=primary`：一级行业板块（默认）
-  - `sector_type=concept`：概念板块（题材）
-- 支持两种模式：
-  - `trade_date`：单日板块复盘
-  - `start_date + end_date`：区间板块复盘
-- 支持参数：
-  - `sector_type`：板块类型（`primary` / `concept`）
-  - `sort_by / descending / top_n / limit`
-  - `min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
-- 已与 `market_brief` 对齐到统一 `review_envelope_v1`
-  - 新增统一字段：`subject_type / subject_name / requested_trade_date`
-  - `leaders / laggards / items` 统一为同一类 review item-card
-  - `meta.review_envelope_schema / meta.sentiment_score_schema / meta.rotation_score_schema` 明确暴露
-- 输出包含：
-  - `breadth`（上涨/下跌/放量/连涨连跌分布）
-  - `stats`（平均收益、相对强弱、量比、回撤、离散度）
-  - `sentiment`（偏热 / 偏强 / 中性 / 偏弱 / 偏冷；统一 `score=[-5,5]`、`normalized_score=[0,100]`）
-  - `benchmark_summary`（板块成员基准分布与平均基准收益）
-  - `continuity`（持续强势/弱势、连涨连跌情况）
-  - `rotation`（区间模式下的轮动判断，如 `leader_driven / broad_advance / divergent_rotation`）
-  - `structure`（板块结构标签，如 `broad_strength / high_dispersion / benchmark_outperform / trend_divergence`）
-  - `rankings`（收益 / 相对强弱 / 量比 / 回撤风险榜）
-  - `buckets`（`leaders / followers / draggers / risk_alerts / strong_candidates / weak_candidates`）
-  - 可直接阅读的 `summary` 文本
+### 当前仓库内真正附带的 skill
+主要是：
+- `skills/newsbot-stock-routing/SKILL.md`
 
-### sector_rotation_review（多板块轮动复盘 / 跨板块横向比较）
-- 新增 `sector_rotation_review` tool
-- 当前路径：
-  - 对每个 `sector_name` 复用 `sector_review`
-  - 再聚合得到跨板块 `rankings / buckets / rotation / sentiment / structure`
-- 当前支持：
-  - `trade_date`：单日轮动复盘
-  - `start_date + end_date`：区间轮动复盘
-- 当前参数：
-  - `sector_names[] / sector_type / sort_by / descending / top_n / limit / member_top_n`
-  - `min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
-- 当前排序字段：
-  - `avg_relative_strength`
-  - `avg_return`
-  - `positive_ratio`
-  - `stronger_ratio`
-  - `sentiment_score`
-  - `rotation_score`
-- 当前输出包含：
-  - 顶层 `subject_type=sector_rotation`
-  - 板块层 `breadth / stats / sentiment / benchmark_summary / continuity / rotation / structure`
-  - 跨板块 `rankings`（如 `leaders_by_avg_return / leaders_by_avg_relative_strength / leaders_by_rotation_score`）
-  - 跨板块 `buckets`（如 `mainline_sectors / broad_strength_sectors / leader_driven_sectors / watchlist_sectors / risk_sectors`）
-  - `items`（每个板块一张 card）
-  - `meta.item_schema.schema=sector_rotation_item_v1`
-- 当前限制：
-  - ~~v1 先只支持 `sector_type=primary`~~（已移除：concept 板块已完整验证通过）
-  - live 路径仍偏重，较大 `limit` 或较多板块时耗时会明显上升
-- 当前性能优化：
-  - `stock_review` 改为日线一次取数，周/月线本地聚合
-  - `stock_review_batch` 增加受控并发
-  - `sector_rotation_review` 增加受控并发
-  - 交易日历 / 历史数据 / 基准指数结果增加线程安全共享缓存
-- 已完成真实验收：
-  - `provider_health` 正常
-  - `sector_lookup(mode=list, sector_type=primary)` 正常
-  - `sector_review(1000信息, trade_date=2026-05-06, limit=3)` 正常
-  - `sector_rotation_review([1000信息,1000工业], trade_date=2026-05-06, limit=1)` 已真实返回成功
-  - `sector_rotation_review([1000信息,1000工业], trade_date=2026-05-06, limit=5)` 已真实返回成功
-  - `sector_rotation_review([1000信息,1000工业,1000医药], trade_date=2026-05-06, limit=5)` 已真实返回成功
-  - `sector_rotation_review([1000信息,1000工业,1000医药,1000公用,1000可选], trade_date=2026-05-06, limit=5)` 已真实返回成功
+它是：
+- OpenClaw / news agent 的 skill adapter
+- 不是所有平台通用的 skill 标准
 
-### stock_candidate_scan（候选扫描 / 股票 universe 筛选）
-- 新增 `stock_candidate_scan` tool
-- 当前路径：
-  - `symbols[]`：直接作为手工 universe
-  - `sector_names[]`：通过 `sector_lookup(children)` 扩展成员股
-  - `pool_type`：通过 `market_pool` 扩展池成员
-  - 合并去重后复用 `stock_review_batch`，再补 `candidate_score / candidate_label / reason_tags / risk_flags`
-- 当前支持：
-  - `trade_date`：单日候选扫描
-  - `start_date + end_date`：区间候选扫描
-- 当前参数：
-  - `symbols[] / sector_names[] / sector_type / pool_type`
-  - `sort_by / descending / top_n / limit`
-  - `min_candidate_score / min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
-- 当前排序字段：
-  - `candidate_score`
-  - `relative_strength`
-  - `return`
-  - `volume_ratio`
-  - `max_drawdown`
-- 当前输出包含：
-  - 顶层 `subject_type=candidate_scan`
-  - `candidate_score_schema=candidate_score_v1`
-  - `items` 中每项新增：`candidate_score / candidate_label / reason_tags / risk_flags / source_tags`
-  - `rankings`（候选分 / 相对强弱 / 收益 / 量比 / 回撤）
-  - `buckets`（`candidates / watchlist / observe / risk_alerts`）
-- 当前定位：
-  - 从板块、股池、自选池里做第一轮筛查
-  - 为后续 `stock_review / stock_review_batch` 提供优先级
-- 已完成真实验收：
-  - `stock_candidate_scan(pool_type=strong, trade_date=2026-05-06, limit=3, top_n=2)` 已真实返回成功
+---
 
-### watchlist_review（观察池复盘 / 持续跟踪分层）
-- 新增 `watchlist_review` tool
-- 当前路径：
-  - 显式传入 `symbols[]` 作为观察池
-  - 复用 `stock_review_batch` 批量复盘
-  - 再补 `watchlist_score / status_label / reason_tags / risk_flags`
-- 当前支持：
-  - `trade_date`：单日观察池复盘
-  - `start_date + end_date`：区间观察池复盘
-- 当前参数：
-  - `symbols[] / watchlist_name`
-  - `sort_by / descending / top_n`
-  - `min_watchlist_score / min_relative_strength / min_return / max_drawdown_limit / min_volume_ratio`
-- 当前排序字段：
-  - `watchlist_score`
-  - `relative_strength`
-  - `return`
-  - `volume_ratio`
-  - `max_drawdown`
-- 当前输出包含：
-  - 顶层 `subject_type=watchlist`
-  - `watchlist_score_schema=watchlist_score_v1`
-  - `items` 中每项新增：`watchlist_score / status_label / reason_tags / risk_flags`
-  - `rankings`（观察分 / 相对强弱 / 收益 / 量比）
-  - `buckets`（`focus / monitor / observe / risk_alerts`）
-- 当前定位：
-  - 复盘一个固定观察池 / 核心池 / 自选池
-  - 给出继续重点看、跟踪、观察、风险预警的分层
+## 6) 当前已知设计约束
 
-### multi_timeframe_review（多周期复盘 / 跨周期共振分析）
-- 新增 `multi_timeframe_review` tool
-- 当前路径：
-  - 对 `intervals[]` 中每个周期分别调用 `stock_history`
-  - 对 `indicators[]` 中每个指标分别调用 `technical_indicator`
-  - 再聚合成跨周期 `trend_score / trend_label / signal_tags / conflict_notes`
-- 当前支持：
-  - 单只标的跨多个周期复盘
-  - `trade_date` 或 `start_date + end_date`
-- 当前参数：
-  - `symbol / sec_type / intervals[] / indicators[] / limit`
-- 当前输出包含：
-  - 顶层 `subject_type=multi_timeframe`
-  - `items`（每个周期一张 card）
-  - `trend_score / trend_label / signal_tags / conflict_notes`
-  - `alignment_score_schema=multi_timeframe_alignment_v1`
-  - `buckets`（`bullish_timeframes / neutral_timeframes / bearish_timeframes / conflict_points`）
-- 当前定位：
-  - 判断短中长周期是否一致
-  - 判断不同周期之间的结构冲突
-- 已完成真实验收：
-  - `multi_timeframe_review(symbol=000001.SH, sec_type=index, intervals=[15,d,w], indicators=[macd,ma,kdj], limit=60)` 已真实返回成功
-- 指标获取失败不再静默跳过，记录到 `errors` 列表（含 interval/indicator/error_code/message/retryable），`partial_failure` 真实反映
+### `sector_lookup`
+这是当前最容易踩坑的接口之一：
+- `mode=children|members` 表示**成员股列表**，不是子板块
+- `mode=children|members` 时，**必须显式传 `sector_type=primary|concept`**
 
-### trading_calendar（交易日历 / 复盘日期辅助）
-- 新增 `trading_calendar` tool
-- 当前 provider：`akshare`
-- 支持两类查询：
-  - 单日查询：是否交易日、上一个交易日、下一个交易日、最近 N 个交易日
-  - 区间查询：返回区间内交易日列表
-- `TradingCalendarRequest` 增加参数校验：
-  - `date` 不能与 `start_date/end_date` 混用
-  - 区间模式强制要求 `start_date` + `end_date` 成对提供
-  - `start_date <= end_date`
+### `provider_health`
+不建议在正常业务回答前默认调用：
+- 会增加延迟
+- 会消耗上游请求
+- 更适合诊断场景
 
-### stock_history(stock) 复盘增强
-- 当前 provider：`akshare`
-- 已支持周期：`1d / 1w / 1M`（输入别名仍可用：`d / w / m`）
-- **当前不支持 `1m`；传入 `1m` 会在 schema 层直接报错，避免误映射为 `1M` 月线**
-- `1w / 1M` 通过日线结果聚合得到：
-  - 周线：按自然周聚合
-  - 月线：按自然月聚合
-- 字段口径：
-  - `open`：周期首日开盘
-  - `high`：周期内最高
-  - `low`：周期内最低
-  - `close`：周期末日收盘
-  - `volume`：周期内成交量求和
-  - `turnover`：周期内成交额求和
-  - `prev_close`：聚合后按前一根 K 线 close 回填
-- 区间语义：
-  - `limit` 在聚合后应用
-  - `start_date/end_date` 指定区间时，边界周/月可能是不完整周期
-  - usecase 会在 `meta` 输出：`derived_from / aggregation / limit_applied_after_aggregation / partial_period_at_range_edges`
+### 大 payload / 大 universe
+当前所有 AI 使用建议都默认：
+- 先用轻工具
+- 先用小参数
+- 只有用户明确要求更大覆盖时再放大
 
-### stock_history(index) 多周期输入别名支持
-- 已支持输入：`5/15/30/60/d/w/m/y`
-- **当前不支持 `1m`；仅支持从 `5m` 起的分钟级周期**
-- 内部标准化映射：
-  - `5 -> 5m`
-  - `15 -> 15m`
-  - `30 -> 30m`
-  - `60 -> 60m`
-  - `d -> 1d`
-  - `w -> 1w`
-  - `m -> 1M`
-  - `y -> 1y`
-- 与既有格式 `5m/15m/30m/60m/1d/1w/1M/1y` 兼容
+---
 
-### technical_indicator 多指标 / 多周期输入别名支持
-- 已支持指标：`macd / ma / boll / kdj`（大小写不敏感，统一转小写）
-- 已支持周期输入：`5/15/30/60/d/w/m/y`
-- **当前不支持 `1m`；仅支持从 `5m` 起的分钟级周期**
-- 内部标准化映射：
-  - `5 -> 5m`
-  - `15 -> 15m`
-  - `30 -> 30m`
-  - `60 -> 60m`
-  - `d -> 1d`
-  - `w -> 1w`
-  - `m -> 1M`
-  - `y -> 1y`
-- 与既有格式 `5m/15m/30m/60m/1d/1w/1M/1y` 兼容
+## 7) 当前仍可继续优化，但不阻塞交付
 
-### stock_quote(stock-main) 双源路由定稿
-- 路由策略：`zhitu` 主，`akshare` 备
-- 适用范围：`stock` 且非 `BJ`、非 `688`（即 A 股主板/常规沪深股票）
-- **北交所 stock_quote 现已增加 akshare fallback：**
-  - 路由策略：`zhitu` 主，`akshare` 备
-  - AKShare 走 `stock_bj_a_spot_em()` 全表拉取 + 本地代码过滤
-  - 内置 10 秒 TTL 缓存，避免频繁拉全表
-  - 字段通过 `adapt_akshare_quote_row` 映射到统一 `Quote` 模型
-- 维持既有策略：
-  - `index/fund`：`zhitu` 主，`akshare` 备
-  - `stock-bj`：`zhitu` 主，`akshare` 备（新增）
-  - `stock-star(688)`：`zhitu` 主（无备）
-- `provider_preference` 已生效：
-  - 支持按请求显式指定优先顺序（如 `['akshare','zhitu']`）
-  - 顺序即执行顺序，自动 fallback
+以下事项仍值得继续做，但它们不是“当前不能交付”的阻塞项：
 
-### market_pool 类型扩充
-- 标准类型仍为：`limit_up / limit_down / strong`
-- `trade_date` 为空时：
-  - 若当天是交易日，使用当天
-  - 若当天不是交易日，自动回退到上一个有效交易日
-- 返回中补充：
-  - `requested_trade_date`
-  - `meta.calendar.requested_is_trading_day`
-  - `meta.calendar.effective_trade_date`
-  - `meta.calendar.adjusted_to_previous_trading_day`
-- 新增可用别名：
-  - `ztgc / up / 涨停` -> `limit_up`
-  - `dtgc / down / 跌停` -> `limit_down`
-  - `qsgc / 强势` -> `strong`
-- 兼容现有 provider 路径映射，不影响旧调用
+1. 补 `LICENSE`
+2. 补 `CHANGELOG.md` / release 记录
+3. 决定 `Live Smoke` 是否长期保留为 schedule，或进一步收缩为 manual only
+4. 对重点宿主做一轮真机 smoke（例如 Claude Desktop / Cursor / Cline / OpenClaw）
+5. 继续保持 `AI_ONBOARDING.md`、`AGENT_MINIMAL.md`、`.agent-hints.json` 的一致性
 
-### market_brief（一键市场简报 / 复盘增强）
-- 聚合接口：组合 `market_overview/历史指数日线 + market_pool + trading_calendar`
-- 支持两种模式：
-  - `trade_date` 为空：实时模式
-  - `trade_date` 非空：复盘模式
-- 复盘模式特性：
-  - 先通过 `trading_calendar` 解析有效交易日
-  - 若传入非交易日，自动回退到上一个交易日
-  - 指数概览改为通过指数 `stock_history(index, 1d)` 重建，不再读取当前实时行情
-- 支持参数：
-  - `brief_type`: `pre_open / intraday / close`
-  - `trade_date`: 可选，默认当天
-  - `include_pools`: 是否包含股池摘要
-  - `top_n`: 股池展示条数
-- 已与 `sector_review` 对齐到统一 `review_envelope_v1`
-  - 新增统一字段：`subject_type / subject_name / stats / benchmark_summary / continuity / rotation / rankings / buckets / items`
-  - `leaders / laggards` 改为同一类 review item-card
-  - `meta.review_envelope_schema / meta.sentiment_score_schema / meta.rotation_score_schema` 明确暴露
-- 输出包含：
-  - 指数概览数据（兼容字段：`overview`）
-  - 指数强弱排序（兼容字段：`index_ranking`）
-  - 市场宽度摘要：`breadth`
-  - 情绪温度：`sentiment`（与 `sector_review` 共用 `sentiment_temperature_v1`）
-  - 市场结构：`structure`
-  - 市场轮动：`rotation`
-  - 关键高亮（兼容字段：`highlights`）
-  - 股池统计（兼容字段：`pools`）
-  - 统一榜单与分层：`leaders / laggards / rankings / buckets / items`
-  - 可直接给 newsbot 使用的 `summary` 文本
-  - `meta.review_mode / meta.calendar / meta.overview / meta.pools`
+---
 
-## 已验证通过（智兔主链路）
-- 指数实时行情
-- 基金实时行情
-- 科创板实时行情
-- 北交所指数实时行情
-- 指数历史日线
-- 北证50 历史回退已补齐（AKShare index history fallback）
-- MACD 技术指标
-- 市场概览
-- 涨停股池
-- 科创板五档盘口
+## 8) 当前状态结论
 
-## AKShare 现状
-- 股票搜索：可用
-- Eastmoney 历史接口：失败（远端直接断开）
-- 腾讯历史接口：已验证可用，作为股票历史替代实现
-- 股票历史当前通过腾讯历史接口恢复可用
-- 指数历史 fallback 已增强：AKShare 现支持 `index_zh_a_hist` 的 `1d/1w/1M`，用于补齐北证50等指数历史覆盖
-- 已增强字段完整度：
-  - `volume`：优先通过 `stock_zh_a_daily` 按日期回填
-  - `prev_close`：按前一条 bar 的 `close` 推导；已通过前推 start_date 10 个自然日确保首条 prev_close 可填充（仅上市首日仍为空）
-  - `turnover`：统一为成交额口径（`stock_zh_a_daily.amount` 优先）
+截至 2026-05-21，本项目已经不再只是“开发中代码仓库”，而是已经具备：
+- 安装
+- 自检
+- 打包
+- host 接入
+- 人类友好文档
+- AI 集成说明
+- 多宿主配置模板
+- 基础 CI 验证
 
-## 当前建议
+当前最适合的定位是：
 
-### 当前主交付路径
-以 **智兔** 作为主 provider：
-- 普通沪深股票实时
-- 指数实时 / 历史 / 技术指标
-- 基金实时
-- 北交所 / 科创板实时
-- 市场概览
-- 股池
-- 盘口
-- 板块列表 / 成员股
-
-### 当前补充路径
-以 **AKShare** 作为补充 provider：
-- 搜索
-- 股票历史（腾讯历史接口 + 字段增强）
-- 指数历史 fallback
-- 交易日历 / 复盘日期辅助
-
-## 已知限制
-1. AKShare 股票历史字段仍依赖上游可用性与口径
-2. `stock_history(stock)` 中首条 `prev_close` 已通过前推 start_date 填充；仅上市首日仍为空
-3. `sector_lookup(children/members)` 依赖智兔一级板块名称；无效板块名会返回空列表
-4. `market_pool` 少量记录可能含上游异常值，当前已通过 `extra.data_quality / anomaly_flags` 标记可疑数据
-5. `1m` 周期当前未实现；需等可靠 provider 明确后再开放
-6. ~~智兔多 token 只做了最小冷却策略，尚未做更细粒度的配额统计与长期调度~~ → 已修复：新增每日限额跟踪（`zhitu_daily_quota_per_token`），跨日自动重置，配额耗尽自动切 token
-7. `sector_rotation_review` 当前虽已补充受控并发与共享缓存，但 live 请求在较大板块数或较大 `limit` 下仍会明显变慢
-8. ~~科创板 `stock_quote` 当前仍为 `zhitu` 单源~~ → 已补 AKShare fallback（Sina `stock_zh_a_spot()` 源，缺失 PE/PB/市值/换手率/振幅，作为 fallback 可接受）
-9. `stock_orderbook` / `stock_profile` / `event_calendar` 仍为 `zhitu` 单源
-10. ~~`margin_trading` 静默吞错~~ → 已修复（P0），现返回 `partial_failure` + `errors`
-11. ~~`limit_stat` 跌停数获取失败静默当 0~~ → 已修复（P1），现返回 `partial_failure` + `errors`
-12. ~~`multi_timeframe_review` 指标获取失败静默跳过~~ → 已修复（P1），现记录 indicator errors 并真实反映 `partial_failure`
-13. ~~`index_compose` 权重接口降级无标记~~ → 已修复（P1），现返回 `used_fallback_endpoint` + `endpoint_note`
-
-## 仍待处理
-1. 增强 token alias / 多 token 选择策略
-2. 继续补自动化测试与发布前验收样例（已补首轮 live smoke 拆分与独立 workflow，后续继续扩 coverage）
-3. 如有需要，继续增强 AKShare 股票历史字段完整度
-4. 如需继续增强 `sector_rotation_review` 的实用性，优先考虑更细粒度 benchmark 复用、轻量化个股复盘路径
-
-
-### stock_candidate_scan（二轮增强）
-- 新增过滤参数：`min_up_streak`、`max_down_streak`、`require_source_tags`、`exclude_risk_flags`、`must_have_reason_tags`、`exclude_reason_tags`
-- 新增解释字段：`candidate_score_breakdown`（分项得分 + total）
-- 保持原有接口兼容（老参数全部可继续使用）
-
-### macro_indicator（宏观经济指标）
-- 新增 `macro_indicator` tool
-- 当前 provider：`akshare`
-- 支持 4 个 region：`cn` / `usa` / `euro` / `global`
-- 支持 4 种 include 模式：
-  - `latest`：最新值 + 预期差（beat/miss/in_line）
-  - `history`：最近 N 期序列
-  - `calendar`：近期待公布事件（actual=None 且有 forecast/previous）
-  - `overview`：一地区核心指标快照（cn: 10个/usa: 6个/euro: 3个）
-- 输入契约：`MacroIndicatorRequest`
-  - `indicator`：指标标识（cpi/ppi/pmi/gdp/lpr/m2/credit/exports/imports/fx_reserves/rrr/non_farm/jobless/rate/bdi/gold 等）
-  - `region`：cn/usa/euro/global
-  - `include`：latest/history/calendar/overview
-  - `history_n`：history 模式取最近 N 期（默认 12）
-  - `start_date / end_date`：可选日期范围过滤
-- AKShare 宏观接口返回结构分 4 类：
-  - format=A：标准金融日历格式 `[商品, 日期, 今值, 预测值, 前值]`
-  - format=A2：美国部分接口微调 `[时间, 发布日期, 现值, 前值]`
-  - format=B：NBS 宽表，每个接口列名不同，需配置 `b_date_col / b_value_col`
-  - format=C：特殊结构（如 LPR `[TRADE_DATE, LPR1Y, LPR5Y, ...]`），需配置 `c_col_map`
-- 通过 `INDICATOR_REGISTRY` 映射表统一管理，扩展只改映射表不改 tool 契约
-- 输出包含：
-  - `latest`：MacroDataPoint(date, actual, forecast, previous, surprise)
-  - `history`：list[MacroDataPoint]
-  - `calendar`：list[MacroCalendarItem]
-  - `overview`：dict[str, MacroOverviewItem]
-  - `summary`：可读文本摘要
-- 当前已注册指标：cn 16 个 / usa 8 个 / euro 3 个 / global 2 个 = 29 个
-- added models: `MacroDataPoint`, `MacroCalendarItem`, `MacroOverviewItem`, `MacroIndicatorResult`, `MacroEntry`, `INDICATOR_REGISTRY`, `OVERVIEW_PRESETS` in `app/models/macro.py`
-- added `akshare_macro_adapters` with 4 format normalizers + calendar/overview/summary builders
-- added `AKShareProvider.get_macro_raw()` method
-- added `MacroIndicatorUseCase` with overview preset aggregation
-- added `macro_indicator` to provider router → akshare
-- added MCP tool registration
-- added tests: `test_akshare_macro_adapters.py` (27 tests)
-
-### dragon_tiger（龙虎榜明细）
-- 新增 `dragon_tiger` tool
-- 当前 provider：`akshare`
-- 支持 5 种 include 模式：
-  - `daily_detail`：日龙虎榜明细（上榜股+买卖额+上榜原因+解读+上榜后1/2/5/10日涨跌）
-  - `institution`：机构买卖统计（买方/卖方机构数/机构净买额/占比）
-  - `active_broker`：活跃营业部（席位名/买卖金额/买入股票列表）
-  - `broker_rank`：营业部胜率排行（上榜后1/2/5/10天平均涨幅+上涨概率，按时间段聚合）
-  - `stock_stat`：个股上榜统计（上榜次数/净买额/后市统计，按时间段聚合）
-- 输入契约：`DragonTigerRequest`
-  - `include`：daily_detail/institution/active_broker/broker_rank/stock_stat
-  - `trade_date` / `start_date + end_date`：A 类接口日期范围
-  - `period`：近一月/近三月/近六月/近一年（B 类接口时间段）
-  - `sort_by`：net_buy_amount/turnover_amount/buy_amount/inst_net_buy/listed_count
-  - `descending` / `top_n`
-- 输出包含：
-  - `daily_detail`：list[DailyDetailItem]（symbol/name/买卖额/上榜原因/解读/后市涨跌）
-  - `institution`：list[InstitutionItem]（机构参与明细）
-  - `active_broker`：list[ActiveBrokerItem]（席位动向）
-  - `broker_rank`：list[BrokerRankItem]（胜率排行）
-  - `stock_stat`：list[StockStatItem]（个股上榜统计）
-  - `summary`：可读文本摘要
-- AKShare 接口：
-  - `stock_lhb_detail_em` → daily_detail
-  - `stock_lhb_jgmmtj_em` → institution
-  - `stock_lhb_hyyyb_em` → active_broker
-  - `stock_lhb_yybph_em` → broker_rank
-  - `stock_lhb_stock_statistic_em` → stock_stat
-- added models: DailyDetailItem, InstitutionItem, ActiveBrokerItem, BrokerRankItem, StockStatItem, DragonTigerResult
-- added `akshare_dragon_tiger_adapters` with 5 adapt functions + summary builder
-- added `AKShareProvider` methods: get_dragon_tiger_daily/institution/active_broker/broker_rank/stock_stat
-- added `DragonTigerUseCase` with sort/top_n support
-- added `dragon_tiger` to provider router → akshare
-- added MCP tool registration
-- added tests: `test_akshare_dragon_tiger_adapters.py` (12 tests)
-
-### etf_snapshot（ETF 行情快照）
-- 新增 `etf_snapshot` tool
-- 当前 provider：`akshare`
-- 支持 3 种 include 模式：
-  - `spot`：全市场 ETF 实时行情快照（IOPV/基金折价率/主力净流入/份额/市值）
-  - `scale`：上交所 ETF 份额规模
-  - `nav`：ETF 净值序列（单位净值/累计净值/日增长率）
-- 输入契约：`ETFSnapshotRequest`
-  - `include`：spot/scale/nav
-  - `symbol`：单只 ETF 代码（nav 模式必填）
-  - `sort_by`：turnover/change_percent/discount_rate/main_net_inflow/volume/total_market_cap
-  - `descending` / `top_n`（默认 20）
-  - `min_discount` / `max_discount`：折溢价率筛选
-  - `history_n`：nav 模式取最近 N 期（默认 30）
-- 输出包含：
-  - `spot`：list[ETFSpotItem]（IOPV/折价率/主力资金流/份额/市值）
-  - `scale`：list[ETFScaleItem]（份额/类型/日期）
-  - `nav`：list[ETFNAVItem]（净值/累计净值/日增长率）
-  - `summary`：可读文本摘要
-- AKShare 接口：
-  - `fund_etf_spot_em` → spot（~1400+ ETF 全市场快照）
-  - `fund_etf_scale_sse` → scale
-  - `fund_etf_fund_info_em` → nav
-- added models: ETFSpotItem, ETFScaleItem, ETFNAVItem, ETFSnapshotResult
-- added `akshare_etf_snapshot_adapters` with 3 adapt functions + summary builder
-- added `AKShareProvider` methods: get_etf_spot_em/get_etf_scale_sse/get_etf_nav
-- added `ETFSnapshotUseCase` with sort/filter/discount screening
-- added `etf_snapshot` to provider router → akshare
-- added MCP tool registration
-- added tests: `test_akshare_etf_snapshot_adapters.py` (8 tests)
-
-### convertible_bond（可转债）
-- 新增 `convertible_bond` tool
-- 当前 provider：`akshare`
-- 支持 3 种 include 模式：
-  - `spot`：集思录可转债实时快照（现价/涨跌幅/正股/转股价/转股价值/转股溢价率/债券评级/双低/到期税前收益/剩余年限/剩余规模）
-  - `redeem`：强赎监控（强赎天计数/强赎触发价/强赎状态/最后交易日）
-  - `index`：可转债等权指数历史
-- 输入契约：`ConvertibleBondRequest`
-  - `include`：spot/redeem/index
-  - `sort_by`：double_low/conv_premium/ytm/change_percent/turnover/remaining_years（默认 double_low 升序）
-  - `descending` / `top_n`
-  - `min_double_low` / `max_double_low`：双低区间筛选
-  - `max_conv_premium`：溢价率上限筛选
-  - `min_ytm`：到期收益率下限筛选
-  - `call_status_filter`：all/called/near_call/safe（强赎状态筛选）
-  - `history_n`：index 模式取最近 N 期（默认 60）
-- 输出包含：
-  - `spot`：list[CBSpotItem]（双低/溢价率/YTM/评级/转股价值等）
-  - `redeem`：list[CBRedeemItem]（强赎天计数/强赎状态/最后交易日）
-  - `index`：list[CBIndexPoint]（等权指数历史）
-  - `summary`：可读文本摘要
-- AKShare 接口：
-  - `bond_cb_jsl` → spot（集思录快照）
-  - `bond_cb_redeem_jsl` → redeem（强赎监控）
-  - `bond_cb_index_jsl` → index（等权指数）
-- added models: CBSpotItem, CBRedeemItem, CBIndexPoint, ConvertibleBondResult
-- added `akshare_convertible_bond_adapters` with 3 adapt functions + summary builder
-- added `AKShareProvider` methods: get_cb_spot/get_cb_redeem/get_cb_index
-- added `ConvertibleBondUseCase` with double-low sort/filter + call-status screening
-- added `convertible_bond` to provider router → akshare
-- added MCP tool registration
-- added tests: `test_akshare_convertible_bond_adapters.py` (9 tests)
-
-### derivatives_data（期货/期权）
-- 新增 `derivatives_data` tool
-- 当前 provider：`akshare`
-- 支持 4 种 include 模式：
-  - `futures_spot`：期货主力合约实时快照（价格/持仓/涨跌幅）
-  - `futures_hist`：期货合约历史日线（含持仓量/结算价）
-  - `option_list`：期权合约列表（SSE/SZSE，含行权价/合约单位/到期日/持仓）
-  - `qvix`：期权隐含波动率指数（支持 50ETF/300ETF/500ETF/50指数/300指数/1000指数/科创板/创业板）
-- 输入契约：`DerivativesDataRequest`
-  - `include`：futures_spot/futures_hist/option_list/qvix
-  - `futures_symbol`：期货合约代码（默认 RB0=螺纹钢主力）
-  - `option_exchange`：SSE/SZSE/both
-  - `qvix_underlying`：50etf/300etf/500etf/100etf/50index/300index/1000index/kcb/cyb
-  - `option_type_filter`：all/call/put
-  - `history_n`：历史期数（默认 60）
-- 输出包含：
-  - `futures_spot`：list[FuturesSpotItem]
-  - `futures_hist`：list[FuturesHistItem]（含持仓量/结算价）
-  - `option_list`：list[OptionContractItem]（SSE+SZSE）
-  - `qvix`：list[QVIXItem]
-  - `summary`：可读文本摘要
-- AKShare 接口：
-  - `futures_zh_realtime` → futures_spot
-  - `futures_zh_daily_sina` → futures_hist
-  - `option_current_day_sse/szse` → option_list
-  - `index_option_*_qvix` → qvix（9 个标的）
-- 注意：EM 期权接口(option_current_em)当前代理不稳定，使用 SSE/SZSE 官方接口替代
-- added models: FuturesSpotItem, FuturesHistItem, OptionContractItem, QVIXItem, DerivativesDataResult
-- added `akshare_derivatives_data_adapters` with 5 adapt functions + summary builder
-- added `AKShareProvider` methods: get_futures_spot/get_futures_hist/get_option_list_sse/szse/get_qvix
-- added `DerivativesDataUseCase`
-- added `derivatives_data` to provider router → akshare
-- added MCP tool registration
-- added tests: `test_akshare_derivatives_data_adapters.py` (10 tests)
-
-### margin_trading（融资融券）
-- 新增 `margin_trading` tool
-- 当前 provider：`akshare`
-- 支持 2 种 include 模式：
-  - `summary`：两市融资融券汇总（融资余额/融资买入额/融券余量/融券卖出量/两融余额）
-  - `detail`：个股融资融券明细（融资余额/买入额/偿还额/融券余量/卖出量）
-- 输入契约：`MarginTradingRequest`
-  - `include`：summary/detail
-  - `trade_date` / `start_date + end_date`：日期范围（SSE 汇总支持区间，SZSE/明细为单日）
-  - `exchange`：SSE/SZSE/both
-  - `sort_by`：financing_buy/financing_balance/securities_sell/securities_volume
-  - `descending` / `top_n`
-- 输出包含：
-  - `summary`：list[MarginSummaryItem]（按日期+交易所）
-  - `detail`：list[MarginDetailItem]（个股明细，支持排序截断）
-  - `summary_text`：可读文本摘要
-  - `partial_failure`：bool，部分交易所数据获取失败时为 True
-  - `errors`：list，失败的 exchange+section+error_code+message（对齐项目其他 tool 的 partial_failure 模式）
-- AKShare 接口：
-  - `stock_margin_sse` → SSE 汇总（支持日期区间）
-  - `stock_margin_szse` → SZSE 汇总（单日）
-  - `stock_margin_detail_sse` → SSE 个股明细（单日）
-  - `stock_margin_detail_szse` → SZSE 个股明细（单日）
-- 注意：SZSE 汇总单位为亿元，SSE 为元；SSE 明细含融资偿还额/融券偿还额，SZSE 含融券余额/两融余额
-- added models: MarginSummaryItem, MarginDetailItem, MarginTradingResult
-- added `akshare_margin_trading_adapters` with 4 adapt functions + summary builder
-- added `AKShareProvider` methods: get_margin_sse/szse_summary/detail
-- added `MarginTradingUseCase` with SSE/SZSE dual-exchange + sort/top_n
-- added `margin_trading` to provider router → akshare
-- added MCP tool registration
-- added tests: `test_akshare_margin_trading_adapters.py` (9 adapter tests + 3 partial_failure usecase tests)
-
-## 配置接线审计（P2）
-
-### Settings 字段使用状态
-
-| 字段 | 默认值 | 是否被代码消费 | 消费者 |
-|---|---|---|---|
-| `app_env` | dev | 否 | — |
-| `log_level` | INFO | **是** | main.py → setup_logging() |
-| `mcp_server_name` | cn-stock-mcp | 是 | mcp_server.py |
-| `mcp_server_version` | 0.1.0 | 是 | mcp_server.py |
-| `default_market` | CN | 否 | — |
-| `default_provider_order` | akshare,zhitu | 是 | provider_router.py |
-| `enable_provider_fallback` | True | 是 | provider_router.py |
-| `akshare_enabled` | True | **是** | provider_router._is_enabled() |
-| `akshare_timeout_seconds` | 20 | 否 | — |
-| `zhitu_enabled` | True | **是** | provider_router._is_enabled() |
-| `zhitu_base_url` | https://api.zhituapi.com | 是 | zhitu_provider.py |
-| `zhitu_token` | "" | 是 | zhitu_provider.py |
-| `zhitu_token_config_path` | config/zhitu_tokens.json | 是 | zhitu_provider.py |
-| `zhitu_timeout_seconds` | 15 | 是 | zhitu_provider.py → build_http_client() |
-| ~~`zhitu_rate_limit_per_minute`~~ | ~~300~~ | ~~否~~ | — （已重命名为 `zhitu_daily_quota_per_token`） |
-| `zhitu_daily_quota_per_token` | 500 | **是** | zhitu_provider._daily_quota / _daily_remaining() / get_token_health() |
-| `zhitu_token_cooldown_seconds` | 60 | 是 | zhitu_provider.py |
-| `cache_ttl_list_seconds` | 86400 | 是 | stock_review（calendar cache） |
-| `cache_ttl_quote_seconds` | 10 | **是** | stock_quote |
-| `cache_ttl_overview_seconds` | 10 | **是** | market_overview |
-| `cache_ttl_history_seconds` | 3600 | 是 | stock_review（history/benchmark cache） |
-| `cache_ttl_indicator_seconds` | 300 | **是** | technical_indicator |
-| `cache_ttl_orderbook_seconds` | 3 | **是** | stock_orderbook |
-| `cache_ttl_pool_seconds` | 600 | **是** | market_pool |
-| `stock_review_batch_max_workers` | 4 | 是 | stock_review_batch |
-| `sector_rotation_max_workers` | 2 | 是 | sector_rotation_review |
-
-### 仍未接线的配置（P3 改进项）
-
-以下配置已定义但**没有任何代码消费**：
-- `app_env` — 可用于环境区分
-- `default_market` — 目前硬编码 "CN"
-- `akshare_timeout_seconds` — AKShare 内部使用 requests，无法统一超时
-
-### 已完成接入（2026-05-13）
-
-- `log_level` → main.py setup_logging()
-- `akshare_enabled` / `zhitu_enabled` → ProviderRouter._is_enabled() / _filter_selection()
-- `zhitu_daily_quota_per_token`（原 `zhitu_rate_limit_per_minute`）→ ZhituProvider 每日限额跟踪
-- `cache_ttl_quote_seconds` → StockQuoteUseCase
-- `cache_ttl_overview_seconds` → MarketOverviewUseCase
-- `cache_ttl_indicator_seconds` → TechnicalIndicatorUseCase
-- `cache_ttl_orderbook_seconds` → OrderbookUseCase
-- `cache_ttl_pool_seconds` → MarketPoolUseCase
-
-### schemas.py 拆分（P2 已完成）
-
-- 原 `server/schemas.py`（1128 行）已拆分为 `server/schema_defs/` 包：
-  - `_types.py` — 共享 Literal 类型
-  - `_helpers.py` — 共享 validator helpers（日期区间校验、interval 归一化、pool_type 归一化、include 去重）
-  - `_stock.py` — 股票相关 schema（10 个 Request）
-  - `_market.py` — 市场相关 schema（9 个 Request）
-  - `_sector.py` — 板块相关 schema（6 个 Request）
-  - `_analytics.py` — 分析/评分相关 schema（6 个 Request）
-  - `_macro.py` — 宏观/衍生品相关 schema（5 个 Request）
-  - `__init__.py` — 统一 re-export
-- `server/schemas.py` 保留为向后兼容的 re-export facade（`from ... import *`）
-- 所有现有 `from cn_stock_mcp.server.schemas import X` 不受影响
+> **一个可交付给最终用户 / AI 集成人员试装、试接、试用的中国证券市场 MCP server 项目。**
