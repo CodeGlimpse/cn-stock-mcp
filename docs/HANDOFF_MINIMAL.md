@@ -42,47 +42,10 @@ cn-stock-mcp --doctor-network
 
 ---
 
-## 常见错误
+## 接下来只在需要时再看
 
-### 1. 提示找不到 `cn-stock-mcp`
-请重新安装：
-
-```bash
-python -m pip install cn-stock-mcp
-```
-
-### 2. `--doctor-network` 提示没有 token
-说明你还没有在 MCP host 配置里填写：
-
-```json
-"ZHITU_TOKEN": "your-token"
-```
-
-### 3. `--doctor-network` 提示 provider_health 失败
-通常表示：
-- token 无效
-- 网络访问上游失败
-- 上游服务暂时异常
-
-这时先检查 token，再重试。
-
-### 4. 查询“银行”这类板块成员时失败
-`sector_lookup` 的 `children/members` 必须显式传 `sector_type`。
-
-正确示例：
-```json
-{"mode":"children","sector_type":"primary","sector_name":"银行","limit":20}
-```
-
-错误示例：
-```json
-{"mode":"children","sector_name":"银行","limit":20}
-```
-
----
-
-## 只在需要时再看
-
+- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的复制即用模板
+- `docs/FAQ.md`：常见错误与排查
 - `docs/EXAMPLES_MINIMAL.md`：最小调用示例
-- `docs/COMPATIBILITY.md`：不同 MCP host / skill host 的兼容说明
+- `docs/COMPATIBILITY.md`：不同 host / skill host 的兼容说明
 - `docs/INTEGRATION.md`：更完整的挂载与联调说明
