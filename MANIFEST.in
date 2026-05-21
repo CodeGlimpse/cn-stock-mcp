@@ -1,0 +1,14 @@
+include README.md
+include .env.example
+include .mcp.sample.json
+recursive-include src/cn_stock_mcp *.py *.json
+recursive-include skills *.md
+recursive-include docs *.md
+prune tests
+prune .github
+prune .venv
+prune dist
+prune build
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .DS_Store

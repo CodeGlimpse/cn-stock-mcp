@@ -31,12 +31,17 @@ jobs:
         id: token_check
         env:
           ZHITU_TOKEN: ${{ secrets.ZHITU_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           if [ -n "$ZHITU_TOKEN" ]; then
             echo "has_token=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_token=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::ZHITU_TOKEN is missing; skipping live smoke tests."
+            if [ "$EVENT_NAME" = "schedule" ]; then
+              echo "::error::ZHITU_TOKEN is missing; scheduled live smoke must fail instead of silently skipping."
+              exit 1
+            fi
+            echo "::notice::ZHITU_TOKEN is missing; skipping live smoke tests for manual run."
           fi
 
       - name: Run live smoke

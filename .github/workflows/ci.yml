@@ -29,3 +29,15 @@ jobs:
 
       - name: Run tests
         run: pytest -q -m "not live"
+
+      - name: Build package
+        run: python -m build
+
+      - name: Wheel install smoke
+        run: |
+          python -m venv /tmp/cn-stock-mcp-wheel-smoke
+          /tmp/cn-stock-mcp-wheel-smoke/bin/python -m pip install --upgrade pip
+          /tmp/cn-stock-mcp-wheel-smoke/bin/python -m pip install dist/*.whl
+          /tmp/cn-stock-mcp-wheel-smoke/bin/cn-stock-mcp --version
+          /tmp/cn-stock-mcp-wheel-smoke/bin/cn-stock-mcp --doctor
+          /tmp/cn-stock-mcp-wheel-smoke/bin/cn-stock-mcp --list-tools

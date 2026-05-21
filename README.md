@@ -17,7 +17,7 @@
 ## 文档导航
 
 - `docs/README_DOCS.md`：文档总览与阅读顺序
-- `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的最短接入说明
+- `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的一页接入说明（优先看这个）
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口
 - `docs/EXAMPLES_MINIMAL.md`：最小可工作的调用示例
@@ -32,8 +32,16 @@
 
 ### 安装依赖
 
+面向最终用户，优先推荐：
+
 ```bash
-pip install -e .
+python -m pip install cn-stock-mcp
+```
+
+本地源码开发时再使用：
+
+```bash
+python -m pip install -e .
 ```
 
 ### 开发环境安装（推荐）
@@ -88,13 +96,13 @@ cp .env.example .env
 ### 列出已注册 tools
 
 ```bash
-PYTHONPATH=src python -m cn_stock_mcp.main --list-tools
+cn-stock-mcp --list-tools
 ```
 
 ### 调用单个 tool
 
 ```bash
-PYTHONPATH=src python -m cn_stock_mcp.main --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
+cn-stock-mcp --tool stock_quote --payload '{"symbols":["000001.SH"],"sec_type":"index"}'
 ```
 
 ### 返回结构（统一 envelope）
@@ -122,7 +130,8 @@ AI agent 默认先看最小样例；只有在需要更完整 payload 模板时�
 ### 运行 smoke test
 
 ```bash
-PYTHONPATH=src python scripts/smoke_test.py
+cn-stock-mcp --doctor
+cn-stock-mcp --doctor-network
 bash scripts/smoke_live.sh
 ```
 
@@ -131,7 +140,9 @@ bash scripts/smoke_live.sh
 ### 运行 provider 自检
 
 ```bash
-PYTHONPATH=src python -m cn_stock_mcp.main --tool provider_health --payload '{}'
+cn-stock-mcp --doctor
+cn-stock-mcp --doctor-network
+cn-stock-mcp --tool provider_health --payload '{}'
 ```
 
 更多自检/挂载说明见：`docs/INTEGRATION.md`

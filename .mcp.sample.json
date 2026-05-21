@@ -1,21 +1,10 @@
 {
   "mcpServers": {
     "cn-stock-mcp": {
-      "command": "/tmp/cn-stock-mcp-venv/bin/python",
-      "args": [
-        "-m",
-        "cn_stock_mcp.main",
-        "--stdio"
-      ],
-      "cwd": "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp",
+      "command": "cn-stock-mcp",
+      "args": ["--stdio"],
       "env": {
-        "PYTHONPATH": "src",
-        "HTTP_PROXY": "",
-        "HTTPS_PROXY": "",
-        "ALL_PROXY": "",
-        "http_proxy": "",
-        "https_proxy": "",
-        "all_proxy": ""
+        "ZHITU_TOKEN": "replace-with-your-token"
       }
     }
   }
