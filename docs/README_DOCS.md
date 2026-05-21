@@ -18,10 +18,13 @@ Last Updated: 2026-05-21
 3. `HOST_CONFIG_TEMPLATES.md`
    - 按宿主类型选择模板入口。
 
-4. `AGENT_AND_SKILL_MAP.md`
+4. `AI_ONBOARDING.md`
+   - 给 AI 集成人员 / agent 作者的使用说明。
+
+5. `AGENT_AND_SKILL_MAP.md`
    - 解释哪些平台只是接 MCP，哪些才有仓库内 skill，以及 skill 文件在哪。
 
-5. `FAQ.md`
+6. `FAQ.md`
    - 常见错误与排查。
 
 ---
@@ -35,15 +38,18 @@ Last Updated: 2026-05-21
 
 ---
 
-## 给 AI agent 的阅读顺序
+## 给 AI agent / AI 集成人员的阅读顺序
 
-1. `AGENT_MINIMAL.md`
+1. `AI_ONBOARDING.md`
+   - 人类可读的 AI 集成说明。
+
+2. `AGENT_MINIMAL.md`
    - 最小路由、最小 payload、最容易踩坑的契约。
 
-2. `EXAMPLES_MINIMAL.md`
+3. `EXAMPLES_MINIMAL.md`
    - 最小可工作的调用示例。
 
-3. `INTERFACE_SCHEMA.md`
+4. `INTERFACE_SCHEMA.md`
    - 需要详细输入输出契约、枚举、symbol/interval 约束时再看。
 
 ---
@@ -73,6 +79,7 @@ Last Updated: 2026-05-21
 ## 文档定位约定（避免重复/过时）
 
 - 仓库人类入口：只在 `START_HERE.md` 维护。
+- AI 集成说明：只在 `AI_ONBOARDING.md` 维护。
 - 功能事实：只在 `IMPLEMENTATION_STATUS.md` 维护。
 - 协议契约：只在 `INTERFACE_SCHEMA.md` 维护。
 - 错误语义：只在 `ERROR_MODEL.md` 维护。

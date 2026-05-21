@@ -4,6 +4,8 @@
 
 > **如果你是人类用户：** 不要先通读整个仓库，先看 `docs/START_HERE.md`。
 
+> **如果你要把这个 MCP 教给 AI / 集成到 agent：** 先看 `docs/AI_ONBOARDING.md`。
+
 > **如果你在找“给各个 agent 用的 skill 在哪里”：** 先看 `docs/AGENT_AND_SKILL_MAP.md`。
 
 > **如果你是 AI agent：** 不要默认通读本 README。先读 `docs/AGENT_MINIMAL.md`，需要最小示例时再读 `docs/EXAMPLES_MINIMAL.md`。
@@ -14,6 +16,7 @@
 - `docs/START_HERE.md`：最友好的仓库入口
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
 - `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- `docs/AI_ONBOARDING.md`：给 AI 集成人员 / agent 作者的使用说明
 - `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 用什么、有没有 skill、skill 在哪里
 - `docs/FAQ.md`：常见错误与排查
 
@@ -32,7 +35,8 @@
 - `docs/CODEX_TEMPLATE.md`：Codex 单独模板
 - `docs/FAQ.md`：常见错误与排查
 
-### AI agent
+### AI agent / AI 集成人员
+- `docs/AI_ONBOARDING.md`：人类可读的 AI 集成说明
 - `docs/AGENT_MINIMAL.md`：最小规则与路由入口
 - `docs/EXAMPLES_MINIMAL.md`：最小可工作示例
 - `docs/INTERFACE_SCHEMA.md`：需要详细契约时再看
@@ -103,6 +107,7 @@ cn-stock-mcp --doctor-network
 ## 文档导航
 
 - `docs/START_HERE.md`：给人类用户的最友好入口
+- `docs/AI_ONBOARDING.md`：给 AI 集成人员 / agent 作者的说明
 - `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 的使用方式与 skill 对照
 - `docs/README_DOCS.md`：文档总览与阅读顺序
 - `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的一页接入说明
