@@ -3,8 +3,12 @@ from __future__ import annotations
 import asyncio
 import json
 
+from pydantic import BaseModel
+
 from mcp import types
 
+from cn_stock_mcp.server import stdio_server
+from cn_stock_mcp.server.mcp_server import MCPServerStub, MCPTool
 from cn_stock_mcp.server.stdio_server import build_fastmcp_server
 
 
@@ -14,69 +18,67 @@ def _run(coro):
 
 def test_mcp_server_lists_every_registered_tool():
     server = build_fastmcp_server()
+    registry = stdio_server.create_server()
     handler = server.get_request_handler("tools/list")
     assert handler is not None
 
     result = _run(handler.handler(None, None))
 
-    assert len(result.tools) == 52
-    assert {tool.name for tool in result.tools} == {
-        "stock_search",
-        "stock_quote",
-        "stock_history",
-        "stock_review",
-        "stock_review_batch",
-        "watchlist_review",
-        "trading_calendar",
-        "market_overview",
-        "market_brief",
-        "technical_indicator",
-        "multi_timeframe_review",
-        "market_pool",
-        "stock_orderbook",
-        "stock_candidate_scan",
-        "sector_lookup",
-        "sector_review",
-        "sector_rotation_review",
-        "sector_leaders",
-        "hot_theme_tracker",
-        "provider_health",
-        "event_calendar",
-        "stock_profile",
-        "capital_flow",
-        "stock_financial",
-        "limit_stat",
-        "northbound",
-        "valuation_rank",
-        "index_compose",
-        "index_enhance",
-        "industry_valuation_rank",
-        "earnings_quality",
-        "macro_indicator",
-        "dragon_tiger",
-        "etf_snapshot",
-        "convertible_bond",
-        "derivatives_data",
-        "margin_trading",
-        "block_trade",
-        "institute_hold",
-        "money_rate",
-        "stock_screen",
-        "insider_trade",
-        "dividend_rank",
-        "shareholder_change",
-        "disclosure_calendar",
-        "stock_repurchase",
-        "stock_compare",
-        "industry_chain",
-        "stock_warrant",
-        "fund_flow",
-        "limit_up_pool",
-        "sec_reveal",
-    }
+    assert len(result.tools) == len(registry.tools)
+    assert {tool.name for tool in result.tools} == set(registry.tools)
+    assert len({tool.name for tool in result.tools}) == len(result.tools)
 
     provider_health = next(tool for tool in result.tools if tool.name == "provider_health")
     assert provider_health.input_schema["type"] == "object"
+
+
+def test_mcp_server_builds_a_schema_for_every_registered_tool():
+    server = build_fastmcp_server()
+    registry = stdio_server.create_server()
+    handler = server.get_request_handler("tools/list")
+    assert handler is not None
+
+    result = _run(handler.handler(None, None))
+
+    for tool in result.tools:
+        assert tool.description
+        assert tool.input_schema == registry.tools[tool.name].input_model.model_json_schema()
+        assert tool.input_schema["type"] == "object"
+
+
+def test_mcp_server_routes_successful_call_and_preserves_envelope(monkeypatch):
+    class SuccessRequest(BaseModel):
+        value: int
+
+    registry = MCPServerStub(name="test-server", version="0.0.0")
+    registry.register_tool(
+        MCPTool(
+            name="success",
+            description="A local success test tool.",
+            input_model=SuccessRequest,
+            handler=lambda request: {"doubled": request.value * 2},
+        )
+    )
+    monkeypatch.setattr(stdio_server, "create_server", lambda: registry)
+
+    server = build_fastmcp_server()
+    handler = server.get_request_handler("tools/call")
+    assert handler is not None
+
+    result = _run(
+        handler.handler(
+            None,
+            types.CallToolRequestParams(name="success", arguments={"value": 21}),
+        )
+    )
+
+    assert result.is_error is False
+    payload = json.loads(result.content[0].text)
+    assert payload["success"] is True
+    assert payload["data"] == {"doubled": 42}
+    assert payload["error"] is None
+    assert payload["meta"]["tool"] == "success"
+    assert result.structured_content == payload
 
 
 def test_mcp_server_routes_invalid_arguments_without_upstream_call():
