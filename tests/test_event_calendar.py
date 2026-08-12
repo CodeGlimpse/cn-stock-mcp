@@ -1,6 +1,12 @@
 from cn_stock_mcp.app.usecases.event_calendar import EventCalendarUseCase
 
 
+def _today():
+    from datetime import date
+
+    return date(2026, 5, 1)
+
+
 class _Record:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -49,7 +55,7 @@ class _Resolver:
 
 
 def test_event_calendar_generates_timeline_items():
-    uc = EventCalendarUseCase()
+    uc = EventCalendarUseCase(today_provider=_today)
     uc.router = _Router()
     uc.resolver = _Resolver()
 
@@ -72,7 +78,7 @@ def test_event_calendar_generates_timeline_items():
 
 
 def test_event_calendar_next_event_only_returns_one_future_item():
-    uc = EventCalendarUseCase()
+    uc = EventCalendarUseCase(today_provider=_today)
     uc.router = _Router()
     uc.resolver = _Resolver()
 
@@ -97,7 +103,7 @@ def test_event_calendar_next_event_only_returns_one_future_item():
 
 
 def test_event_calendar_next_event_priority():
-    uc = EventCalendarUseCase()
+    uc = EventCalendarUseCase(today_provider=_today)
     uc.router = _Router()
     uc.resolver = _Resolver()
 

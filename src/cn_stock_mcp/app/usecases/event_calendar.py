@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date as dt_date
+from typing import Callable
 
 from cn_stock_mcp.app.services.error_mapper import serialize_exception
 from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
@@ -9,9 +10,10 @@ from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
 
 
 class EventCalendarUseCase:
-    def __init__(self) -> None:
+    def __init__(self, today_provider: Callable[[], dt_date] | None = None) -> None:
         self.router = ProviderRouter()
         self.resolver = SymbolResolver()
+        self._today_provider = today_provider or dt_date.today
 
     @staticmethod
     def _priority_rank(event_type: str, event_priority: list[str]) -> int:
@@ -40,7 +42,7 @@ class EventCalendarUseCase:
         event_types = set(getattr(request, "event_types", None) or ["dividend", "unlock", "profit"])
         next_event_only = bool(getattr(request, "next_event_only", False))
         event_priority = list(getattr(request, "event_priority", None) or ["unlock", "dividend", "profit"])
-        today_iso = dt_date.today().isoformat()
+        today_iso = self._today_provider().isoformat()
         errors = []
         items = []
         per_symbol = []
