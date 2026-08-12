@@ -3,14 +3,16 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import anyio
+
 from cn_stock_mcp.server.mcp_server import create_server
-from cn_stock_mcp.server.stdio_server import build_fastmcp_server
+from cn_stock_mcp.server.stdio_server import build_fastmcp_server, run_stdio_server
 
 
 class TransportApp:
     """Production transport facade.
 
-    - stdio path: MCP Python SDK (FastMCP) via `run_stdio()`
+    - stdio path: MCP Python SDK 2.x low-level server via `run_stdio()`
     - local test/debug path: direct in-process registry invocation
     """
 
@@ -38,8 +40,7 @@ class TransportApp:
         print(self.to_stdio_payload(name, payload))
 
     def run_stdio(self) -> None:
-        mcp = build_fastmcp_server()
-        mcp.run(transport="stdio")
+        anyio.run(run_stdio_server, build_fastmcp_server())
 
 
 def _json_default(value: Any):
