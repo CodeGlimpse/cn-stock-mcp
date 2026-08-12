@@ -1,6 +1,10 @@
 from .schemas import (
     BlockTradeRequest,
+    ConvertibleBondRequest,
+    DerivativesDataRequest,
     DisclosureCalendarRequest,
+    DragonTigerRequest,
+    ETFSnapshotRequest,
     StockRepurchaseRequest,
     StockCompareRequest,
     DividendRankRequest,
@@ -14,6 +18,7 @@ from .schemas import (
     ShareholderChangeRequest,
     InstituteHoldRequest,
     InsiderTradeRequest,
+    MarginTradingRequest,
     MoneyRateRequest,
     StockScreenRequest,
     MacroIndicatorRequest,
