@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 from cn_stock_mcp.app.services.provider_types import ProviderSelection
 from cn_stock_mcp.infra.config import get_settings
 from cn_stock_mcp.providers.akshare_provider import AKShareProvider
@@ -60,11 +62,24 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
 _DEFAULT_ROUTE: tuple[str, list[str]] = ("akshare", ["zhitu"])
 
 
+@lru_cache(maxsize=1)
+def _shared_providers() -> tuple[AKShareProvider, ZhituProvider]:
+    """Build the process-wide providers used by all routers.
+
+    A ZhituProvider owns an httpx client, whose SSL context creation is
+    expensive on Windows.  UseCases historically created their own router,
+    so constructing the MCP registry duplicated that work dozens of times.
+    Provider state (connection pool, token health, and small provider caches)
+    is safe and useful to share for the lifetime of the server process.
+    """
+
+    return AKShareProvider(), ZhituProvider()
+
+
 class ProviderRouter:
     def __init__(self) -> None:
         self._settings = get_settings()
-        self.akshare = AKShareProvider()
-        self.zhitu = ZhituProvider()
+        self.akshare, self.zhitu = _shared_providers()
 
     # ── public API ──────────────────────────────────────────────
 

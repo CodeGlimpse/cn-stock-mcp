@@ -1,6 +1,14 @@
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 
 
+def test_provider_instances_are_shared_between_routers():
+    first = ProviderRouter()
+    second = ProviderRouter()
+
+    assert first.akshare is second.akshare
+    assert first.zhitu is second.zhitu
+
+
 def test_stock_quote_stock_main_route_defaults_to_zhitu_primary():
     router = ProviderRouter()
     sel = router.choose_provider(tool_name="stock_quote", symbol="600519.SH", sec_type="stock")
