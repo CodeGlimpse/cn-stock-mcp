@@ -149,3 +149,18 @@ cn-stock-mcp --tool provider_health --payload '{}'
 1. `docs/INTEGRATION.md`
 2. `docs/COMPATIBILITY.md`
 3. `docs/OPENCLAW_INTEGRATION.md`（如果你用 OpenClaw）
+
+---
+
+## 9) Windows 上为什么 `py` 会启动 Python 3.13t？
+
+如果同时安装了普通 CPython 3.13 和 free-threaded 3.13t，Windows Python Launcher 会在 `py` 或 `py -3` 的“最新 3.x”选择中优先使用 3.13t。
+
+本项目的 Windows/MCP 开发环境应使用普通 CPython 3.13：
+
+```powershell
+py -3.13 -V
+& .\.venv\Scripts\python.exe -V
+```
+
+不要用 `py -3.13t` 运行本项目。当前 MCP 的 Windows stdio 依赖 `pywin32`，其可用发布物没有 `cp313t` wheel。完整兼容边界见 `docs/COMPATIBILITY.md`。

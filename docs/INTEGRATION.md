@@ -1,6 +1,6 @@
 # Integration Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-05-20
+Last Updated: 2026-08-13
 
 ## 1) 本地运行与自检
 
@@ -43,6 +43,20 @@ bash scripts/smoke_live.sh
 
 > 约束：stdio 模式不要向 stdout 打普通日志，调试日志写 stderr 或文件。
 
+### Windows 开发环境（推荐）
+
+本项目在 Windows 上使用普通 CPython 3.13.2 验证通过。若机器同时安装了 Python 3.13t，不要使用默认的 `py` 或 `py -3`；请使用 `py -3.13`，或直接调用项目虚拟环境中的解释器：
+
+```powershell
+cd F:\agents\code\cn-stock-mcp
+& .\.venv\Scripts\python.exe -V
+& .\.venv\Scripts\python.exe -m pip check
+& .\.venv\Scripts\cn-stock-mcp.exe --doctor
+& .\.venv\Scripts\cn-stock-mcp.exe --doctor-network
+```
+
+PowerShell 如果禁止执行 `Activate.ps1`，不需要修改全局执行策略，直接使用上述 `.venv\Scripts` 路径即可。
+
 ---
 
 ## 2) 通用 MCP 挂载配置
@@ -81,6 +95,19 @@ bash scripts/smoke_live.sh
     "http_proxy": "",
     "https_proxy": "",
     "all_proxy": ""
+  }
+}
+```
+
+Windows 源码目录方式对应配置（将路径替换为实际项目目录）：
+
+```json
+{
+  "command": "C:\\path\\to\\cn-stock-mcp\\.venv\\Scripts\\python.exe",
+  "args": ["-m", "cn_stock_mcp.main", "--stdio"],
+  "cwd": "C:\\path\\to\\cn-stock-mcp",
+  "env": {
+    "PYTHONPATH": "src"
   }
 }
 ```
@@ -140,3 +167,5 @@ bash scripts/smoke_live.sh
 3. `live smoke` 命令（`bash scripts/smoke_live.sh`）至少能稳定跑通核心链路。
 4. 更重的 live extended 用例可单独执行，不与默认 smoke 混跑。
 5. stdio 模式下协议输出正常，无 stdout 杂日志干扰。
+
+本次 P2 验证的具体结果见：`docs/P2_DELIVERY_RECORD_2026-08-13.md`。

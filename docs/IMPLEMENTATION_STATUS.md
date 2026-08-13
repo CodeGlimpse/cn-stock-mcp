@@ -1,6 +1,6 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-05-21
+Last Updated: 2026-08-13
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
@@ -85,6 +85,19 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - **手动诊断 / 上游连通性验证 workflow**
 
 而不是基础质量门禁或定时巡检任务。
+
+### P2 实时数据与兼容性验证
+
+2026-08-13 在 Windows 普通 CPython 3.13.2 项目虚拟环境中完成：
+
+- 实时 smoke：13/13 通过
+- extended live：3/3 通过
+- Zhitu 市场池日期格式兼容：3/3 通过，支持 `YYYY-MM-DD` 与 `YYYYMMDD`
+- MCP stdio 进程级验证：initialize 成功、52 个工具、无效参数返回 `INVALID_ARGUMENT`
+- `--doctor-network`：`provider_health` 通过
+- `pip check`：通过
+
+详细命令、环境和限制见 `docs/P2_DELIVERY_RECORD_2026-08-13.md`。
 
 ---
 
@@ -192,6 +205,12 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - 会消耗上游请求
 - 更适合诊断场景
 
+### Windows Python 运行时
+
+- 已验证：普通 CPython 3.13.2，`cp313-win_amd64`。
+- 当前不把 Python 3.13t/free-threaded 作为 Windows/MCP 开发环境；`pywin32` 尚无可用的 `cp313t` wheel。
+- Windows 同时安装两个构建时，应使用 `py -3.13` 或项目 `.venv`，不要使用默认 `py` / `py -3`。
+
 ### 大 payload / 大 universe
 当前所有 AI 使用建议都默认：
 - 先用轻工具
@@ -204,17 +223,15 @@ cn-stock-mcp --tool provider_health --payload '{}'
 
 以下事项仍值得继续做，但它们不是“当前不能交付”的阻塞项：
 
-1. 补 `LICENSE`
-2. 补 `CHANGELOG.md` / release 记录
-3. 决定 `Live Smoke` 是否长期保留为 schedule，或进一步收缩为 manual only
-4. 对重点宿主做一轮真机 smoke（例如 Claude Desktop / Cursor / Cline / OpenClaw）
-5. 继续保持 `AI_ONBOARDING.md`、`AGENT_MINIMAL.md`、`.agent-hints.json` 的一致性
+1. 决定 `Live Smoke` 是否长期保留为 schedule，或进一步收缩为 manual only
+2. 对重点宿主做一轮真机 smoke（例如 Claude Desktop / Cursor / Cline / OpenClaw）
+3. 继续保持 `AI_ONBOARDING.md`、`AGENT_MINIMAL.md`、`.agent-hints.json` 的一致性
 
 ---
 
 ## 8) 当前状态结论
 
-截至 2026-05-21，本项目已经不再只是“开发中代码仓库”，而是已经具备：
+截至 2026-08-13，本项目已经不再只是“开发中代码仓库”，而是已经具备：
 - 安装
 - 自检
 - 打包

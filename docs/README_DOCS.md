@@ -1,6 +1,6 @@
 # Docs Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-05-21
+Last Updated: 2026-08-13
 
 本目录只保留当前有效的运行文档。
 
@@ -74,6 +74,9 @@ Last Updated: 2026-05-21
 6. `OPENCLAW_INTEGRATION.md`
    - 仅在你使用 OpenClaw 时再看。
 
+7. `P2_DELIVERY_RECORD_2026-08-13.md`
+   - 本次实时数据、日期兼容、stdio 和 Python 运行时验证记录。
+
 ---
 
 ## 文档定位约定（避免重复/过时）
@@ -87,5 +90,6 @@ Last Updated: 2026-05-21
 - 最终用户快速入口：只在 `HANDOFF_MINIMAL.md` / `HOST_CONFIG_TEMPLATES.md` / `FAQ.md` 维护。
 - agent / skill 对照关系：只在 `AGENT_AND_SKILL_MAP.md` 维护。
 - 宿主专属最终配置：只在各自的 `*_TEMPLATE.md` 维护。
+- 阶段性交付证据：以带日期的 `P2_DELIVERY_RECORD_*.md` 为准，不改写历史验证记录。
 
 如果某条信息出现在多个文件，以以上“单一事实源”优先。
