@@ -57,6 +57,16 @@ cd F:\agents\code\cn-stock-mcp
 
 PowerShell 如果禁止执行 `Activate.ps1`，不需要修改全局执行策略，直接使用上述 `.venv\Scripts` 路径即可。
 
+运行本地回归时，如果系统临时目录没有写权限，可将 pytest 临时目录放到项目临时目录，并关闭 pytest cache：
+
+```powershell
+$env:TEMP = "F:\agents\code\temp\cn-stock-mcp-pytest"
+$env:TMP = $env:TEMP
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -m "not live"
+```
+
+当前 Provider 已在进程内复用；首次 MCP registry 构建约 0.33 秒，后续构建约 0.06 秒。
+
 ---
 
 ## 2) 通用 MCP 挂载配置

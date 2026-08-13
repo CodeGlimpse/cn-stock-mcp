@@ -96,6 +96,8 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - MCP stdio 进程级验证：initialize 成功、52 个工具、无效参数返回 `INVALID_ARGUMENT`
 - `--doctor-network`：`provider_health` 通过
 - `pip check`：通过
+- 完整非 live 回归：472 通过，16 个 live 用例排除
+- Provider 复用后首次 `create_server()` 约 0.33 秒，后续约 0.06 秒
 
 详细命令、环境和限制见 `docs/P2_DELIVERY_RECORD_2026-08-13.md`。
 
@@ -210,6 +212,12 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - 已验证：普通 CPython 3.13.2，`cp313-win_amd64`。
 - 当前不把 Python 3.13t/free-threaded 作为 Windows/MCP 开发环境；`pywin32` 尚无可用的 `cp313t` wheel。
 - Windows 同时安装两个构建时，应使用 `py -3.13` 或项目 `.venv`，不要使用默认 `py` / `py -3`。
+
+### Provider 初始化性能
+
+- `ProviderRouter` 在进程内共享 AKShare/Zhitu Provider，避免每个 UseCase 重复创建 Zhitu HTTP client。
+- 该优化只改变实例生命周期，不改变 Provider 路由、token 轮换或 fallback 契约。
+- 共享 Provider 已通过完整非 live、MCP transport 和实时 smoke 回归。
 
 ### 大 payload / 大 universe
 当前所有 AI 使用建议都默认：

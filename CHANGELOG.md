@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Documented the verified Windows development runtime: regular CPython 3.13.2 with the project virtual environment; Python 3.13t is not supported for the Windows/MCP path because `pywin32` has no available `cp313t` wheel.
 - Added the P2 delivery record covering live data, date compatibility, MCP stdio, provider health, and dependency validation.
+- Reused Provider instances across routers to avoid repeated Windows SSL initialization during MCP registry construction; focused construction time dropped from about 17.9 seconds to 0.33 seconds.
 
 ## [0.1.0] - 2026-05-21
 
