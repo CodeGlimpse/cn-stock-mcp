@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from datetime import date
 from typing import Any
 
 import httpx
@@ -72,8 +73,21 @@ class ZhituProvider:
         return time.time()
 
     def _today_str(self) -> str:
-        from datetime import date
         return date.today().isoformat()
+
+    @staticmethod
+    def _normalize_pool_trade_date(trade_date: str) -> str:
+        value = str(trade_date).strip()
+        try:
+            if len(value) == 8 and value.isdigit():
+                value = f"{value[:4]}-{value[4:6]}-{value[6:]}"
+            return date.fromisoformat(value).isoformat()
+        except ValueError as exc:
+            raise ProviderError(
+                "INVALID_ARGUMENT",
+                "trade_date must use YYYY-MM-DD or YYYYMMDD format",
+                retryable=False,
+            ) from exc
 
     def _ensure_daily_counter(self, token: str) -> dict[str, int | str]:
         if token not in self._daily_counters:
@@ -898,10 +912,11 @@ class ZhituProvider:
     def get_market_pool(self, pool_type: str, trade_date: str | None = None):
         if not trade_date:
             raise ProviderError("INVALID_ARGUMENT", "trade_date is required before calling zhitu market_pool provider", retryable=False)
+        normalized_trade_date = self._normalize_pool_trade_date(trade_date)
         path_map = {
-            "limit_up": f"/hs/pool/ztgc/{trade_date}",
-            "limit_down": f"/hs/pool/dtgc/{trade_date}",
-            "strong": f"/hs/pool/qsgc/{trade_date}",
+            "limit_up": f"/hs/pool/ztgc/{normalized_trade_date}",
+            "limit_down": f"/hs/pool/dtgc/{normalized_trade_date}",
+            "strong": f"/hs/pool/qsgc/{normalized_trade_date}",
         }
         path = path_map.get(pool_type)
         if not path:
