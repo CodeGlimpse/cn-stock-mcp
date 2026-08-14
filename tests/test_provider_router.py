@@ -56,3 +56,43 @@ def test_stock_quote_star_has_akshare_fallback():
     sel = router.choose_provider(tool_name="stock_quote", symbol="688001.SH", sec_type="stock")
     assert sel.primary == "zhitu"
     assert sel.fallback == ["akshare"]
+
+
+def test_provider_fallback_can_be_disabled():
+    router = ProviderRouter()
+    router._settings.enable_provider_fallback = False
+
+    sel = router.choose_provider(tool_name="stock_search")
+
+    assert sel.primary == "akshare"
+    assert sel.fallback == []
+
+
+def test_default_provider_order_reorders_generic_routes():
+    router = ProviderRouter()
+    router._settings.default_provider_order = "zhitu,akshare"
+
+    sel = router.choose_provider(tool_name="stock_search")
+
+    assert sel.primary == "zhitu"
+    assert sel.fallback == ["akshare"]
+
+
+def test_default_provider_order_does_not_change_fixed_single_source_route():
+    router = ProviderRouter()
+    router._settings.default_provider_order = "zhitu,akshare"
+
+    sel = router.choose_provider(tool_name="trading_calendar")
+
+    assert sel.primary == "akshare"
+    assert sel.fallback == []
+
+
+def test_explicit_preference_overrides_default_provider_order():
+    router = ProviderRouter()
+    router._settings.default_provider_order = "akshare,zhitu"
+
+    sel = router.choose_provider(tool_name="stock_search", preferred="zhitu")
+
+    assert sel.primary == "zhitu"
+    assert sel.fallback == ["akshare"]

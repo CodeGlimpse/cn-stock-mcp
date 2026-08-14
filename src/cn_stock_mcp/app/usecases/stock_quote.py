@@ -31,7 +31,7 @@ class StockQuoteUseCase:
             return None
         primary = ordered[0]
         fallback = [p for p in ordered[1:] if p != primary]
-        return ProviderSelection(primary=primary, fallback=fallback)
+        return self.router.filter_selection(ProviderSelection(primary=primary, fallback=fallback))
 
     def _validate_symbol_sec_type(self, raw_symbol: str, requested_sec_type: str | None):
         if not requested_sec_type:

@@ -60,6 +60,7 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
 
 # Default for tools not in the table
 _DEFAULT_ROUTE: tuple[str, list[str]] = ("akshare", ["zhitu"])
+_DEFAULT_ORDER_TOOLS = {"stock_search", "market_overview"}
 
 
 @lru_cache(maxsize=1)
@@ -91,6 +92,10 @@ class ProviderRouter:
         preferred: str | None = None,
     ) -> ProviderSelection:
         selection = self._resolve(tool_name, symbol, sec_type, preferred)
+        return self._filter_selection(selection)
+
+    def filter_selection(self, selection: ProviderSelection) -> ProviderSelection:
+        """Apply enabled-provider and fallback settings to an explicit selection."""
         return self._filter_selection(selection)
 
     def get_provider(self, name: str):
@@ -126,7 +131,10 @@ class ProviderRouter:
 
         # 3. Table lookup
         primary, fallback = _TOOL_ROUTES.get(tool_name, _DEFAULT_ROUTE)
-        return ProviderSelection(primary=primary, fallback=fallback)
+        selection = ProviderSelection(primary=primary, fallback=fallback)
+        if tool_name in _DEFAULT_ORDER_TOOLS or tool_name not in _TOOL_ROUTES:
+            return self._apply_default_provider_order(selection)
+        return selection
 
     def _apply_overrides(
         self,
@@ -175,4 +183,19 @@ class ProviderRouter:
         filtered = [p for p in providers if self._is_enabled(p)]
         if not filtered:
             raise ProviderError("PROVIDER_DISABLED", "No enabled provider for selection", retryable=False)
+        if not self._settings.enable_provider_fallback:
+            filtered = filtered[:1]
         return ProviderSelection(primary=filtered[0], fallback=filtered[1:])
+
+    def _apply_default_provider_order(self, selection: ProviderSelection) -> ProviderSelection:
+        configured = [
+            item.strip().lower()
+            for item in str(self._settings.default_provider_order or "").split(",")
+            if item.strip().lower() in {"akshare", "zhitu"}
+        ]
+        ordered: list[str] = []
+        for name in [*configured, selection.primary, *selection.fallback]:
+            if name not in ordered:
+                ordered.append(name)
+        selected = [name for name in ordered if name in {selection.primary, *selection.fallback}]
+        return ProviderSelection(primary=selected[0], fallback=selected[1:])

@@ -2,6 +2,7 @@
 import pytest
 
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
 from cn_stock_mcp.providers.errors import ProviderError
 
 
@@ -46,3 +47,14 @@ def test_both_disabled_raises():
     router._settings.akshare_enabled = False
     with pytest.raises(ProviderError, match="No enabled provider"):
         router.choose_provider(tool_name="stock_quote", symbol="600519.SH", sec_type="stock")
+
+
+def test_stock_quote_provider_preference_honors_fallback_switch():
+    usecase = StockQuoteUseCase()
+    usecase.router._settings.enable_provider_fallback = False
+
+    selection = usecase._selection_from_preference(["zhitu", "akshare"])
+
+    assert selection is not None
+    assert selection.primary == "zhitu"
+    assert selection.fallback == []

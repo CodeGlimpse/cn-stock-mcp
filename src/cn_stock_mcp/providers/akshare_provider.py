@@ -4,14 +4,19 @@ from bisect import bisect_left, bisect_right
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime, timedelta
 from io import StringIO
+from threading import Lock, local
+
+import requests
 
 from cn_stock_mcp.infra.time_utils import normalize_symbol
+from cn_stock_mcp.infra.config import Settings, get_settings
 from cn_stock_mcp.providers.errors import ProviderError
 
 try:
     import akshare as ak
 except Exception:  # pragma: no cover
     ak = None
+
 
 from cn_stock_mcp.app.models.bar import Bar
 from cn_stock_mcp.app.models.instrument import Instrument
@@ -49,10 +54,33 @@ from cn_stock_mcp.app.models.northbound import NorthboundFlowRecord, NorthboundD
 from cn_stock_mcp.infra.time_utils import normalize_symbol
 
 
+_request_timeout_state = local()
+_request_patch_lock = Lock()
+_original_session_request = requests.sessions.Session.request
+
+
+def _request_with_thread_timeout(session, method, url, *args, **kwargs):
+    timeout = getattr(_request_timeout_state, "timeout", None)
+    if timeout is not None and kwargs.get("timeout") is None:
+        kwargs["timeout"] = timeout
+    return _original_session_request(session, method, url, *args, **kwargs)
+
+
+def _install_request_timeout_wrapper() -> None:
+    global _original_session_request
+    with _request_patch_lock:
+        current = requests.sessions.Session.request
+        if current is not _request_with_thread_timeout:
+            _original_session_request = current
+            requests.sessions.Session.request = _request_with_thread_timeout
+
+
 class AKShareProvider:
     name = "akshare"
 
-    def __init__(self) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or get_settings()
+        self.akshare_timeout_seconds = max(int(self.settings.akshare_timeout_seconds or 20), 1)
         self._trade_dates_cache: list[str] | None = None
         self._bj_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
         self._bj_spot_cache_ttl: int = 10  # seconds
@@ -65,9 +93,18 @@ class AKShareProvider:
         return ak
 
     def _call_ak_quietly(self, fn, *args, **kwargs):
+        _install_request_timeout_wrapper()
+        previous_timeout = getattr(_request_timeout_state, "timeout", None)
+        _request_timeout_state.timeout = self.akshare_timeout_seconds
         sink = StringIO()
-        with redirect_stdout(sink), redirect_stderr(sink):
-            return fn(*args, **kwargs)
+        try:
+            with redirect_stdout(sink), redirect_stderr(sink):
+                return fn(*args, **kwargs)
+        finally:
+            if previous_timeout is None:
+                del _request_timeout_state.timeout
+            else:
+                _request_timeout_state.timeout = previous_timeout
 
     def _load_trade_dates(self) -> list[str]:
         if self._trade_dates_cache is not None:

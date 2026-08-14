@@ -2,6 +2,7 @@ from cn_stock_mcp.app.services.cache_service import CacheService
 from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.providers.errors import ProviderError
 
 
 class MarketOverviewUseCase:
@@ -31,7 +32,14 @@ class MarketOverviewUseCase:
             self.router,
             selection,
             lambda provider: provider.get_market_overview(request.market),
+            should_fallback_result=lambda value: not self._has_index_data(value),
         )
+        if not self._has_index_data(result):
+            raise ProviderError(
+                "PROVIDER_UNAVAILABLE",
+                "Market overview returned no index data from enabled providers",
+                retryable=True,
+            )
         payload = result if isinstance(result, dict) else {"data": result}
         payload.setdefault("meta", {})
         payload["meta"].update(
@@ -46,3 +54,7 @@ class MarketOverviewUseCase:
         payload["source"] = fallback_meta.final_provider or selection.primary
         self.overview_cache.set(cache_key, payload)
         return payload
+
+    @staticmethod
+    def _has_index_data(value) -> bool:
+        return isinstance(value, dict) and bool(value.get("indices"))
