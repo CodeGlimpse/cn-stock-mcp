@@ -10,7 +10,14 @@
   "meta": {
     "schema_version": "v1",
     "request_id": "req_xxx",
-    "tool": "stock_quote"
+    "tool": "stock_quote",
+    "freshness": {
+      "observed_at": "2026-08-14T08:00:00Z",
+      "as_of": "2026-08-14T07:59:55Z",
+      "basis": "provider_timestamp",
+      "status": "realtime",
+      "age_seconds": 5
+    }
   }
 }
 ```
@@ -49,6 +56,16 @@
 - `schema_version`: 当前响应协议版本，现为 `v1`
 - `request_id`: 本次 tool 调用唯一请求 ID，用于串联日志
 - `tool`: 被调用的 tool 名称
+- `freshness`: 成功响应的数据新鲜度元数据；失败响应不保证存在
+
+### freshness 字段
+- `observed_at`: server 完成获取/组装响应的 UTC 时间
+- `as_of`: 从业务 payload 识别出的最新源时间/日期，无法识别时为 `null`
+- `basis`: `provider_timestamp`、`source_date` 或 `unknown`
+- `status`: `realtime`（源提供时间级字段）、`dated`（仅有日期级字段）或 `unknown`
+- `age_seconds`: 观察时间与 `as_of` 的非负秒差；`as_of` 不可识别时为 `null`
+
+`status=realtime` 表示源数据带有时间级字段，不承诺数据一定处于交易时段；调用方仍应结合 `as_of`、交易日历和业务字段判断是否适合当前决策。
 
 ### error 字段
 - `error_code`: 稳定错误码，供调用方做程序分支

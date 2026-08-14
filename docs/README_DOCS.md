@@ -1,6 +1,6 @@
 # Docs Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-08-13
+Last Updated: 2026-08-14
 
 本目录只保留当前有效的运行文档。
 
@@ -76,6 +76,9 @@ Last Updated: 2026-08-13
 
 7. `P2_DELIVERY_RECORD_2026-08-13.md`
    - 本次实时数据、日期兼容、stdio 和 Python 运行时验证记录。
+
+8. `P2_DELIVERY_RECORD_2026-08-14.md`
+   - 接口文档同步与统一数据新鲜度元数据交付记录。
 
 ---
 

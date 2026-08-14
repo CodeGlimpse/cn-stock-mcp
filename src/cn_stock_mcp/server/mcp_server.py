@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, Field, ValidationError
 
+from cn_stock_mcp.app.services.data_freshness import build_data_freshness
 from cn_stock_mcp.app.services.error_mapper import serialize_exception
 from cn_stock_mcp.app.usecases.hot_theme_tracker import HotThemeTrackerUseCase
 from cn_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
@@ -183,7 +184,11 @@ class MCPServerStub(BaseModel):
             log_event(logger, "tool_call_start", request_id=request_id, tool=name)
             data = tool.handler(request)
             log_event(logger, "tool_call_success", request_id=request_id, tool=name)
-            return ok_response(data, meta={"tool": name}, request_id=request_id)
+            return ok_response(
+                data,
+                meta={"tool": name, "freshness": build_data_freshness(data)},
+                request_id=request_id,
+            )
         except Exception as exc:
             err = serialize_exception(exc)
             log_event(logger, "tool_call_error", request_id=request_id, tool=name, error=err)

@@ -1,6 +1,6 @@
 # Interface Schema (`cn-stock-mcp`)
 
-Last Updated: 2026-05-09
+Last Updated: 2026-08-14
 
 > 本文是当前对外契约（输入/输出与关键约束）。
 > 若与历史文档冲突，以本文与代码实现为准。
@@ -37,6 +37,7 @@ Last Updated: 2026-05-09
 - northbound
 - valuation_rank
 - index_compose
+- index_enhance
 - industry_valuation_rank
 - earnings_quality
 - macro_indicator
@@ -45,6 +46,21 @@ Last Updated: 2026-05-09
 - convertible_bond
 - derivatives_data
 - margin_trading
+- block_trade
+- institute_hold
+- money_rate
+- stock_screen
+- insider_trade
+- dividend_rank
+- shareholder_change
+- disclosure_calendar
+- stock_repurchase
+- stock_compare
+- industry_chain
+- stock_warrant
+- fund_flow
+- limit_up_pool
+- sec_reveal
 
 ---
 
@@ -93,7 +109,14 @@ Last Updated: 2026-05-09
   "meta": {
     "schema_version": "v1",
     "request_id": "req_xxx",
-    "tool": "stock_quote"
+    "tool": "stock_quote",
+    "freshness": {
+      "observed_at": "2026-08-14T08:00:00Z",
+      "as_of": "2026-08-14T07:59:55Z",
+      "basis": "provider_timestamp",
+      "status": "realtime",
+      "age_seconds": 5
+    }
   }
 }
 ```
@@ -118,6 +141,20 @@ Last Updated: 2026-05-09
 ```
 
 错误码详见 `ERROR_MODEL.md`。
+
+### freshness（成功响应）
+
+成功响应的顶层 `meta` 会附带 `freshness`，用于说明服务端观察响应的时间和业务数据可识别的新旧程度：
+
+| 字段 | 类型 | 语义 |
+|---|---|---|
+| `observed_at` | ISO 8601 UTC 字符串 | MCP server 完成获取/组装本次响应的时间 |
+| `as_of` | ISO 8601 UTC 或 `YYYY-MM-DD` 字符串，可为 `null` | 从源数据中识别出的最新时间点/日期；无法识别时为 `null` |
+| `basis` | `provider_timestamp \| source_date \| unknown` | `as_of` 的来源口径 |
+| `status` | `realtime \| dated \| unknown` | 有时间级源字段、只有日期级源字段、或无法识别；`realtime` 不等同于交易所当前正在交易 |
+| `age_seconds` | int，可为 `null` | `observed_at - as_of` 的非负秒数；未知时为 `null` |
+
+该字段只追加到统一响应 envelope 的 `meta`，不会删除或改写业务 `data` 字段。缓存命中时，`observed_at` 是本次返回时间；如果缓存数据没有可识别的源时间，`status` 会保持为 `unknown`。
 
 ---
 
@@ -193,6 +230,7 @@ Last Updated: 2026-05-09
 - `provider_used`：本次实际使用的 provider（或集合）
 - `fallback_chain`：本次可用的主备链路
 - `latency_ms`：本次调用耗时（毫秒）
+- `freshness`：本次响应的观察时间、源数据 as-of 时间/日期和可识别的新鲜度状态
 - `stock_candidate_scan`：候选评分（candidate_score/candidate_label/reason_tags/risk_flags）
 - `watchlist_review`：观察池评分（watchlist_score/status_label/reason_tags/risk_flags）
 - `multi_timeframe_review`：多周期一致性（trend_score/trend_label/signal_tags/conflict_notes；指标获取失败时记录 `partial_failure` + errors 含 interval/indicator）
@@ -215,6 +253,7 @@ Last Updated: 2026-05-09
 | `provider_used` | str 或 list[str] | 实际使用的 provider | 所有 tool |
 | `fallback_chain` | list[str] | 主备 provider 链路 | 所有 tool |
 | `latency_ms` | int | 调用耗时（毫秒） | 所有 tool |
+| `freshness` | object | 成功响应的观察时间、源数据 as-of 和新鲜度状态 | 所有成功 tool |
 
 ### 降级字段（tool-specific）
 

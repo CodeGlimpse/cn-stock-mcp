@@ -1,6 +1,6 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-08-13
+Last Updated: 2026-08-14
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
@@ -60,13 +60,14 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - AI 集成说明：`docs/AI_ONBOARDING.md`
 - AI 最小规则：`docs/AGENT_MINIMAL.md`
 - agent / skill 对照：`docs/AGENT_AND_SKILL_MAP.md`
+- 接口契约与错误模型同步维护成功响应的 `meta.freshness` 数据新鲜度信息
 
 ---
 
 ## 3) 当前测试与 CI 状态
 
 ### 已验证
-- 非 live 回归：`461 passed, 16 deselected`
+- 非 live 回归：`482 passed, 23 deselected`（排除 live 用例及一个会触发受限网络的旧缓存测试）
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
 - `python -m build` 的 CI 失败根因已修复：`build` 已加入 `dev` 依赖
 - 干净 venv 下 `pip install -e .[dev]` 后，`python -m build` 可正常执行
@@ -100,6 +101,17 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - Provider 复用后首次 `create_server()` 约 0.33 秒，后续约 0.06 秒
 
 详细命令、环境和限制见 `docs/P2_DELIVERY_RECORD_2026-08-13.md`。
+
+### P2 接口文档与数据新鲜度
+
+2026-08-14 已完成：
+
+- `docs/INTERFACE_SCHEMA.md` 与实际 52 个注册 tool 对齐
+- `docs/ERROR_MODEL.md` 增加 `meta.freshness` 成功响应契约
+- MCP 成功响应统一提供 `observed_at/as_of/basis/status/age_seconds`
+- 无法从业务 payload 识别源时间时返回 `status=unknown`，不伪造数据产生时间
+
+交付记录见 `docs/P2_DELIVERY_RECORD_2026-08-14.md`。
 
 ---
 
