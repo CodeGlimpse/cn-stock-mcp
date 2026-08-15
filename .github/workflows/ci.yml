@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout
@@ -41,3 +41,38 @@ jobs:
           /tmp/cn-stock-mcp-wheel-smoke/bin/cn-stock-mcp --version
           /tmp/cn-stock-mcp-wheel-smoke/bin/cn-stock-mcp --doctor
           /tmp/cn-stock-mcp-wheel-smoke/bin/cn-stock-mcp --list-tools
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run Windows non-live smoke
+        shell: pwsh
+        run: |
+          python -m pytest -q `
+            tests/test_usecase_caching.py `
+            tests/test_fallback.py `
+            tests/test_mcp_transport.py `
+            tests/test_doctor_service.py `
+            -m "not live"
+
+      - name: Build and CLI smoke
+        shell: pwsh
+        run: |
+          python -m build
+          python -m cn_stock_mcp.main --version
+          python -m cn_stock_mcp.main --doctor
+          python -m cn_stock_mcp.main --list-tools

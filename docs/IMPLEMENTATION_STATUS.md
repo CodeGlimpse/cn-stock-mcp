@@ -67,10 +67,12 @@ cn-stock-mcp --tool provider_health --payload '{}'
 ## 3) 当前测试与 CI 状态
 
 ### 已验证
-- 非 live 回归：`482 passed, 23 deselected`（排除 live 用例及一个会触发受限网络的旧缓存测试）
+- 非 live 回归：`486 passed, 22 deselected`
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
+- `market_pool` 显式日期缓存命中不再先访问交易日历上游
+- fallback 不再吞掉未预期的编程异常或结果策略异常
 - `python -m build` 的 CI 失败根因已修复：`build` 已加入 `dev` 依赖
-- 干净 venv 下 `pip install -e .[dev]` 后，`python -m build` 可正常执行
+- Windows 本地使用 `python -m build --no-isolation` 可正常生成 wheel/sdist
 
 ### CI
 当前保留：
@@ -78,7 +80,8 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - `.github/workflows/live-smoke.yml`
 
 说明：
-- `CI` 用于构建、非 live 测试、wheel 安装 smoke、CLI smoke
+- `CI` 用于构建、非 live 测试、wheel 安装 smoke、CLI smoke，并覆盖 Python 3.11/3.12/3.13
+- `windows-smoke` 使用普通 CPython 3.13 验证缓存、fallback、transport、doctor、构建和 CLI
 - `Live Smoke` 当前已经收缩为 **manual only** 的诊断 workflow
 
 ### Live Smoke 当前定位

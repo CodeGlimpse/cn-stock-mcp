@@ -69,19 +69,37 @@ class MarketPoolUseCase:
             "source": calendar.get("source"),
         }
 
+    @staticmethod
+    def _limit_cached_result(cached: dict, limit: int | None) -> dict:
+        items = cached["items"]
+        if limit:
+            items = items[:limit]
+        result = {
+            **cached,
+            "items": items,
+        }
+        if "count" in result:
+            result["count"] = len(items)
+        return result
+
     def execute(self, request):
+        requested_trade_date = getattr(request, "trade_date", None)
+
+        # An explicit date can be looked up without consulting the trading
+        # calendar first. This keeps a valid cache hit offline and avoids an
+        # unnecessary upstream call for every repeated historical request.
+        if requested_trade_date:
+            requested_cache_key = f"pool:{request.pool_type}:{requested_trade_date}"
+            cached = self.pool_cache.get(requested_cache_key)
+            if cached is not None:
+                return self._limit_cached_result(cached, request.limit)
+
         effective_trade_date, calendar_meta = self._resolve_effective_trade_date(getattr(request, "trade_date", None))
 
         cache_key = f"pool:{request.pool_type}:{effective_trade_date}"
         cached = self.pool_cache.get(cache_key)
         if cached is not None:
-            items = cached["items"]
-            if request.limit:
-                items = items[: request.limit]
-            return {
-                **cached,
-                "items": items,
-            }
+            return self._limit_cached_result(cached, request.limit)
 
         selection = self.router.choose_provider(
             tool_name="market_pool",
@@ -98,25 +116,7 @@ class MarketPoolUseCase:
         )
         items = self._annotate_anomalies(items)
         # Cache the full result before applying limit
-        self.pool_cache.set(cache_key, {
-            "pool_type": request.pool_type,
-            "trade_date": effective_trade_date,
-            "requested_trade_date": calendar_meta["requested_trade_date"],
-            "items": items,
-            "count": len(items),
-            "source": fallback_meta.final_provider or selection.primary,
-            "meta": {
-                "selected_primary": fallback_meta.selected_primary,
-                "selected_fallback": fallback_meta.selected_fallback,
-                "attempted": fallback_meta.attempted,
-                "final_provider": fallback_meta.final_provider,
-                "used_fallback": fallback_meta.used_fallback,
-                "calendar": calendar_meta,
-            },
-        })
-        if request.limit:
-            items = items[: request.limit]
-        return {
+        cached_result = {
             "pool_type": request.pool_type,
             "trade_date": effective_trade_date,
             "requested_trade_date": calendar_meta["requested_trade_date"],
@@ -132,3 +132,10 @@ class MarketPoolUseCase:
                 "calendar": calendar_meta,
             },
         }
+        self.pool_cache.set(cache_key, cached_result)
+        if requested_trade_date and requested_trade_date != effective_trade_date:
+            self.pool_cache.set(
+                f"pool:{request.pool_type}:{requested_trade_date}",
+                cached_result,
+            )
+        return self._limit_cached_result(cached_result, request.limit)

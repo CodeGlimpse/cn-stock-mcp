@@ -49,10 +49,7 @@ def _should_try_next_provider(exc: ProviderError) -> bool:
 def _should_try_next_result(result: Any, should_fallback_result: Callable[[Any], bool] | None, has_next: bool) -> bool:
     if not has_next or should_fallback_result is None:
         return False
-    try:
-        return bool(should_fallback_result(result))
-    except Exception:
-        return False
+    return bool(should_fallback_result(result))
 
 
 def _build_meta(selection, attempted: list[str], final_provider: str | None, last_error: Exception | None) -> FallbackMeta:
@@ -72,9 +69,9 @@ def run_with_fallback(router, selection, invoke, should_fallback_result: Callabl
     provider_names = [selection.primary, *selection.fallback]
 
     for idx, name in enumerate(provider_names):
-        provider = router.get_provider(name)
         has_next = idx < len(provider_names) - 1
         try:
+            provider = router.get_provider(name)
             result = invoke(provider)
             if _should_try_next_result(result, should_fallback_result, has_next):
                 if candidate_result is _NO_RESULT:
@@ -87,9 +84,6 @@ def run_with_fallback(router, selection, invoke, should_fallback_result: Callabl
                 return candidate_result
             if not _should_try_next_provider(exc):
                 raise
-            continue
-        except Exception as exc:  # pragma: no cover
-            last_error = exc
             continue
 
     if candidate_result is not _NO_RESULT:
@@ -107,10 +101,10 @@ def run_with_fallback_meta(router, selection, invoke, should_fallback_result: Ca
     provider_names = [selection.primary, *selection.fallback]
 
     for idx, name in enumerate(provider_names):
-        provider = router.get_provider(name)
-        attempted.append(name)
         has_next = idx < len(provider_names) - 1
         try:
+            provider = router.get_provider(name)
+            attempted.append(name)
             result = invoke(provider)
             if _should_try_next_result(result, should_fallback_result, has_next):
                 if candidate_result is _NO_RESULT:
@@ -126,9 +120,6 @@ def run_with_fallback_meta(router, selection, invoke, should_fallback_result: Ca
                 return candidate_result, meta
             if not _should_try_next_provider(exc):
                 raise
-            continue
-        except Exception as exc:  # pragma: no cover
-            last_error = exc
             continue
 
     if candidate_result is not _NO_RESULT:

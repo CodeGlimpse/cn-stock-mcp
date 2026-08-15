@@ -112,3 +112,26 @@ def test_market_pool_uses_cache_on_second_call():
     result = uc.execute(req)
     assert result["items"] == [{"symbol": "000001.SZ"}]
     assert result["source"] == "zhitu"
+
+
+def test_market_pool_explicit_date_cache_hit_skips_calendar_lookup(monkeypatch):
+    uc = MarketPoolUseCase()
+    fake_result = {
+        "pool_type": "limit_up",
+        "trade_date": "2026-05-06",
+        "requested_trade_date": "2026-05-06",
+        "items": [{"symbol": "000001.SZ"}],
+        "count": 1,
+        "source": "zhitu",
+        "meta": {"calendar": {}},
+    }
+    uc.pool_cache.set("pool:limit_up:2026-05-06", fake_result)
+
+    def fail_if_calendar_is_called(_):
+        raise AssertionError("calendar lookup should not run on an explicit cache hit")
+
+    monkeypatch.setattr(uc, "_resolve_effective_trade_date", fail_if_calendar_is_called)
+
+    result = uc.execute(_make_pool_request(limit=1))
+
+    assert result["items"] == [{"symbol": "000001.SZ"}]

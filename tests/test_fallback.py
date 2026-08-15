@@ -1,3 +1,5 @@
+import pytest
+
 from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
 from cn_stock_mcp.app.services.provider_types import ProviderSelection
 from cn_stock_mcp.providers.errors import ProviderError
@@ -70,3 +72,36 @@ def test_run_with_fallback_meta_uses_fallback_on_empty_result_when_requested():
     assert meta.used_fallback is True
     assert meta.final_provider == "akshare"
     assert meta.attempted == ["zhitu", "akshare"]
+
+
+def test_run_with_fallback_meta_does_not_swallow_unexpected_exceptions():
+    router = _Router()
+
+    class _BrokenProvider:
+        name = "zhitu"
+
+        def op(self):
+            raise ValueError("adapter bug")
+
+    router._map["zhitu"] = _BrokenProvider()
+    selection = ProviderSelection(primary="zhitu", fallback=["akshare"])
+
+    with pytest.raises(ValueError, match="adapter bug"):
+        run_with_fallback_meta(router, selection, lambda p: p.op())
+
+
+def test_run_with_fallback_meta_does_not_swallow_result_policy_errors():
+    router = _Router()
+    router._map["zhitu"] = _Provider("zhitu", ok=True, result=[])
+    selection = ProviderSelection(primary="zhitu", fallback=["akshare"])
+
+    def broken_policy(_result):
+        raise ValueError("fallback policy bug")
+
+    with pytest.raises(ValueError, match="fallback policy bug"):
+        run_with_fallback_meta(
+            router,
+            selection,
+            lambda p: p.op(),
+            should_fallback_result=broken_policy,
+        )

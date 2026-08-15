@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2026-08-14
+## [Unreleased] - 2026-08-15
 
 ### Changed
 - Documented the verified Windows development runtime: regular CPython 3.13.2 with the project virtual environment; Python 3.13t is not supported for the Windows/MCP path because `pywin32` has no available `cp313t` wheel.
@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
 - Reused Provider instances across routers to avoid repeated Windows SSL initialization during MCP registry construction; focused construction time dropped from about 17.9 seconds to 0.33 seconds.
 - Synchronized the interface and error-model documentation with the current 52-tool registry.
 - Added `meta.freshness` to successful tool responses with server observation time and recognizable source as-of information.
+- Added `.gitattributes` to keep repository text files on stable line endings across Windows and Unix.
+- Extended CI coverage to Python 3.13 and added a Windows CPython 3.13 smoke job.
+
+### Fixed
+- Avoided the `market_pool` trading-calendar upstream call when an explicit-date pool result is already cached; cached responses now preserve the requested item count semantics.
+- Stopped fallback from swallowing unexpected provider adapter and fallback-policy exceptions.
 
 ## [0.1.0] - 2026-05-21
 
