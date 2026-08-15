@@ -41,3 +41,20 @@ def test_main_doctor_network_flag_dispatches_and_propagates_exit_code(monkeypatc
 
     assert exc.value.code == 1
     assert called == {"include_network": True}
+
+
+def test_main_doctor_json_dispatches_json_output(monkeypatch):
+    called: dict[str, bool] = {}
+
+    def fake_doctor(*, include_network: bool = False, json_output: bool = False) -> int:
+        called["include_network"] = include_network
+        called["json_output"] = json_output
+        return 0
+
+    monkeypatch.setattr(cli, "_doctor", fake_doctor)
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--doctor", "--json"])
+
+    assert exc.value.code == 0
+    assert called == {"include_network": False, "json_output": True}

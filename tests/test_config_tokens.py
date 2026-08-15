@@ -23,3 +23,25 @@ def test_resolve_zhitu_tokens_reads_default_first_and_keeps_others(tmp_path: Pat
 
     assert settings.resolve_zhitu_tokens() == ["TOKEN_B", "TOKEN_A"]
     assert settings.resolve_zhitu_token() == "TOKEN_B"
+
+
+def test_token_config_status_reports_invalid_json_without_exposing_content(tmp_path: Path):
+    config_path = tmp_path / "zhitu_tokens.json"
+    config_path.write_text('{"tokens":', encoding="utf-8")
+
+    settings = Settings(zhitu_token_config_path=str(config_path), zhitu_token="")
+    status = settings.zhitu_token_config_status()
+
+    assert status["status"] == "invalid"
+    assert "line" in status["message"]
+    assert "tokens" not in status["message"]
+    assert settings.resolve_zhitu_tokens() == []
+
+
+def test_token_config_status_reports_invalid_shape(tmp_path: Path):
+    config_path = tmp_path / "zhitu_tokens.json"
+    config_path.write_text('{"tokens": []}', encoding="utf-8")
+
+    settings = Settings(zhitu_token_config_path=str(config_path), zhitu_token="")
+
+    assert settings.zhitu_token_config_status()["status"] == "invalid_shape"

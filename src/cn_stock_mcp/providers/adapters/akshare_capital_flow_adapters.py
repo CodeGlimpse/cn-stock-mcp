@@ -78,6 +78,21 @@ def adapt_akshare_sector_fund_flow(row: dict) -> SectorFundFlowItem:
     )
 
 
+def adapt_akshare_sector_fund_flow_rank(row: dict) -> SectorFundFlowItem:
+    """Adapt the newer stock_sector_fund_flow_rank endpoint.
+
+    The rank endpoint does not expose every field of the legacy endpoint;
+    unavailable fields remain null rather than being inferred.
+    """
+    return SectorFundFlowItem(
+        rank=_to_int(row.get("序号")),
+        sector_name=str(row.get("名称") or row.get("行业") or row.get("板块") or ""),
+        sector_change_percent=_to_float(row.get("今日涨跌幅") or row.get("行业-涨跌幅")),
+        net_amount=_to_float(row.get("今日主力净流入-净额") or row.get("净额")),
+        leading_stock=str(row.get("今日主力净流入最大股") or row.get("领涨股") or "") or None,
+    )
+
+
 def build_market_fund_flow_summary(records: list[CapitalFlowRecord]) -> MarketFundFlowSummary:
     """Build a summary from the most recent market fund flow record."""
     if not records:

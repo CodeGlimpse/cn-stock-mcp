@@ -25,6 +25,7 @@ _SERIES_CONTAINERS = {
     "snapshot",
 }
 _EVENT_CONTAINERS = {"dividends", "unlocks"}
+_EXPLICIT_SOURCE_FIELDS = ("source_as_of", "source_timestamp", "source_date")
 _SHANGHAI = ZoneInfo("Asia/Shanghai")
 
 
@@ -115,6 +116,30 @@ def _collect_candidates(value: Any, path: tuple[str, ...] = ()) -> list[_Freshne
     return []
 
 
+def _collect_explicit_candidates(data: Any) -> list[_FreshnessCandidate]:
+    """Read an optional source-time hint before applying generic heuristics."""
+    mapping = _as_mapping(data)
+    if mapping is None:
+        return []
+    meta = _as_mapping(mapping.get("meta"))
+    if meta is None:
+        return []
+
+    candidates: list[_FreshnessCandidate] = []
+    for field in _EXPLICIT_SOURCE_FIELDS:
+        parsed = _parse_datetime(meta.get(field))
+        if parsed is None:
+            continue
+        parsed_value, is_date = parsed
+        candidates.append(
+            _FreshnessCandidate(
+                parsed=parsed_value,
+                kind="date" if is_date or field == "source_date" else "timestamp",
+            )
+        )
+    return candidates
+
+
 def _iso_utc(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -131,7 +156,7 @@ def build_data_freshness(data: Any, observed_at: datetime | None = None) -> dict
         observed = observed.replace(tzinfo=timezone.utc)
     observed = observed.astimezone(timezone.utc)
 
-    candidates = _collect_candidates(data)
+    candidates = _collect_explicit_candidates(data) or _collect_candidates(data)
     realtime = [candidate for candidate in candidates if candidate.kind == "timestamp"]
     dated = [candidate for candidate in candidates if candidate.kind == "date"]
     selected = max(realtime or dated, key=lambda candidate: candidate.parsed, default=None)

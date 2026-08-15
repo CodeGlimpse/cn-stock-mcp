@@ -1,6 +1,6 @@
 # Interface Schema (`cn-stock-mcp`)
 
-Last Updated: 2026-08-14
+Last Updated: 2026-08-15
 
 > 本文是当前对外契约（输入/输出与关键约束）。
 > 若与历史文档冲突，以本文与代码实现为准。
@@ -156,6 +156,19 @@ Last Updated: 2026-08-14
 
 该字段只追加到统一响应 envelope 的 `meta`，不会删除或改写业务 `data` 字段。缓存命中时，`observed_at` 是本次返回时间；如果缓存数据没有可识别的源时间，`status` 会保持为 `unknown`。
 
+### 可观测 meta（成功响应）
+
+关键 tool 的业务 `data.meta` 中如果包含以下字段，统一响应层会将其提升到 envelope 的顶层 `meta`，方便 MCP 调用方直接读取；原有 `data.meta` 会继续保留以兼容旧调用方：
+
+| 字段 | 类型 | 语义 |
+|---|---|---|
+| `provider_used` | str 或 list[str] | 实际产生本次结果的 provider |
+| `fallback_chain` | list[str] | 本次尝试或可用的主备 provider 链路 |
+| `latency_ms` | int | 本次调用耗时（毫秒） |
+| `used_fallback` | bool | 是否使用了 fallback provider |
+| `final_provider` | str | 最终成功的 provider |
+| `attempted` | list[str] | 实际尝试过的 provider |
+
 ---
 
 ## 4. Provider 路由（当前策略）
@@ -210,7 +223,7 @@ Last Updated: 2026-08-14
 - `sector_review`：板块成员聚合（breadth/stats/sentiment/rotation/structure/rankings/buckets）；支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材）
 - `stock_profile`：公司基本面（profile/dividends/unlocks/quarter_profits/valuation/dividend_summary/unlock_risk）
 - `sector_rotation_review`：跨板块比较（rankings/buckets/rotation）
-- `capital_flow`：资金流向（`flow_type=market/individual/industry/concept`）；其中 `flow_type=market` 返回 `records`（历史序列）和 `market_summary`（指定 trade_date 的当日摘要）。注意 `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，当前实际语义是 **当日主力资金净流入占比**，不是区间平均值。`flow_type=industry/concept` 返回榜单型 `items`，其中 `rank` 表示**上游原始涨跌幅排名**，不是当前按 `net_amount` 重排后的序号。
+- `capital_flow`：资金流向（`flow_type=market/individual/industry/concept`）；其中 `flow_type=market` 返回 `records`（历史序列）和 `market_summary`（指定 trade_date 的当日摘要）。注意 `market_summary.avg_main_net_inflow_pct` 虽字段名带 `avg`，当前实际语义是 **当日主力资金净流入占比**，不是区间平均值。`flow_type=industry/concept` 返回榜单型 `items`，其中 `rank` 表示**上游原始涨跌幅排名**，不是当前按 `net_amount` 重排后的序号。资金流结果带有进程内缓存：新鲜缓存直接返回；上游失败时默认 `allow_stale=false`，不返回旧缓存，只有显式传 `allow_stale=true` 且缓存未超过允许年龄时才返回，并在 `data.meta` 标记 `stale=true` 与 `stale_age_seconds`。板块资金流会在主 endpoint 返回空结果或失败时尝试备用 `stock_sector_fund_flow_rank`，并在 `data.meta` 记录 `endpoint_used` 与 `used_fallback_endpoint`。
 - `stock_financial`：财务数据三层视图（snapshot/history/details）
 - `limit_stat`：短线情绪统计（封板率/连板分布/炸板/昨涨停今继续率；返回 `partial_failure` + `errors` 标记跌停数据获取失败）
 - `market_pool(limit_up)`：轻量涨停池快照；`extra.limit_count` 为当前连续涨停板数/连板高度（1=首板，2=二连板）；`extra.stat` 为涨停统计，格式通常为 `N/M`，表示 **N 天 M 板**（最近 N 个交易日内出现 M 次涨停）。
@@ -250,17 +263,21 @@ Last Updated: 2026-08-14
 |---|---|---|---|
 | `partial_failure` | bool | 本次调用存在部分数据获取失败 | margin_trading, limit_stat, multi_timeframe_review, stock_quote, stock_candidate_scan, watchlist_review 等 |
 | `errors` | list[dict] | 失败条目列表；每条含 `error_code`, `message`, `retryable`, 上下文字段（如 `exchange`, `section`, `interval`, `indicator`, `symbol`） | 同上 |
-| `provider_used` | str 或 list[str] | 实际使用的 provider | 所有 tool |
-| `fallback_chain` | list[str] | 主备 provider 链路 | 所有 tool |
-| `latency_ms` | int | 调用耗时（毫秒） | 所有 tool |
+| `provider_used` | str 或 list[str] | 实际使用的 provider；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
+| `fallback_chain` | list[str] | 主备 provider 链路；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
+| `latency_ms` | int | 调用耗时（毫秒）；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
 | `freshness` | object | 成功响应的观察时间、源数据 as-of 和新鲜度状态 | 所有成功 tool |
 
 ### 降级字段（tool-specific）
 
 | 字段 | 类型 | 语义 | 产出 tool |
 |---|---|---|---|
-| `used_fallback_endpoint` | bool | 降级到了备用接口 | index_compose |
+| `used_fallback_endpoint` | bool | 降级到了备用接口；对 `capital_flow` 表示板块资金流是否使用备用 endpoint | index_compose, capital_flow |
 | `endpoint_note` | str | 降级原因说明 | index_compose |
+| `cache_hit` | bool | 是否直接使用新鲜缓存 | capital_flow |
+| `stale` | bool | 是否在显式允许下返回旧缓存 | capital_flow |
+| `stale_age_seconds` | int | 旧缓存距当前的秒数；仅 stale 结果提供 | capital_flow |
+| `endpoint_used` | str | 本次资金流实际使用的上游 endpoint | capital_flow |
 
 ### errors 条目通用结构
 

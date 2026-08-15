@@ -57,6 +57,10 @@
 - `request_id`: 本次 tool 调用唯一请求 ID，用于串联日志
 - `tool`: 被调用的 tool 名称
 - `freshness`: 成功响应的数据新鲜度元数据；失败响应不保证存在
+- `provider_used` / `fallback_chain` / `latency_ms`: 成功响应中的稳定可观测字段；若业务 payload 的 `data.meta` 提供这些字段，统一响应层会同步提升到顶层 `meta`
+- `used_fallback` / `final_provider` / `attempted`: provider fallback 过程的可观测字段，存在时同步提升到顶层 `meta`
+
+为保持兼容，业务 `data.meta` 中的原字段不会被删除；调用方可优先读取顶层 `meta`，并对旧响应保留 `data.meta` 回退读取。
 
 ### freshness 字段
 - `observed_at`: server 完成获取/组装响应的 UTC 时间
@@ -127,6 +131,15 @@
   - 若 `retryable=true`，可短次数重试或换源
   - 若已有 fallback，优先采用 fallback 结果
   - 若 `retryable=false`，按失败处理并提示
+
+### PROVIDER_CIRCUIT_OPEN
+- 含义：某个不稳定的 provider endpoint 已连续失败，进程内熔断器暂时拒绝继续访问
+- 典型来源：AKShare 资金流 endpoint 在达到失败阈值后再次调用
+- `retryable`: `true`
+- 调用方建议：
+  - 短时间内不要立即密集重试，等待熔断恢复窗口
+  - 如果业务允许，改用其他 tool/provider 或使用显式允许的 stale 缓存
+  - 记录 endpoint、`request_id` 和错误消息
 
 ### UNSUPPORTED_INTERVAL
 - 含义：当前 provider / route 不支持指定周期
@@ -207,6 +220,16 @@
 - 记录 `request_id`
 - 视 `retryable` 决定是否重试
 
+### 资金流 stale-if-error
+
+`capital_flow` 的 `allow_stale` 默认为 `false`。上游失败时，默认返回原始 provider 错误，不把旧缓存伪装成成功；只有请求显式传 `allow_stale=true`、错误可重试且缓存未超过允许年龄时，才返回成功结果。此时业务 `data.meta` 必须包含：
+
+- `stale: true`
+- `stale_age_seconds`: 旧缓存年龄（秒）
+- `provider_used: "cache"`
+
+调用方应向用户说明这是旧数据，并结合 `stale_age_seconds` 判断是否可接受。
+
 ---
 
 ## 5. 调用方推荐决策表
@@ -218,6 +241,7 @@
 | PROVIDER_AUTH_FAILED | false | 检查 token/配置，不重试 |
 | PROVIDER_TIMEOUT | true | 可重试 1~2 次，优先换源 |
 | PROVIDER_UNAVAILABLE | true/false | 若可重试则换源或短重试，否则直接失败 |
+| PROVIDER_CIRCUIT_OPEN | true | 等待熔断恢复，避免密集重试；必要时改用缓存或其他源 |
 | UNSUPPORTED_INTERVAL | false | 改 interval |
 | UNSUPPORTED_SEC_TYPE | false | 改 sec_type / tool / provider |
 | UNSUPPORTED_MARKET | false | 改市场 / 标的 / provider |

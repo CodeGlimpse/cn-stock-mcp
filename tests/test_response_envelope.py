@@ -9,6 +9,10 @@ class _Req(BaseModel):
     value: int = Field(ge=1)
 
 
+class _EmptyReq(BaseModel):
+    pass
+
+
 def test_call_tool_wraps_success_in_envelope():
     s = MCPServerStub(name="x", version="1")
     s.register_tool(MCPTool(name="ok", description="", input_model=_Req, handler=lambda r: {"v": r.value}))
@@ -21,6 +25,32 @@ def test_call_tool_wraps_success_in_envelope():
     assert resp["meta"]["schema_version"] == "v1"
     assert isinstance(resp["meta"]["request_id"], str)
     assert resp["meta"]["request_id"].startswith("req_")
+
+
+def test_success_envelope_promotes_observability_without_changing_data():
+    s = MCPServerStub(name="x", version="1")
+    s.register_tool(
+        MCPTool(
+            name="observed",
+            description="",
+            input_model=_EmptyReq,
+            handler=lambda r: {
+                "items": [],
+                "meta": {
+                    "provider_used": "akshare",
+                    "fallback_chain": ["akshare"],
+                    "latency_ms": 12,
+                },
+            },
+        )
+    )
+
+    resp = s.call_tool("observed", {})
+
+    assert resp["data"]["meta"]["provider_used"] == "akshare"
+    assert resp["meta"]["provider_used"] == "akshare"
+    assert resp["meta"]["fallback_chain"] == ["akshare"]
+    assert resp["meta"]["latency_ms"] == 12
 
 
 def test_call_tool_includes_realtime_freshness_metadata():
@@ -77,6 +107,30 @@ def test_call_tool_includes_dated_or_unknown_freshness_metadata():
     assert unknown["status"] == "unknown"
     assert unknown["as_of"] is None
     assert unknown["age_seconds"] is None
+
+
+def test_freshness_prefers_explicit_source_as_of_hint():
+    class FreshRequest(BaseModel):
+        pass
+
+    server = MCPServerStub(name="test-server", version="1")
+    server.register_tool(
+        MCPTool(
+            name="explicit-freshness",
+            description="",
+            input_model=FreshRequest,
+            handler=lambda request: {
+                "records": [{"report_date": "2026-08-14"}],
+                "meta": {"source_as_of": "2026-08-10T08:00:00Z"},
+            },
+        )
+    )
+
+    freshness = server.call_tool("explicit-freshness", {})["meta"]["freshness"]
+
+    assert freshness["as_of"] == "2026-08-10T08:00:00Z"
+    assert freshness["basis"] == "provider_timestamp"
+    assert freshness["status"] == "realtime"
 
 
 def test_call_tool_validation_error_in_envelope():

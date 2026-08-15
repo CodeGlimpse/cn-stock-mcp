@@ -47,7 +47,11 @@ class ZhituProvider:
         self.base_url = self.settings.zhitu_base_url.rstrip("/")
         self.tokens = self.settings.resolve_zhitu_tokens()
         self.token = self.tokens[0] if self.tokens else ""
-        self.client = build_http_client(self.settings.zhitu_timeout_seconds)
+        self.client = build_http_client(
+            self.settings.zhitu_timeout_seconds,
+            trust_env=bool(getattr(self.settings, "provider_trust_env", False)),
+            proxy_url=getattr(self.settings, "provider_proxy_url", "") or None,
+        )
         self._instrument_name_cache: dict[tuple[str, str], str] = {}
         self._concept_name_map: dict[str, str] | None = None  # display_name -> zhitu_mc
         self._token_cooldowns: dict[str, float] = {}

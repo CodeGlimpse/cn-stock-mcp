@@ -79,6 +79,7 @@ class CapitalFlowRequest(BaseModel):
     sort_by: Literal["net_amount", "inflow", "outflow", "sector_change_percent", "company_count"] = "net_amount"
     descending: bool = True
     top_n: int | None = Field(default=None, ge=1, le=200)
+    allow_stale: bool = Field(default=False, description="Allow a clearly marked cached result when the upstream is unavailable")
     provider: Literal["akshare"] | None = "akshare"
 
     @model_validator(mode="after")

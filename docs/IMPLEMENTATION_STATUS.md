@@ -1,6 +1,6 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-08-14
+Last Updated: 2026-08-15
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
@@ -26,7 +26,9 @@ Last Updated: 2026-08-14
 cn-stock-mcp --stdio
 cn-stock-mcp --version
 cn-stock-mcp --doctor
+cn-stock-mcp --doctor --json
 cn-stock-mcp --doctor-network
+cn-stock-mcp --doctor-network --json
 cn-stock-mcp --list-tools
 cn-stock-mcp --tool provider_health --payload '{}'
 ```
@@ -42,6 +44,8 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - `--doctor-network`
   - 在本地基础检查之外
   - 额外验证 token / provider / 上游连通性
+
+两种 doctor 都支持 `--json`，输出包含 `result`、`exit_code` 和逐项 `checks`，适合脚本或宿主集成读取；token 配置文件缺失、格式错误或不可读时只报告脱敏 WARN，不输出 token 内容。
 
 ### 打包与发布物
 当前已经完成：
@@ -60,14 +64,14 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - AI 集成说明：`docs/AI_ONBOARDING.md`
 - AI 最小规则：`docs/AGENT_MINIMAL.md`
 - agent / skill 对照：`docs/AGENT_AND_SKILL_MAP.md`
-- 接口契约与错误模型同步维护成功响应的 `meta.freshness` 数据新鲜度信息
+- 接口契约与错误模型同步维护成功响应的 `meta.freshness` 数据新鲜度信息及 provider/cache 可观测字段
 
 ---
 
 ## 3) 当前测试与 CI 状态
 
 ### 已验证
-- 非 live 回归：`486 passed, 22 deselected`
+- 非 live 回归：`500 passed, 22 deselected`
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
 - `market_pool` 显式日期缓存命中不再先访问交易日历上游
 - fallback 不再吞掉未预期的编程异常或结果策略异常
@@ -115,6 +119,16 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - 无法从业务 payload 识别源时间时返回 `status=unknown`，不伪造数据产生时间
 
 交付记录见 `docs/P2_DELIVERY_RECORD_2026-08-14.md`。
+
+### P1 稳定性与使用体验
+
+2026-08-15 已完成：
+
+- 统一响应层将 provider、fallback、耗时等稳定可观测字段提升到顶层 `meta`，同时保留 `data.meta` 兼容旧调用方
+- freshness 支持 `source_as_of`、`source_timestamp`、`source_date` 显式 hint，优先于通用字段扫描
+- doctor 支持机器可读的 `--doctor --json` / `--doctor-network --json`，并区分 token 配置缺失、格式错误、结构错误和不可读状态
+- AKShare 资金流 endpoint 增加进程内熔断、统一 proxy/环境代理配置、空结果失败处理和板块 endpoint fallback
+- `capital_flow` 增加新鲜缓存、显式 `allow_stale` stale-if-error；默认不返回旧缓存，stale 结果带 `stale` 与 `stale_age_seconds`
 
 ---
 
@@ -221,6 +235,13 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - 会增加延迟
 - 会消耗上游请求
 - 更适合诊断场景
+
+### 资金流缓存与 endpoint 熔断
+
+- `capital_flow.allow_stale` 默认是 `false`；只有调用方显式允许时才可能返回标记清晰的旧缓存
+- `PROVIDER_CIRCUIT_OPEN` 表示单个不稳定 endpoint 被进程内熔断，不是 token 鉴权错误；等待恢复窗口后会自动尝试半开恢复
+- 熔断状态是进程内状态，重启 MCP server 后会清空，不提供跨进程共享或持久化
+- `provider_proxy_url` 可为 provider 请求指定代理；`provider_trust_env=true` 时允许读取环境代理，默认关闭以避免隐式代理差异
 
 ### Windows Python 运行时
 

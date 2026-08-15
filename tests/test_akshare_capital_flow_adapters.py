@@ -142,6 +142,27 @@ def test_adapt_sector_fund_flow_missing_fields():
     assert item.net_amount is None
 
 
+def test_adapt_sector_fund_flow_rank_partial_fields():
+    from cn_stock_mcp.providers.adapters.akshare_capital_flow_adapters import adapt_akshare_sector_fund_flow_rank
+
+    item = adapt_akshare_sector_fund_flow_rank(
+        {
+            "序号": 2,
+            "名称": "人工智能",
+            "今日涨跌幅": 1.8,
+            "今日主力净流入-净额": 123.4,
+            "今日主力净流入最大股": "示例股份",
+        }
+    )
+
+    assert item.rank == 2
+    assert item.sector_name == "人工智能"
+    assert item.sector_change_percent == pytest.approx(1.8)
+    assert item.net_amount == pytest.approx(123.4)
+    assert item.leading_stock == "示例股份"
+    assert item.company_count is None
+
+
 # ---- build_market_fund_flow_summary ----
 
 def test_build_summary_inflow():

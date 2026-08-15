@@ -1,12 +1,57 @@
 from __future__ import annotations
 
+import json
+import time
+
+from cn_stock_mcp.app.services.cache_service import CacheService
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 from cn_stock_mcp.app.models.capital_flow import CapitalFlowRecord, MarketFundFlowSummary, SectorFundFlowItem
+from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.providers.errors import ProviderError
 
 
 class CapitalFlowUseCase:
+    _shared_cache: CacheService | None = None
+
     def __init__(self) -> None:
         self.router = ProviderRouter()
+        settings = get_settings()
+        self.cache_ttl_seconds = max(int(settings.cache_ttl_capital_flow_seconds or 300), 10)
+        self.stale_max_age_seconds = max(int(settings.capital_flow_stale_max_age_seconds or 86400), self.cache_ttl_seconds)
+        if CapitalFlowUseCase._shared_cache is None:
+            CapitalFlowUseCase._shared_cache = CacheService(
+                maxsize=512,
+                ttl=self.stale_max_age_seconds,
+            )
+        self.cache = CapitalFlowUseCase._shared_cache
+
+    def _cache_key(self, request) -> str:
+        values = {
+            "flow_type": request.flow_type,
+            "symbol": getattr(request, "symbol", None),
+            "start_date": getattr(request, "start_date", None),
+            "end_date": getattr(request, "end_date", None),
+            "limit": getattr(request, "limit", 60),
+            "sort_by": getattr(request, "sort_by", "net_amount"),
+            "descending": getattr(request, "descending", True),
+            "top_n": getattr(request, "top_n", None),
+        }
+        return f"capital_flow:{json.dumps(values, ensure_ascii=False, sort_keys=True)}"
+
+    @staticmethod
+    def _with_cache_meta(payload: dict, age_seconds: int, stale: bool) -> dict:
+        result = {**payload}
+        meta = dict(payload.get("meta") or {})
+        meta.update(
+            {
+                "provider_used": "cache",
+                "cache_hit": True,
+                "stale": stale,
+                "stale_age_seconds": age_seconds if stale else None,
+            }
+        )
+        result["meta"] = meta
+        return result
 
     def _filter_records_by_date(
         self,
@@ -65,6 +110,9 @@ class CapitalFlowUseCase:
         summary: MarketFundFlowSummary | None,
         sector_items: list[SectorFundFlowItem] | None,
     ) -> str:
+        def amount_text(value: float | None) -> str:
+            return f"{value / 1e8:.2f}亿" if value is not None else "N/A"
+
         if flow_type == "market":
             if not summary or not records:
                 return "大盘资金流向数据暂无"
@@ -73,9 +121,9 @@ class CapitalFlowUseCase:
             direction_cn = {"inflow": "净流入", "outflow": "净流出", "neutral": "中性"}.get(direction, "中性")
             main_val = latest.main_net_inflow
             main_pct = latest.main_net_inflow_pct
-            main_str = f"{main_val / 1e8:.2f}亿" if main_val is not None else "N/A"
+            main_str = amount_text(main_val)
             pct_str = f"{main_pct:.2f}%" if main_pct is not None else "N/A"
-            return f"大盘资金{direction_cn}，主力净流入{main_str}（占比{pct_str}），超大单{latest.super_large_net_inflow / 1e8:.2f}亿，大单{latest.large_net_inflow / 1e8:.2f}亿"
+            return f"大盘资金{direction_cn}，主力净流入{main_str}（占比{pct_str}），超大单{amount_text(latest.super_large_net_inflow)}，大单{amount_text(latest.large_net_inflow)}"
 
         if flow_type in ("industry", "concept"):
             if not sector_items:
@@ -88,13 +136,21 @@ class CapitalFlowUseCase:
             latest = records[-1]
             direction = "净流入" if (latest.main_net_inflow or 0) > 0 else "净流出"
             main_val = latest.main_net_inflow
-            main_str = f"{main_val / 1e8:.2f}亿" if main_val is not None else "N/A"
+            main_str = amount_text(main_val)
             pct_str = f"{latest.main_net_inflow_pct:.2f}%" if latest.main_net_inflow_pct is not None else "N/A"
-            return f"{symbol or '个股'}主力{direction}{main_str}（占比{pct_str}），超大单{latest.super_large_net_inflow / 1e8:.2f}亿"
+            return f"{symbol or '个股'}主力{direction}{main_str}（占比{pct_str}），超大单{amount_text(latest.super_large_net_inflow)}"
 
         return "资金流向数据暂无"
 
     def execute(self, request) -> dict:
+        cache_key = self._cache_key(request)
+        cache_entry = self.cache.get(cache_key)
+        now = time.time()
+        if isinstance(cache_entry, dict) and isinstance(cache_entry.get("payload"), dict):
+            age_seconds = max(0, int(now - float(cache_entry.get("stored_at", now))))
+            if age_seconds <= self.cache_ttl_seconds:
+                return self._with_cache_meta(cache_entry["payload"], age_seconds, stale=False)
+
         flow_type = request.flow_type
         symbol = getattr(request, "symbol", None)
         start_date = getattr(request, "start_date", None)
@@ -104,31 +160,44 @@ class CapitalFlowUseCase:
         descending = getattr(request, "descending", True)
         top_n = getattr(request, "top_n", None)
 
-        provider = self.router.get_provider("akshare")
+        try:
+            provider = self.router.get_provider("akshare")
+        except ProviderError:
+            raise
 
         records: list[CapitalFlowRecord] | None = None
         summary: MarketFundFlowSummary | None = None
         sector_items: list[SectorFundFlowItem] | None = None
 
-        if flow_type == "market":
-            records, summary = provider.get_market_capital_flow(limit=limit)
-            records = self._filter_records_by_date(records, start_date, end_date)
-            summary_records = records
-            from cn_stock_mcp.providers.adapters.akshare_capital_flow_adapters import build_market_fund_flow_summary
-            summary = build_market_fund_flow_summary(summary_records)
+        started_at = time.perf_counter()
+        try:
+            if flow_type == "market":
+                records, summary = provider.get_market_capital_flow(limit=limit)
+                records = self._filter_records_by_date(records, start_date, end_date)
+                summary_records = records
+                from cn_stock_mcp.providers.adapters.akshare_capital_flow_adapters import build_market_fund_flow_summary
+                summary = build_market_fund_flow_summary(summary_records)
 
-        elif flow_type == "individual":
-            if not symbol:
-                raise ValueError("symbol is required when flow_type=individual")
-            records = provider.get_individual_capital_flow(symbol=symbol, limit=limit)
-            records = self._filter_records_by_date(records, start_date, end_date)
+            elif flow_type == "individual":
+                if not symbol:
+                    raise ValueError("symbol is required when flow_type=individual")
+                records = provider.get_individual_capital_flow(symbol=symbol, limit=limit)
+                records = self._filter_records_by_date(records, start_date, end_date)
 
-        elif flow_type in ("industry", "concept"):
-            sector_items = provider.get_sector_capital_flow(flow_type=flow_type)
-            sector_items = self._sort_sector_items(sector_items, sort_by, descending, top_n)
+            elif flow_type in ("industry", "concept"):
+                sector_items = provider.get_sector_capital_flow(flow_type=flow_type)
+                sector_items = self._sort_sector_items(sector_items, sort_by, descending, top_n)
 
-        else:
-            raise ValueError(f"Unsupported flow_type: {flow_type}")
+            else:
+                raise ValueError(f"Unsupported flow_type: {flow_type}")
+        except ProviderError as exc:
+            if not exc.retryable or not getattr(request, "allow_stale", False):
+                raise
+            if isinstance(cache_entry, dict) and isinstance(cache_entry.get("payload"), dict):
+                age_seconds = max(0, int(now - float(cache_entry.get("stored_at", now))))
+                if age_seconds <= self.stale_max_age_seconds:
+                    return self._with_cache_meta(cache_entry["payload"], age_seconds, stale=True)
+            raise
 
         summary_text = self._build_flow_summary_text(flow_type, symbol, records, summary, sector_items)
 
@@ -153,5 +222,24 @@ class CapitalFlowUseCase:
 
         if start_date or end_date:
             result["date_range"] = {"start_date": start_date, "end_date": end_date}
+
+        provider_meta = getattr(provider, "last_capital_flow_meta", {})
+        if not isinstance(provider_meta, dict):
+            provider_meta = {}
+        result["meta"] = {
+            "provider_used": getattr(provider, "name", None) or "akshare",
+            "fallback_chain": [getattr(provider, "name", None) or "akshare"],
+            "latency_ms": int((time.perf_counter() - started_at) * 1000),
+            "cache_hit": False,
+            "stale": False,
+            **provider_meta,
+        }
+        self.cache.set(
+            cache_key,
+            {
+                "payload": result,
+                "stored_at": time.time(),
+            },
+        )
 
         return result

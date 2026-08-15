@@ -10,12 +10,18 @@ All notable changes to this project will be documented in this file.
 - Reused Provider instances across routers to avoid repeated Windows SSL initialization during MCP registry construction; focused construction time dropped from about 17.9 seconds to 0.33 seconds.
 - Synchronized the interface and error-model documentation with the current 52-tool registry.
 - Added `meta.freshness` to successful tool responses with server observation time and recognizable source as-of information.
+- Promoted provider/fallback/latency observability from business payloads to the response envelope while preserving the nested fields for compatibility.
+- Added machine-readable `--doctor --json` and `--doctor-network --json` output, including sanitized token configuration diagnostics.
+- Added explicit provider proxy and environment-proxy controls for upstream requests.
+- Added capital-flow fresh caching, opt-in stale-if-error behavior, endpoint circuit breaking, empty-result handling, and sector endpoint fallback metadata.
 - Added `.gitattributes` to keep repository text files on stable line endings across Windows and Unix.
 - Extended CI coverage to Python 3.13 and added a Windows CPython 3.13 smoke job.
 
 ### Fixed
 - Avoided the `market_pool` trading-calendar upstream call when an explicit-date pool result is already cached; cached responses now preserve the requested item count semantics.
 - Stopped fallback from swallowing unexpected provider adapter and fallback-policy exceptions.
+- Fixed capital-flow summary formatting when upstream rows omit optional large-order fields.
+- Added `PROVIDER_CIRCUIT_OPEN` as a retryable error for temporarily blocked unstable endpoints.
 
 ## [0.1.0] - 2026-05-21
 

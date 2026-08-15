@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     default_market: str = "CN"
     default_provider_order: str = "akshare,zhitu"
     enable_provider_fallback: bool = True
+    provider_trust_env: bool = False
+    provider_proxy_url: str = ""
 
     akshare_enabled: bool = True
     akshare_timeout_seconds: int = 20
@@ -35,6 +37,10 @@ class Settings(BaseSettings):
     cache_ttl_indicator_seconds: int = 300
     cache_ttl_orderbook_seconds: int = 3
     cache_ttl_pool_seconds: int = 600
+    cache_ttl_capital_flow_seconds: int = 300
+    capital_flow_stale_max_age_seconds: int = 86400
+    capital_flow_circuit_failure_threshold: int = 3
+    capital_flow_circuit_reset_seconds: int = 60
 
     stock_review_batch_max_workers: int = 4
     sector_rotation_max_workers: int = 2
@@ -47,17 +53,38 @@ class Settings(BaseSettings):
             path = Path.cwd() / path
         return path
 
-    def _load_zhitu_token_config(self) -> dict:
+    def _read_zhitu_token_config(self) -> tuple[dict, str, str]:
         path = self._resolve_zhitu_token_config_path()
         if not path.exists():
-            return {}
+            return {}, "missing", "token config file not found"
 
         try:
             raw_text = path.read_text(encoding="utf-8")
             text = "\n".join(line for line in raw_text.splitlines() if not line.strip().startswith("#"))
-            return json.loads(text)
-        except Exception:
-            return {}
+        except UnicodeDecodeError:
+            return {}, "unreadable", "token config is not valid UTF-8"
+        except OSError as exc:
+            return {}, "unreadable", f"token config cannot be read: {exc.__class__.__name__}"
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            return {}, "invalid", f"token config JSON is invalid at line {exc.lineno}, column {exc.colno}"
+        if not isinstance(data, dict):
+            return {}, "invalid_shape", "token config root must be a JSON object"
+        tokens = data.get("tokens", {})
+        if not isinstance(tokens, dict):
+            return {}, "invalid_shape", "token config 'tokens' must be a JSON object"
+        return data, "ok", "token config parsed"
+
+    def zhitu_token_config_status(self) -> dict[str, str]:
+        path = self._resolve_zhitu_token_config_path()
+        _, status, message = self._read_zhitu_token_config()
+        return {"path": str(path), "status": status, "message": message}
+
+    def _load_zhitu_token_config(self) -> dict:
+        data, status, _ = self._read_zhitu_token_config()
+        return data if status == "ok" else {}
 
     def resolve_zhitu_tokens(self) -> list[str]:
         ordered_tokens: list[str] = []

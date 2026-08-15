@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 from dataclasses import dataclass
@@ -43,6 +44,18 @@ class DoctorReport:
             return "WARN"
         return "OK"
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "title": self.title,
+            "version": self.version,
+            "result": self.result_label,
+            "exit_code": self.exit_code,
+            "checks": [
+                {"status": check.status, "name": check.name, "detail": check.detail}
+                for check in self.checks
+            ],
+        }
+
 
 def collect_doctor_report(settings: Settings, app: TransportApp, include_network: bool = False) -> DoctorReport:
     checks: list[DoctorCheck] = []
@@ -69,6 +82,17 @@ def collect_doctor_report(settings: Settings, app: TransportApp, include_network
     )
 
     token_count = len(settings.resolve_zhitu_tokens())
+    token_status_fn = getattr(settings, "zhitu_token_config_status", None)
+    if callable(token_status_fn):
+        token_status = token_status_fn()
+        if token_status.get("status") not in {"missing", "ok"}:
+            checks.append(
+                DoctorCheck(
+                    "WARN",
+                    "zhitu_token_config",
+                    f"{token_status.get('path')}: {token_status.get('message')}",
+                )
+            )
     checks.append(
         DoctorCheck(
             "OK" if token_count > 0 else "WARN",
@@ -117,3 +141,7 @@ def render_doctor_report(report: DoctorReport) -> str:
         lines.append("This usually means local installation is usable, but some optional checks were skipped or incomplete.")
 
     return "\n".join(lines)
+
+
+def render_doctor_json(report: DoctorReport) -> str:
+    return json.dumps(report.to_dict(), ensure_ascii=False, indent=2)

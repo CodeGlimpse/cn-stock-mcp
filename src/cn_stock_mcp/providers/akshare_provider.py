@@ -10,6 +10,7 @@ import requests
 
 from cn_stock_mcp.infra.time_utils import normalize_symbol
 from cn_stock_mcp.infra.config import Settings, get_settings
+from cn_stock_mcp.app.services.circuit_breaker import EndpointCircuitBreaker
 from cn_stock_mcp.providers.errors import ProviderError
 
 try:
@@ -31,6 +32,7 @@ from cn_stock_mcp.providers.adapters.akshare_capital_flow_adapters import (
     adapt_akshare_individual_fund_flow,
     adapt_akshare_market_fund_flow,
     adapt_akshare_sector_fund_flow,
+    adapt_akshare_sector_fund_flow_rank,
     build_market_fund_flow_summary,
 )
 from cn_stock_mcp.providers.adapters.akshare_financial_adapters import (
@@ -63,6 +65,9 @@ def _request_with_thread_timeout(session, method, url, *args, **kwargs):
     timeout = getattr(_request_timeout_state, "timeout", None)
     if timeout is not None and kwargs.get("timeout") is None:
         kwargs["timeout"] = timeout
+    proxies = getattr(_request_timeout_state, "proxies", None)
+    if proxies is not None and "proxies" not in kwargs:
+        kwargs["proxies"] = proxies
     return _original_session_request(session, method, url, *args, **kwargs)
 
 
@@ -86,16 +91,41 @@ class AKShareProvider:
         self._bj_spot_cache_ttl: int = 10  # seconds
         self._kc_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
         self._kc_spot_cache_ttl: int = 10  # seconds
+        self._capital_flow_breaker = EndpointCircuitBreaker(
+            failure_threshold=getattr(self.settings, "capital_flow_circuit_failure_threshold", 3),
+            reset_seconds=getattr(self.settings, "capital_flow_circuit_reset_seconds", 60),
+        )
+        self.last_capital_flow_meta: dict[str, object] = {}
 
     def _require_ak(self):
         if ak is None:
             raise ProviderError("PROVIDER_UNAVAILABLE", "akshare is not installed", retryable=False)
         return ak
 
+    def _call_capital_flow_endpoint(self, endpoint: str, fn, *args, **kwargs):
+        if fn is None:
+            raise ProviderError(
+                "PROVIDER_UNAVAILABLE",
+                f"AKShare endpoint is unavailable: {endpoint}",
+                retryable=True,
+            )
+        return self._capital_flow_breaker.call(
+            endpoint,
+            lambda: self._call_ak_quietly(fn, *args, **kwargs),
+        )
+
     def _call_ak_quietly(self, fn, *args, **kwargs):
         _install_request_timeout_wrapper()
         previous_timeout = getattr(_request_timeout_state, "timeout", None)
+        previous_proxies = getattr(_request_timeout_state, "proxies", None)
         _request_timeout_state.timeout = self.akshare_timeout_seconds
+        proxy_url = str(getattr(self.settings, "provider_proxy_url", "") or "").strip()
+        trust_env = bool(getattr(self.settings, "provider_trust_env", False))
+        _request_timeout_state.proxies = (
+            {"http": proxy_url, "https": proxy_url}
+            if proxy_url
+            else None if trust_env else {}
+        )
         sink = StringIO()
         try:
             with redirect_stdout(sink), redirect_stderr(sink):
@@ -105,6 +135,11 @@ class AKShareProvider:
                 del _request_timeout_state.timeout
             else:
                 _request_timeout_state.timeout = previous_timeout
+            if previous_proxies is None:
+                if hasattr(_request_timeout_state, "proxies"):
+                    del _request_timeout_state.proxies
+            else:
+                _request_timeout_state.proxies = previous_proxies
 
     def _load_trade_dates(self) -> list[str]:
         if self._trade_dates_cache is not None:
@@ -571,8 +606,14 @@ class AKShareProvider:
 
     def get_market_capital_flow(self, limit: int | None = None) -> tuple[list[CapitalFlowRecord], MarketFundFlowSummary]:
         lib = self._require_ak()
+        endpoint = "stock_market_fund_flow"
+        self.last_capital_flow_meta = {"endpoint_used": endpoint, "used_fallback_endpoint": False}
         try:
-            df = self._call_ak_quietly(lib.stock_market_fund_flow)
+            df = self._call_capital_flow_endpoint(endpoint, getattr(lib, endpoint, None))
+            if getattr(df, "empty", False):
+                raise ProviderError("PROVIDER_EMPTY", f"AKShare endpoint returned no rows: {endpoint}", retryable=True)
+        except ProviderError:
+            raise
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare market fund flow failed: {exc}", retryable=True) from exc
 
@@ -587,8 +628,19 @@ class AKShareProvider:
         lib = self._require_ak()
         normalized = normalize_symbol(symbol)
         code, market = self._resolve_market_code(normalized)
+        endpoint = "stock_individual_fund_flow"
+        self.last_capital_flow_meta = {"endpoint_used": endpoint, "used_fallback_endpoint": False}
         try:
-            df = self._call_ak_quietly(lib.stock_individual_fund_flow, stock=code, market=market)
+            df = self._call_capital_flow_endpoint(
+                endpoint,
+                getattr(lib, endpoint, None),
+                stock=code,
+                market=market,
+            )
+            if getattr(df, "empty", False):
+                raise ProviderError("PROVIDER_EMPTY", f"AKShare endpoint returned no rows: {endpoint}", retryable=True)
+        except ProviderError:
+            raise
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare individual fund flow failed for {symbol}: {exc}", retryable=True) from exc
 
@@ -600,18 +652,72 @@ class AKShareProvider:
 
     def get_sector_capital_flow(self, flow_type: str = "industry") -> list[SectorFundFlowItem]:
         lib = self._require_ak()
-        if flow_type == "concept":
-            fn = lib.stock_fund_flow_concept
-        else:
-            fn = lib.stock_fund_flow_industry
+        primary_endpoint = "stock_fund_flow_concept" if flow_type == "concept" else "stock_fund_flow_industry"
+        fallback_endpoint = "stock_sector_fund_flow_rank"
+        self.last_capital_flow_meta = {
+            "endpoint_used": primary_endpoint,
+            "used_fallback_endpoint": False,
+        }
+        endpoint_candidates = [
+            (primary_endpoint, getattr(lib, primary_endpoint, None), {}, False),
+            (
+                fallback_endpoint,
+                getattr(lib, fallback_endpoint, None),
+                {
+                    "indicator": "今日",
+                    "sector_type": "概念资金流" if flow_type == "concept" else "行业资金流",
+                },
+                True,
+            ),
+        ]
+        last_error: ProviderError | None = None
 
-        try:
-            df = self._call_ak_quietly(fn)
-        except Exception as exc:
-            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare sector fund flow ({flow_type}) failed: {exc}", retryable=True) from exc
+        for endpoint, fn, kwargs, is_fallback in endpoint_candidates:
+            try:
+                df = self._call_capital_flow_endpoint(endpoint, fn, **kwargs)
+                if getattr(df, "empty", False):
+                    raise ProviderError(
+                        "PROVIDER_EMPTY",
+                        f"AKShare endpoint returned no rows: {endpoint}",
+                        retryable=True,
+                    )
+                rows = df.to_dict(orient="records")
+                items = (
+                    [adapt_akshare_sector_fund_flow_rank(row) for row in rows]
+                    if is_fallback
+                    else [adapt_akshare_sector_fund_flow(row) for row in rows]
+                )
+                if not items:
+                    raise ProviderError(
+                        "PROVIDER_EMPTY",
+                        f"AKShare endpoint returned no usable rows: {endpoint}",
+                        retryable=True,
+                    )
+                self.last_capital_flow_meta = {
+                    "endpoint_used": endpoint,
+                    "used_fallback_endpoint": is_fallback,
+                    "primary_endpoint": primary_endpoint,
+                    "fallback_endpoint": fallback_endpoint,
+                }
+                return items
+            except ProviderError as exc:
+                last_error = exc
+                if not exc.retryable:
+                    raise
+            except Exception as exc:
+                last_error = ProviderError(
+                    "PROVIDER_UNAVAILABLE",
+                    f"AKShare sector fund flow ({flow_type}) failed at {endpoint}: {exc}",
+                    retryable=True,
+                )
 
-        rows = df.to_dict(orient="records")
-        return [adapt_akshare_sector_fund_flow(row) for row in rows]
+        if last_error:
+            raise last_error
+        raise ProviderError(
+            "PROVIDER_UNAVAILABLE",
+            f"AKShare sector fund flow ({flow_type}) has no available endpoint",
+            retryable=True,
+        )
 
     def _resolve_symbol_code(self, symbol: str) -> str:
         """Resolve the 6-digit code from a normalized symbol like 000001.SZ."""
