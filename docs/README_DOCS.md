@@ -1,6 +1,6 @@
 # Docs Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-08-14
+Last Updated: 2026-08-15
 
 本目录只保留当前有效的运行文档。
 
@@ -79,6 +79,9 @@ Last Updated: 2026-08-14
 
 8. `P2_DELIVERY_RECORD_2026-08-14.md`
    - 接口文档同步与统一数据新鲜度元数据交付记录。
+
+9. `TOOL_CATALOG.md`
+   - 从 MCP registry 自动生成的 53 个工具目录、参数 schema、最小示例和 Provider route。
 
 ---
 

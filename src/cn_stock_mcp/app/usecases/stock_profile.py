@@ -37,6 +37,7 @@ class StockProfileUseCase:
             "dividends": [d.model_dump() for d in profile.dividends],
             "unlocks": [u.model_dump() for u in profile.unlocks],
             "quarter_profits": [p.model_dump() for p in profile.quarter_profits],
+            "valuation": profile.valuation.model_dump() if profile.valuation else None,
             "dividend_summary": profile.dividend_summary,
             "unlock_risk": profile.unlock_risk,
             "source": profile.source,

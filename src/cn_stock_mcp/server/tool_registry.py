@@ -34,6 +34,7 @@ from .schemas import (
     StockCandidateScanRequest,
     StockProfileRequest,
     StockQuoteRequest,
+    StockSnapshotRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
     StockSearchRequest,
@@ -45,6 +46,7 @@ from .schemas import (
 __all__ = [
     "StockSearchRequest",
     "StockQuoteRequest",
+    "StockSnapshotRequest",
     "StockHistoryRequest",
     "StockReviewRequest",
     "StockReviewBatchRequest",

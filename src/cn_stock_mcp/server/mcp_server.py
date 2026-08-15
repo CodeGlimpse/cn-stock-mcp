@@ -7,6 +7,7 @@ from typing import Any, Callable
 from pydantic import BaseModel, Field, ValidationError
 
 from cn_stock_mcp.app.services.data_freshness import build_data_freshness
+from cn_stock_mcp.app.services.data_quality import build_data_quality
 from cn_stock_mcp.app.services.error_mapper import serialize_exception
 from cn_stock_mcp.app.usecases.hot_theme_tracker import HotThemeTrackerUseCase
 from cn_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
@@ -55,6 +56,7 @@ from cn_stock_mcp.app.usecases.sector_rotation_review import SectorRotationRevie
 from cn_stock_mcp.app.usecases.sector_leaders import SectorLeadersUseCase
 from cn_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
 from cn_stock_mcp.app.usecases.stock_quote import StockQuoteUseCase
+from cn_stock_mcp.app.usecases.stock_snapshot import StockSnapshotUseCase
 from cn_stock_mcp.app.usecases.stock_review import StockReviewUseCase
 from cn_stock_mcp.app.usecases.stock_review_batch import StockReviewBatchUseCase
 from cn_stock_mcp.app.usecases.stock_search import StockSearchUseCase
@@ -108,6 +110,7 @@ from cn_stock_mcp.server.schemas import (
     StockCandidateScanRequest,
     StockProfileRequest,
     StockQuoteRequest,
+    StockSnapshotRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
     StockSearchRequest,
@@ -184,9 +187,10 @@ class MCPServerStub(BaseModel):
             log_event(logger, "tool_call_start", request_id=request_id, tool=name)
             data = tool.handler(request)
             log_event(logger, "tool_call_success", request_id=request_id, tool=name)
+            freshness = build_data_freshness(data)
             return ok_response(
                 data,
-                meta={"tool": name, "freshness": build_data_freshness(data)},
+                meta={"tool": name, "freshness": freshness, "data_quality": build_data_quality(data, freshness)},
                 request_id=request_id,
             )
         except Exception as exc:
@@ -200,6 +204,7 @@ def create_server() -> MCPServerStub:
 
     stock_search = StockSearchUseCase()
     stock_quote = StockQuoteUseCase()
+    stock_snapshot = StockSnapshotUseCase()
     stock_history = StockHistoryUseCase()
     stock_review = StockReviewUseCase()
     stock_review_batch = StockReviewBatchUseCase()
@@ -253,6 +258,7 @@ def create_server() -> MCPServerStub:
 
     server.register_tool(MCPTool(name="stock_search", description="Search stocks, indices, funds, or sectors by keyword or code.", input_model=StockSearchRequest, handler=stock_search.execute))
     server.register_tool(MCPTool(name="stock_quote", description="Get real-time quotes for one or more instruments.", input_model=StockQuoteRequest, handler=stock_quote.execute))
+    server.register_tool(MCPTool(name="stock_snapshot", description="Get a bounded multi-source stock snapshot combining quote, recent history, financial summary, valuation, events, and risk tags; no trading actions.", input_model=StockSnapshotRequest, handler=stock_snapshot.execute))
     server.register_tool(MCPTool(name="stock_history", description="Get historical price bars for an instrument.", input_model=StockHistoryRequest, handler=stock_history.execute))
     server.register_tool(MCPTool(name="stock_review", description="Generate a review summary for a stock on a trade date or over a date range.", input_model=StockReviewRequest, handler=stock_review.execute))
     server.register_tool(MCPTool(name="stock_review_batch", description="Batch review multiple stocks and rank the results for replay workflows.", input_model=StockReviewBatchRequest, handler=stock_review_batch.execute))

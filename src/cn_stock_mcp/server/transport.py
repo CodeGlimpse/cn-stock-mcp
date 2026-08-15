@@ -7,6 +7,7 @@ import anyio
 
 from cn_stock_mcp.server.mcp_server import create_server
 from cn_stock_mcp.server.stdio_server import build_fastmcp_server, run_stdio_server
+from cn_stock_mcp.app.services.tool_catalog import build_tool_catalog, find_tool
 
 
 class TransportApp:
@@ -19,7 +20,9 @@ class TransportApp:
     def __init__(self) -> None:
         self.server = create_server()
 
-    def list_tools(self) -> list[dict[str, Any]]:
+    def list_tools(self, detailed: bool = False) -> list[dict[str, Any]]:
+        if detailed:
+            return build_tool_catalog(self.server)
         return [
             {
                 "name": tool.name,
@@ -28,6 +31,9 @@ class TransportApp:
             }
             for tool in self.server.tools.values()
         ]
+
+    def describe_tool(self, name: str) -> dict[str, Any] | None:
+        return find_tool(build_tool_catalog(self.server), name)
 
     def call_tool(self, name: str, payload: dict[str, Any]) -> Any:
         return self.server.call_tool(name, payload)

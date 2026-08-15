@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--doctor-network", action="store_true", help="Run local self-check plus upstream network/provider verification")
     parser.add_argument("--json", action="store_true", help="Render doctor output as JSON")
     parser.add_argument("--list-tools", action="store_true", help="List registered tools")
+    parser.add_argument("--describe-tool", type=str, help="Describe one registered tool and its input schema")
     parser.add_argument("--tool", type=str, help="Tool name to invoke")
     parser.add_argument("--payload", type=str, help="Inline JSON payload for tool invocation")
     parser.add_argument("--stdio", action="store_true", help="Run MCP stdio transport")
@@ -53,7 +54,24 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.list_tools:
-        print(json.dumps(app.list_tools(), ensure_ascii=False, indent=2))
+        print(json.dumps(app.list_tools(detailed=args.json), ensure_ascii=False, indent=2))
+        return
+
+    if args.describe_tool:
+        description = app.describe_tool(args.describe_tool)
+        if description is None:
+            print(
+                json.dumps(
+                    {
+                        "error_code": "TOOL_NOT_FOUND",
+                        "message": f"Tool not found: {args.describe_tool}",
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            raise SystemExit(2)
+        print(json.dumps(description, ensure_ascii=False, indent=2))
         return
 
     if args.tool:

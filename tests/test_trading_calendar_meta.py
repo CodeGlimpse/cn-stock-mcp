@@ -25,7 +25,9 @@ class _Router:
 
 
 def test_trading_calendar_response_contains_meta():
-    uc = TradingCalendarUseCase()
+    from datetime import datetime
+
+    uc = TradingCalendarUseCase(now_provider=lambda: datetime.fromisoformat("2026-05-01T10:00:00+08:00"))
     uc.router = _Router()
 
     req = type(
@@ -47,3 +49,5 @@ def test_trading_calendar_response_contains_meta():
     assert result["source"] == "akshare"
     assert result["meta"]["used_fallback"] is False
     assert result["meta"]["final_provider"] == "akshare"
+    assert result["session_context"]["session_status"] == "non_trading_day"
+    assert result["session_context"]["data_may_be_close_data"] is True

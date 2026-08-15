@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Added machine-readable `--doctor --json` and `--doctor-network --json` output, including sanitized token configuration diagnostics.
 - Added explicit provider proxy and environment-proxy controls for upstream requests.
 - Added capital-flow fresh caching, opt-in stale-if-error behavior, endpoint circuit breaking, empty-result handling, and sector endpoint fallback metadata.
+- Added trading-session context to `trading_calendar`, a bounded `stock_snapshot` composite tool, and `data_quality_v1` metadata for successful responses.
+- Generated the registry-driven `docs/TOOL_CATALOG.md` and added `--list-tools --json` / `--describe-tool` CLI discovery commands.
 - Added `.gitattributes` to keep repository text files on stable line endings across Windows and Unix.
 - Extended CI coverage to Python 3.13 and added a Windows CPython 3.13 smoke job.
 
@@ -22,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Stopped fallback from swallowing unexpected provider adapter and fallback-policy exceptions.
 - Fixed capital-flow summary formatting when upstream rows omit optional large-order fields.
 - Added `PROVIDER_CIRCUIT_OPEN` as a retryable error for temporarily blocked unstable endpoints.
+- Exposed the valuation section from `stock_profile` so composite snapshots do not silently omit requested valuation data.
 
 ## [0.1.0] - 2026-05-21
 

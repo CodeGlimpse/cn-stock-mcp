@@ -38,6 +38,7 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
     "disclosure_calendar": ("akshare", []),
     "stock_repurchase":   ("akshare", []),
     "stock_compare":      ("zhitu", ["akshare"]),
+    "stock_snapshot":     ("composite", ["zhitu", "akshare"]),
     "industry_chain":     ("akshare", []),
     "stock_warrant":      ("akshare", []),
     "fund_flow":          ("akshare", []),
@@ -83,6 +84,16 @@ class ProviderRouter:
         self.akshare, self.zhitu = _shared_providers()
 
     # ── public API ──────────────────────────────────────────────
+
+    @classmethod
+    def describe_route(cls, tool_name: str) -> dict[str, object]:
+        """Return a stable, read-only provider route description for tooling/docs."""
+        primary, fallback = _TOOL_ROUTES.get(tool_name, _DEFAULT_ROUTE)
+        return {
+            "primary": primary,
+            "fallback": list(fallback),
+            "mode": "composite" if primary == "composite" else "provider",
+        }
 
     def choose_provider(
         self,

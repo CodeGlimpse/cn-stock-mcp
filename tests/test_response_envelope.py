@@ -109,6 +109,32 @@ def test_call_tool_includes_dated_or_unknown_freshness_metadata():
     assert unknown["age_seconds"] is None
 
 
+def test_call_tool_includes_data_quality_metadata():
+    class QualityRequest(BaseModel):
+        pass
+
+    server = MCPServerStub(name="test", version="1")
+    server.register_tool(
+        MCPTool(
+            name="quality",
+            description="quality",
+            input_model=QualityRequest,
+            handler=lambda request: {
+                "items": [],
+                "count": 0,
+                "partial_failure": True,
+                "meta": {"used_fallback": True},
+            },
+        )
+    )
+
+    response = server.call_tool("quality", {})
+
+    assert response["success"] is True
+    assert response["meta"]["data_quality"]["schema"] == "data_quality_v1"
+    assert "provider_fallback" in response["meta"]["data_quality"]["flags"]
+
+
 def test_freshness_prefers_explicit_source_as_of_hint():
     class FreshRequest(BaseModel):
         pass

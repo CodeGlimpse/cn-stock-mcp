@@ -58,3 +58,29 @@ def test_main_doctor_json_dispatches_json_output(monkeypatch):
 
     assert exc.value.code == 0
     assert called == {"include_network": False, "json_output": True}
+
+
+def test_main_list_tools_json_requests_detailed_catalog(monkeypatch, capsys):
+    class _App:
+        def list_tools(self, detailed=False):
+            assert detailed is True
+            return [{"name": "stock_snapshot", "input_schema": {}}]
+
+    monkeypatch.setattr(cli, "TransportApp", _App)
+
+    cli.main(["--list-tools", "--json"])
+
+    assert '"stock_snapshot"' in capsys.readouterr().out
+
+
+def test_main_describe_tool_prints_catalog_entry(monkeypatch, capsys):
+    class _App:
+        def describe_tool(self, name):
+            assert name == "stock_quote"
+            return {"name": name, "description": "quote"}
+
+    monkeypatch.setattr(cli, "TransportApp", _App)
+
+    cli.main(["--describe-tool", "stock_quote"])
+
+    assert '"name": "stock_quote"' in capsys.readouterr().out

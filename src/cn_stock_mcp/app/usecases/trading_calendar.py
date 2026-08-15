@@ -1,10 +1,12 @@
 from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
+from cn_stock_mcp.app.services.market_session import build_trading_session_context
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 
 
 class TradingCalendarUseCase:
-    def __init__(self) -> None:
+    def __init__(self, now_provider=None) -> None:
         self.router = ProviderRouter()
+        self._now_provider = now_provider
 
     def execute(self, request):
         selection = self.router.choose_provider(
@@ -33,5 +35,11 @@ class TradingCalendarUseCase:
                 "used_fallback": fallback_meta.used_fallback,
             }
         )
+        if request.start_date is None and request.end_date is None:
+            payload["session_context"] = build_trading_session_context(
+                payload,
+                now=self._now_provider() if self._now_provider else None,
+                target_date=payload.get("date"),
+            )
         payload["source"] = fallback_meta.final_provider or selection.primary
         return payload

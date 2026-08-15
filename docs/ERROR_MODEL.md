@@ -17,6 +17,12 @@
       "basis": "provider_timestamp",
       "status": "realtime",
       "age_seconds": 5
+    },
+    "data_quality": {
+      "schema": "data_quality_v1",
+      "score": 100,
+      "label": "high",
+      "flags": []
     }
   }
 }
@@ -57,6 +63,7 @@
 - `request_id`: 本次 tool 调用唯一请求 ID，用于串联日志
 - `tool`: 被调用的 tool 名称
 - `freshness`: 成功响应的数据新鲜度元数据；失败响应不保证存在
+- `data_quality`: 成功响应的数据质量启发式评分；包含 `schema`、`score`、`label`、`flags`、`factors`，不表示投资信心
 - `provider_used` / `fallback_chain` / `latency_ms`: 成功响应中的稳定可观测字段；若业务 payload 的 `data.meta` 提供这些字段，统一响应层会同步提升到顶层 `meta`
 - `used_fallback` / `final_provider` / `attempted`: provider fallback 过程的可观测字段，存在时同步提升到顶层 `meta`
 
@@ -70,6 +77,10 @@
 - `age_seconds`: 观察时间与 `as_of` 的非负秒差；`as_of` 不可识别时为 `null`
 
 `status=realtime` 表示源数据带有时间级字段，不承诺数据一定处于交易时段；调用方仍应结合 `as_of`、交易日历和业务字段判断是否适合当前决策。
+
+### data_quality 字段
+
+统一成功响应的 `meta.data_quality` 使用 `data_quality_v1`，综合 provider fallback、部分失败、stale、数据年龄、显式缺失字段、异常数值和空结果。`label` 只有 `high`、`medium`、`low` 三档；它是数据可用性提示，不是交易信号、投资建议或模型置信度。
 
 ### error 字段
 - `error_code`: 稳定错误码，供调用方做程序分支

@@ -30,6 +30,8 @@ cn-stock-mcp --doctor --json
 cn-stock-mcp --doctor-network
 cn-stock-mcp --doctor-network --json
 cn-stock-mcp --list-tools
+cn-stock-mcp --list-tools --json
+cn-stock-mcp --describe-tool stock_quote
 cn-stock-mcp --tool provider_health --payload '{}'
 ```
 
@@ -71,7 +73,7 @@ cn-stock-mcp --tool provider_health --payload '{}'
 ## 3) 当前测试与 CI 状态
 
 ### 已验证
-- 非 live 回归：`500 passed, 22 deselected`
+- 非 live 回归：`511 passed, 22 deselected`
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
 - `market_pool` 显式日期缓存命中不再先访问交易日历上游
 - fallback 不再吞掉未预期的编程异常或结果策略异常
@@ -130,15 +132,25 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - AKShare 资金流 endpoint 增加进程内熔断、统一 proxy/环境代理配置、空结果失败处理和板块 endpoint fallback
 - `capital_flow` 增加新鲜缓存、显式 `allow_stale` stale-if-error；默认不返回旧缓存，stale 结果带 `stale` 与 `stale_age_seconds`
 
+### P2 功能添加
+
+2026-08-15 已完成（本轮不包含本地持久化观察列表）：
+
+- `trading_calendar` 点查询增加 `session_context`，区分交易日、开盘前、上午交易、午休、下午交易、收盘后和历史日期，并提供最近有效行情日期及收盘数据提示
+- 新增受控 `stock_snapshot`，最多 5 个标的、历史最多 60 根、总超时预算最多 60 秒（默认 30 秒），组合行情/历史/财务/估值/事件/风险，不涉及交易执行
+- 所有成功工具响应增加 `meta.data_quality`（`data_quality_v1`），解释 fallback、partial failure、年龄、缺失字段、异常值和空结果
+- 新增 registry 驱动的 `docs/TOOL_CATALOG.md`，并提供 `--list-tools --json` 与 `--describe-tool`
+
 ---
 
 ## 4) 当前可用工具（MCP tools）
 
-当前工具注册总数：**52**
+当前工具注册总数：**53**
 
 工具包括：
 - `stock_search`
 - `stock_quote`
+- `stock_snapshot`
 - `stock_history`
 - `stock_review`
 - `stock_review_batch`

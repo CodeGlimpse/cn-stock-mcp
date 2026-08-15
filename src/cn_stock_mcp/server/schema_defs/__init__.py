@@ -60,6 +60,7 @@ from ._stock import (
     StockOrderbookRequest,
     StockProfileRequest,
     StockQuoteRequest,
+    StockSnapshotRequest,
     StockReviewBatchRequest,
     StockReviewRequest,
     StockSearchRequest,
@@ -81,7 +82,7 @@ __all__ = [
     "SecType", "ProviderName", "Interval", "AdjustType",
     "IndicatorType", "PoolType", "SectorLookupMode", "SectorType",
     # Stock
-    "StockSearchRequest", "StockQuoteRequest", "StockHistoryRequest",
+    "StockSearchRequest", "StockQuoteRequest", "StockSnapshotRequest", "StockHistoryRequest",
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",

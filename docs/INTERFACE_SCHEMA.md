@@ -11,6 +11,7 @@ Last Updated: 2026-08-15
 
 - stock_search
 - stock_quote
+- stock_snapshot
 - stock_history
 - stock_review
 - stock_review_batch
@@ -116,6 +117,12 @@ Last Updated: 2026-08-15
       "basis": "provider_timestamp",
       "status": "realtime",
       "age_seconds": 5
+    },
+    "data_quality": {
+      "schema": "data_quality_v1",
+      "score": 100,
+      "label": "high",
+      "flags": []
     }
   }
 }
@@ -168,6 +175,7 @@ Last Updated: 2026-08-15
 | `used_fallback` | bool | 是否使用了 fallback provider |
 | `final_provider` | str | 最终成功的 provider |
 | `attempted` | list[str] | 实际尝试过的 provider |
+| `data_quality` | object | `data_quality_v1` 启发式数据质量评分；不表示投资信心或推荐 |
 
 ---
 
@@ -205,6 +213,8 @@ Last Updated: 2026-08-15
     - `turnover`：成交额，单位为 **元**。
     - `pe`：Zhitu 股票实时行情口径为 **动态市盈率**。
     - `market_cap` / `float_market_cap`：Zhitu 股票实时行情口径为 **百元**（即 `元口径市值 / 100`）；例如返回 `16692135830.84` 表示约 `1,669,213,583,084` 元，即约 `1.67` 万亿元。
+- `stock_snapshot`：受控综合快照；默认最多 5 个股票标的、历史最多 60 根日线、总超时预算 30 秒。可组合行情、最近历史、财务摘要、估值、事件和风险标签；逐标的/逐 section 失败写入 `errors`，不执行交易。
+- `trading_calendar`：除交易日与最近交易日外，点查询返回 `session_context`，包括 `session_status`、`is_market_open`、`latest_valid_market_date` 和 `data_may_be_close_data`。上下文按 `Asia/Shanghai` 和 A 股 09:30–11:30、13:00–15:00 计算；显式历史日期标记为 `historical`。
 - hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`
 
 > `stock_orderbook` 当前已支持：
@@ -244,6 +254,7 @@ Last Updated: 2026-08-15
 - `fallback_chain`：本次可用的主备链路
 - `latency_ms`：本次调用耗时（毫秒）
 - `freshness`：本次响应的观察时间、源数据 as-of 时间/日期和可识别的新鲜度状态
+- `data_quality`：本次响应的数据可用性启发式评分（`data_quality_v1`），不表示投资判断
 - `stock_candidate_scan`：候选评分（candidate_score/candidate_label/reason_tags/risk_flags）
 - `watchlist_review`：观察池评分（watchlist_score/status_label/reason_tags/risk_flags）
 - `multi_timeframe_review`：多周期一致性（trend_score/trend_label/signal_tags/conflict_notes；指标获取失败时记录 `partial_failure` + errors 含 interval/indicator）
@@ -267,6 +278,7 @@ Last Updated: 2026-08-15
 | `fallback_chain` | list[str] | 主备 provider 链路；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
 | `latency_ms` | int | 调用耗时（毫秒）；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
 | `freshness` | object | 成功响应的观察时间、源数据 as-of 和新鲜度状态 | 所有成功 tool |
+| `data_quality` | object | `data_quality_v1` 评分、标签、因素和 flags；仅表示数据可用性启发式 | 所有成功 tool |
 
 ### 降级字段（tool-specific）
 

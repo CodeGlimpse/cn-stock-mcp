@@ -24,6 +24,32 @@ class StockQuoteRequest(BaseModel):
     provider_preference: list[Literal["akshare", "zhitu"]] | None = None
 
 
+class StockSnapshotRequest(BaseModel):
+    """Bounded multi-source snapshot; this tool never performs trading actions."""
+
+    symbols: list[str] = Field(min_length=1, max_length=5)
+    sec_type: Literal["stock"] = "stock"
+    include: list[Literal["quote", "history", "financial", "valuation", "events", "risk"]] = Field(
+        default_factory=lambda: ["quote", "history", "financial", "valuation", "events", "risk"]
+    )
+    history_interval: Literal["1d"] = "1d"
+    history_limit: int = Field(default=20, ge=5, le=60)
+    adjust: AdjustType = "none"
+    max_total_timeout_seconds: int = Field(default=30, ge=5, le=60)
+    provider: Literal["akshare", "zhitu"] | None = None
+
+    @model_validator(mode="after")
+    def normalize_request(self):
+        normalized = dedupe_str_list(self.symbols)
+        if not normalized:
+            raise ValueError("symbols must contain at least 1 non-empty symbol")
+        self.symbols = normalized
+        self.include = list(dict.fromkeys(self.include))
+        if not self.include:
+            raise ValueError("include must contain at least one snapshot section")
+        return self
+
+
 class StockHistoryRequest(BaseModel):
     symbol: str
     interval: str
@@ -135,7 +161,7 @@ class EarningsQualityRequest(BaseModel):
 
 
 __all__ = [
-    "StockSearchRequest", "StockQuoteRequest", "StockHistoryRequest",
+    "StockSearchRequest", "StockQuoteRequest", "StockSnapshotRequest", "StockHistoryRequest",
     "StockReviewRequest", "StockReviewBatchRequest", "StockOrderbookRequest",
     "StockProfileRequest", "StockFinancialRequest", "ValuationRankRequest",
     "EarningsQualityRequest", "InsiderTradeRequest", "DividendRankRequest",
