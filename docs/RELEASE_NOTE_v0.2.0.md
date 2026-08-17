@@ -12,6 +12,7 @@
 - `retail_v1_preview` provides a bounded 10-tool profile while `full` remains backward compatible.
 - Officially documented first Host set: Codex, Claude Code, OpenClaw and Hermes Agent.
 - Release workflow includes non-live tests, dependency audit, SBOM, SHA256 and build provenance.
+- PyPI publication is gated by a clean Windows runner wheel install and MCP smoke.
 
 ## Important limits
 

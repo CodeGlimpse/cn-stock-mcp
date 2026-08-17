@@ -31,7 +31,7 @@ OpenClaw 侧可使用两种形态：
   skills: {
     load: {
       extraDirs: [
-        "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp/skills"
+        "/path/to/cn-stock-mcp/skills"
       ]
     },
     entries: {

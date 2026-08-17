@@ -25,6 +25,7 @@ Use this checklist before cutting a release.
 - [ ] `scripts/smoke_live.sh` passes with valid `ZHITU_TOKEN`
 - [ ] manual `Live Smoke` workflow passes if upstream validation is desired
 - [ ] four Host acceptance records are complete on clean Windows user profiles
+- [ ] tag workflow clean Windows wheel gate passes before publication
 
 ## 4. Versioning and release
 - [ ] `pyproject.toml` version is correct

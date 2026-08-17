@@ -2,6 +2,8 @@
 
 中国证券市场行情 MCP 服务。核心交付物是 **通用 MCP server**；OpenClaw skill 只是仓库内附带的平台适配层。
 
+> 本工具不提供任何投资参考、投资建议或风险建议，不连接券商，不保存交易账户，也不执行买卖或自动交易。第三方市场数据可能延迟、缺失或错误，用户必须独立核验。
+
 > **如果你是人类用户：** 不要先通读整个仓库，先看 `docs/START_HERE.md`。
 
 > **Windows + AI 自部署：** 先看 `docs/AI_DEPLOY_WINDOWS.md`；它是固定版本、token 脱敏和首次问答验收的执行合同。
@@ -122,7 +124,9 @@ cn-stock-mcp --doctor-network
 - `docs/HERMES_TEMPLATE.md`：Hermes 单独模板
 - `docs/CODEX_TEMPLATE.md`：Codex 单独模板
 - `docs/FAQ.md`：常见错误与排查
+- `SECURITY.md`、`SUPPORT.md`：漏洞报告与支持边界
 - `docs/AI_DEPLOY_WINDOWS.md`：交给 Windows AI agent 的自部署与验收流程
+- `docs/WINDOWS_ACCEPTANCE_v0.2.0.md`：首发 wheel 的 Windows 验收记录与干净 runner 门禁
 - `docs/SECURITY.md`、`docs/PRIVACY.md`、`docs/DATA_SOURCES.md`：安全、隐私和数据来源边界
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口

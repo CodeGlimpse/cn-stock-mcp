@@ -4,7 +4,6 @@ import json
 import shutil
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from cn_stock_mcp.infra.config import Settings
@@ -72,15 +71,6 @@ def collect_doctor_report(settings: Settings, app: TransportApp, include_network
         )
     )
 
-    env_file = Path.cwd() / ".env"
-    checks.append(
-        DoctorCheck(
-            "OK" if env_file.exists() else "WARN",
-            "env_file",
-            str(env_file) if env_file.exists() else ".env not found in current directory",
-        )
-    )
-
     token_count = len(settings.resolve_zhitu_tokens())
     token_status_fn = getattr(settings, "zhitu_token_config_status", None)
     if callable(token_status_fn):
@@ -97,7 +87,7 @@ def collect_doctor_report(settings: Settings, app: TransportApp, include_network
         DoctorCheck(
             "OK" if token_count > 0 else "WARN",
             "zhitu_token",
-            f"resolved tokens: {token_count}" if token_count > 0 else "no ZHITU token found in current shell/env",
+            f"resolved tokens: {token_count}" if token_count > 0 else "no Zhitu token resolved from the user config or environment",
         )
     )
 
@@ -134,8 +124,8 @@ def render_doctor_report(report: DoctorReport) -> str:
 
     if report.has_fail:
         lines.append("Next steps:")
-        lines.append("- If command is missing, reinstall with: pip install cn-stock-mcp  (or: python -m pip install -e . for local dev)")
-        lines.append("- If token is missing, set ZHITU_TOKEN in your MCP host config env block")
+        lines.append("- If command is missing, reinstall the required fixed version (or use: python -m pip install -e . for local dev)")
+        lines.append("- If token is missing, run --init-config and add it manually to the reported user config file")
         lines.append("- If provider_health failed, check network access and upstream token validity")
     elif report.has_warn:
         lines.append("This usually means local installation is usable, but some optional checks were skipped or incomplete.")

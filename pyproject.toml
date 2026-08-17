@@ -4,6 +4,20 @@ version = "0.2.0"
 description = "MCP server for Chinese market data via AKShare and Zhitu"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "CodeGlimpse" }]
+keywords = ["mcp", "china-stock", "market-data", "akshare", "zhitu"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Office/Business :: Financial :: Investment",
+]
 dependencies = [
   "pydantic>=2.8.0",
   "pydantic-settings>=2.4.0",
@@ -26,8 +40,14 @@ dev = [
 [project.scripts]
 cn-stock-mcp = "cn_stock_mcp.main:main"
 
+[project.urls]
+Homepage = "https://github.com/CodeGlimpse/cn-stock-mcp"
+Documentation = "https://github.com/CodeGlimpse/cn-stock-mcp/tree/main/docs"
+Issues = "https://github.com/CodeGlimpse/cn-stock-mcp/issues"
+Changelog = "https://github.com/CodeGlimpse/cn-stock-mcp/blob/main/CHANGELOG.md"
+
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]

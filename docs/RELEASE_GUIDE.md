@@ -6,6 +6,7 @@
 - 远端 `main`、`v0.2.0` tag、PyPI 文件和 GitHub Release 必须指向同一提交。
 - Release 附件包括 wheel、sdist、SHA256 文件、SBOM 和构建来源证明。
 - 不发布 token、`.env`、`config/zhitu_tokens.json`、诊断包或含凭据的 Host 配置。
+- `constraints-release.txt` 固定直接运行、测试和发布工具版本；pip 仍解析传递依赖，最终解析结果以 `sbom.json` 为准。这是首版的可复现边界，不宣称跨时间字节级完全复现。
 
 ## Verification order
 

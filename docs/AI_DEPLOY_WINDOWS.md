@@ -29,6 +29,15 @@ py -3.13 -m venv "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv"
 
 记录安装版本和解释器路径。不要使用未固定版本的 `pip install cn-stock-mcp` 作为验收证据。
 
+解析并记录 Host 必须使用的绝对命令路径：
+
+```powershell
+$mcpExe = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe"
+(Resolve-Path -LiteralPath $mcpExe).Path
+```
+
+不要假设该用户专用虚拟环境已加入 `PATH`。
+
 ### 3. 创建配置并交给用户填 token
 
 ```powershell
@@ -43,13 +52,14 @@ py -3.13 -m venv "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv"
 & "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --version
 & "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --doctor --json
 & "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --doctor-network --json
+& "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --list-tools --json
 ```
 
-输出中只允许出现配置路径、状态和数量，不得出现 token 原文、尾号或 URL 查询参数。
+`--doctor` 可因跳过网络检查显示 `WARN`，但退出码必须为 0；`--doctor-network` 必须退出 0。`--list-tools --json` 必须只列出 `retail_v1_preview` 的 10 个工具。输出中只允许出现配置路径、状态和数量，不得出现 token 原文、尾号或 URL 查询参数。
 
 ### 5. 配置 Host
 
-使用对应 Host 模板，只写 `command`、`args`、工作目录和工具白名单；不要加入 `ZHITU_TOKEN`。修改前备份原配置，保留原有字段和其他 MCP server。
+使用对应 Host 模板，把其中的 `cn-stock-mcp` 命令替换为步骤 2 解析出的 `cn-stock-mcp.exe` 绝对路径；只写 `command`、`args`、必要的工作目录和工具白名单，不要加入 `ZHITU_TOKEN`。修改前备份原配置，保留原有字段和其他 MCP server。
 
 - Codex：`docs/CODEX_TEMPLATE.md`
 - Claude Code：`docs/CLAUDE_CODE_TEMPLATE.md`
@@ -58,7 +68,7 @@ py -3.13 -m venv "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv"
 
 ### 6. 重载并首次问答
 
-重载对应 Host，确认 server 已连接并看到 `retail_v1_preview` 的 10 个工具。使用以下固定问题：
+重载对应 Host，确认 server 已连接并看到 `retail_v1_preview` 的 10 个工具。Host 没有原生工具白名单时，以 server 端工具档的 10 个结果为准。使用以下固定问题：
 
 > 查询平安银行最新行情，给出数据来源、数据时间、交易时段和数据质量；不要提供投资建议。
 

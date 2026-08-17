@@ -2,7 +2,13 @@
 
 当前代码通过 AKShare、Zhitu 及其下游公开接口取得市场数据。代码依赖和数据内容是两个不同的许可问题：AKShare 的代码许可证不自动授予所有下游数据的商用、缓存或再分发权。
 
-发布前必须由项目维护者逐项记录并复核：
+## v0.2.0 distribution conclusion
+
+The PyPI and GitHub artifacts distribute source code, documentation, and package metadata only. They do not bundle or redistribute a third-party market dataset. AKShare's code license does not automatically grant rights in the data returned by its adapters, and this project has not recorded evidence that Zhitu or every downstream source grants commercial display, caching, or redistribution rights.
+
+Therefore, publishing `cn-stock-mcp` does not represent or grant any data license. Before operating a hosted service, retaining market data, redistributing results, or making commercial use, the operator must obtain and record the applicable terms or permission for each actual provider and downstream source.
+
+The following review remains required before making any broader data-rights claim:
 
 1. AKShare 项目许可证、调用限制和各数据适配器的实际来源。
 2. Zhitu API 服务条款、token 使用限制、缓存/展示/再分发和商业使用条件。

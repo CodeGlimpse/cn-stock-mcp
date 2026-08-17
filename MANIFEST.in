@@ -1,4 +1,8 @@
 include README.md
+include LICENSE
+include SECURITY.md
+include SUPPORT.md
+include constraints-release.txt
 include .env.example
 include .mcp.sample.json
 recursive-include src/cn_stock_mcp *.py

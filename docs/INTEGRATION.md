@@ -1,41 +1,36 @@
 # Integration Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-08-13
+Last Updated: 2026-08-17
 
 ## 1) 本地运行与自检
 
-> AI agent 建议先读 `docs/AGENT_MINIMAL.md` 与 `docs/EXAMPLES_MINIMAL.md`，再决定是否需要展开本页的完整联调说明。
+> Windows 客户端的 AI 自部署以 `docs/AI_DEPLOY_WINDOWS.md` 为准。开发联调时，AI agent 建议先读 `docs/AGENT_MINIMAL.md` 与 `docs/EXAMPLES_MINIMAL.md`。
 
-项目目录：`/home/openclaw/桌面/openclaw/codes/cn-stock-mcp`
+以下源码命令假定当前目录已是仓库根目录。公开安装用户应运行固定版本的 `cn-stock-mcp==0.2.0`，不需要源码目录或 `PYTHONPATH`。
 
 ### 列出 tools
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 PYTHONPATH=src python -m cn_stock_mcp.main --list-tools
 ```
 
 ### provider 健康检查
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 HTTP_PROXY= HTTPS_PROXY= ALL_PROXY= http_proxy= https_proxy= all_proxy= \
 PYTHONPATH=src python -m cn_stock_mcp.main --tool provider_health --payload '{}'
 ```
 
 ### 启动 stdio MCP 服务
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 PYTHONPATH=src python -m cn_stock_mcp.main --stdio
 ```
 
 ### 非 live 稳定回归
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 .venv/bin/python -m pytest -q -m "not live"
 ```
 
 ### live smoke（推荐）
 ```bash
-cd /home/openclaw/桌面/openclaw/codes/cn-stock-mcp
 bash scripts/smoke_live.sh
 ```
 
@@ -77,7 +72,7 @@ $env:TMP = $env:TEMP
 {
   "command": "/tmp/cn-stock-mcp-venv/bin/python",
   "args": ["-m", "cn_stock_mcp.main", "--stdio"],
-  "cwd": "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp",
+  "cwd": "/path/to/cn-stock-mcp",
   "env": {
     "PYTHONPATH": "src",
     "HTTP_PROXY": "",
@@ -96,7 +91,7 @@ $env:TMP = $env:TEMP
 {
   "command": "python3",
   "args": ["-m", "cn_stock_mcp.main", "--stdio"],
-  "cwd": "/home/openclaw/桌面/openclaw/codes/cn-stock-mcp",
+  "cwd": "/path/to/cn-stock-mcp",
   "env": {
     "PYTHONPATH": "src",
     "HTTP_PROXY": "",
@@ -148,6 +143,8 @@ Windows 源码目录方式对应配置（将路径替换为实际项目目录）
 - sector_review
 - sector_rotation_review
 - provider_health
+
+完整 `full` 档当前注册 53 个工具；`retail_v1_preview` 只暴露 10 个高层工具。Host 看到的数量必须与用户配置中的 `tool_profile` 一致。
 
 ### Step 2 - 调用回归（建议顺序）
 1. `provider_health`

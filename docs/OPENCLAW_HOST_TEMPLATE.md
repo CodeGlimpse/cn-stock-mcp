@@ -100,7 +100,7 @@ cn-stock-mcp --doctor-network
 替换成你的实际仓库路径，例如：
 
 ```json5
-"/home/openclaw/桌面/openclaw/codes/cn-stock-mcp/skills"
+"/path/to/cn-stock-mcp/skills"
 ```
 
 ---

@@ -52,6 +52,15 @@ def test_collect_doctor_report_network_fails_without_token():
     assert "no ZHITU token found" in text or "network check requested but no ZHITU token found" in text
 
 
+def test_doctor_guidance_uses_user_config_instead_of_host_environment():
+    report = collect_doctor_report(settings=_Settings(tokens=[]), app=_AppOK(), include_network=True)
+
+    text = render_doctor_report(report)
+
+    assert "--init-config" in text
+    assert "MCP host config env block" not in text
+
+
 def test_collect_doctor_report_network_ok_with_token_and_provider_ok():
     report = collect_doctor_report(settings=_Settings(tokens=["abc"]), app=_AppOK(), include_network=True)
     assert report.has_fail is False
