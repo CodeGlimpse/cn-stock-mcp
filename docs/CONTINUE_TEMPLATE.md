@@ -27,10 +27,7 @@
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -52,7 +49,7 @@
 
 ```yaml
 name: cn-stock-mcp
-version: 0.0.1
+version: 0.2.0
 schema: v1
 mcpServers:
   - name: cn-stock-mcp
@@ -60,8 +57,6 @@ mcpServers:
     command: cn-stock-mcp
     args:
       - --stdio
-    env:
-      ZHITU_TOKEN: replace-with-your-token
 ```
 
 说明：
@@ -82,8 +77,7 @@ mcpServers:
       "args": ["-m", "cn_stock_mcp.main", "--stdio"],
       "cwd": "/path/to/cn-stock-mcp",
       "env": {
-        "PYTHONPATH": "src",
-        "ZHITU_TOKEN": "replace-with-your-token"
+        "PYTHONPATH": "src"
       }
     }
   }

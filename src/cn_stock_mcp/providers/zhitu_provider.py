@@ -935,7 +935,7 @@ class ZhituProvider:
     def get_token_health(self) -> list[dict]:
         now = self._now()
         rows: list[dict] = []
-        for token in self.tokens:
+        for index, token in enumerate(self.tokens, start=1):
             self._ensure_token_state(token)
             stats = self._token_stats[token]
             total = int(stats.get("total_requests", 0) or 0)
@@ -947,7 +947,7 @@ class ZhituProvider:
             daily_used = int(self._ensure_daily_counter(token).get("count", 0))
             rows.append(
                 {
-                    "token": token,
+                    "token_id": f"zhitu_{index}",
                     "score": round(self._token_score(token, now), 3),
                     "total_requests": total,
                     "success_count": success,

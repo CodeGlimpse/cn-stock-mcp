@@ -18,7 +18,7 @@ Claude Desktop 的 MCP 配置文件通常是：
 先安装：
 
 ```bash
-python -m pip install cn-stock-mcp
+python -m pip install cn-stock-mcp==0.2.0
 ```
 
 再把下面内容写进 Claude Desktop 配置文件：
@@ -28,10 +28,7 @@ python -m pip install cn-stock-mcp
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -55,8 +52,7 @@ python -m pip install cn-stock-mcp
       "args": ["-m", "cn_stock_mcp.main", "--stdio"],
       "cwd": "/path/to/cn-stock-mcp",
       "env": {
-        "PYTHONPATH": "src",
-        "ZHITU_TOKEN": "replace-with-your-token"
+        "PYTHONPATH": "src"
       }
     }
   }

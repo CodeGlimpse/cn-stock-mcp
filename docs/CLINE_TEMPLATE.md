@@ -25,9 +25,6 @@
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
       "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      },
       "disabled": false,
       "autoApprove": []
     }
@@ -57,9 +54,6 @@
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
       "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      },
       "disabled": false,
       "autoApprove": []
     }
@@ -78,8 +72,7 @@
       "command": "/path/to/cn-stock-mcp/.venv/bin/python",
       "args": ["-m", "cn_stock_mcp.main", "--stdio"],
       "env": {
-        "PYTHONPATH": "src",
-        "ZHITU_TOKEN": "replace-with-your-token"
+        "PYTHONPATH": "src"
       },
       "disabled": false,
       "autoApprove": []

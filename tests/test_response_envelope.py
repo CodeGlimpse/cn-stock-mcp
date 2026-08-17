@@ -23,6 +23,7 @@ def test_call_tool_wraps_success_in_envelope():
     assert resp["error"] is None
     assert resp["meta"]["tool"] == "ok"
     assert resp["meta"]["schema_version"] == "v1"
+    assert "disclaimer" in resp["meta"]
     assert isinstance(resp["meta"]["request_id"], str)
     assert resp["meta"]["request_id"].startswith("req_")
 

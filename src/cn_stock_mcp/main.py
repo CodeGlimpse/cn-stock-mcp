@@ -4,7 +4,7 @@ import argparse
 import json
 
 from cn_stock_mcp.app.services.doctor import collect_doctor_report, render_doctor_json, render_doctor_report
-from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.infra.config import get_settings, initialize_user_config
 from cn_stock_mcp.infra.logging import setup_logging
 from cn_stock_mcp.server.transport import TransportApp
 
@@ -31,10 +31,18 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--tool", type=str, help="Tool name to invoke")
     parser.add_argument("--payload", type=str, help="Inline JSON payload for tool invocation")
     parser.add_argument("--stdio", action="store_true", help="Run MCP stdio transport")
+    parser.add_argument("--init-config", action="store_true", help="Create the user token configuration template")
     args = parser.parse_args(argv)
 
     if args.version:
         print(settings.mcp_server_version)
+        return
+
+    if args.init_config:
+        path, created = initialize_user_config()
+        state = "created" if created else "already exists"
+        print(f"User config {state}: {path}")
+        print("Add your Zhitu token to this file manually; it will not be echoed by cn-stock-mcp.")
         return
 
     if args.doctor_network:

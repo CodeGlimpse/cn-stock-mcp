@@ -5,7 +5,7 @@
 ## 第 1 步：安装
 
 ```bash
-python -m pip install cn-stock-mcp
+python -m pip install cn-stock-mcp==0.2.0
 ```
 
 ## 第 2 步：先确认程序装好了
@@ -15,7 +15,15 @@ cn-stock-mcp --version
 cn-stock-mcp --doctor
 ```
 
-如果你已经有 token，再继续：
+初始化本机配置文件，然后由用户手动填入 token：
+
+```bash
+cn-stock-mcp --init-config
+```
+
+默认路径是 Windows 的 `%LOCALAPPDATA%\cn-stock-mcp\config.json`。不要把 token 写入 Host 配置。
+
+填好 token 后再继续：
 
 ```bash
 cn-stock-mcp --doctor-network
@@ -31,10 +39,7 @@ cn-stock-mcp --doctor-network
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }

@@ -21,8 +21,8 @@ mcp_servers:
   cn_stock_mcp:
     command: "cn-stock-mcp"
     args: ["--stdio"]
-    env:
-      ZHITU_TOKEN: "replace-with-your-token"
+    tools:
+      include: [stock_search, market_brief, stock_snapshot, stock_quote, stock_history, stock_review, watchlist_review, trading_calendar, sector_review, hot_theme_tracker]
 ```
 
 说明：
@@ -40,7 +40,6 @@ mcp_servers:
     args: ["-m", "cn_stock_mcp.main", "--stdio"]
     env:
       PYTHONPATH: "src"
-      ZHITU_TOKEN: "replace-with-your-token"
 ```
 
 ---
@@ -63,10 +62,8 @@ mcp_servers:
   cn_stock_mcp:
     command: "cn-stock-mcp"
     args: ["--stdio"]
-    env:
-      ZHITU_TOKEN: "replace-with-your-token"
     tools:
-      include: [stock_search, market_brief, provider_health]
+      include: [stock_search, market_brief, stock_snapshot, stock_quote, stock_history, stock_review, watchlist_review, trading_calendar, sector_review, hot_theme_tracker]
       prompts: false
       resources: false
 ```
@@ -86,6 +83,7 @@ Hermes 官方文档建议：
 ## 5) 推荐先做的本地自检
 
 ```bash
+cn-stock-mcp --init-config
 cn-stock-mcp --version
 cn-stock-mcp --doctor
 cn-stock-mcp --doctor-network

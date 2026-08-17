@@ -8,7 +8,7 @@ from cn_stock_mcp import main as cli
 def test_main_version_flag(capsys):
     cli.main(["--version"])
     captured = capsys.readouterr()
-    assert captured.out.strip() == "0.1.0"
+    assert captured.out.strip() == __import__("cn_stock_mcp").__version__
 
 
 def test_main_doctor_flag_dispatches_without_network(monkeypatch):

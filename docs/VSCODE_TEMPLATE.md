@@ -34,10 +34,7 @@
     "cnStockMcp": {
       "type": "stdio",
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -73,42 +70,20 @@ MCP: Open User Configuration
       "command": "/path/to/cn-stock-mcp/.venv/bin/python",
       "args": ["-m", "cn_stock_mcp.main", "--stdio"],
       "env": {
-        "PYTHONPATH": "src",
-        "ZHITU_TOKEN": "replace-with-your-token"
+        "PYTHONPATH": "src"
       }
     }
   }
 }
 ```
 
-如果你希望减少明文 token，可以改用 VS Code 的 `inputs`。
+Token 不放入 VS Code 配置；由用户在固定本机配置文件中填写。
 
 ---
 
-## 4) VS Code 的 input 变量方式（更适合敏感信息）
+## 4) Token 配置
 
-```json
-{
-  "inputs": [
-    {
-      "type": "promptString",
-      "id": "zhitu-token",
-      "description": "ZHITU Token",
-      "password": true
-    }
-  ],
-  "servers": {
-    "cnStockMcp": {
-      "type": "stdio",
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "${input:zhitu-token}"
-      }
-    }
-  }
-}
-```
+不要用 Host 的 input 或 env 保存 token。运行 `cn-stock-mcp --init-config`，由用户在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 手动填写，服务会自动读取。
 
 ---
 

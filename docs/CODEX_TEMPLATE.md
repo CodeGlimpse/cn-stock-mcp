@@ -18,7 +18,7 @@
 ## 1) 最简单：用 CLI 直接添加
 
 ```bash
-codex mcp add cn-stock-mcp --env ZHITU_TOKEN=replace-with-your-token -- cn-stock-mcp --stdio
+codex mcp add cn-stock-mcp -- cn-stock-mcp --stdio
 ```
 
 说明：
@@ -49,7 +49,7 @@ codex mcp --help
 [mcp_servers.cn_stock_mcp]
 command = "cn-stock-mcp"
 args = ["--stdio"]
-env = { ZHITU_TOKEN = "replace-with-your-token" }
+enabled_tools = ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
 ```
 
 说明：
@@ -72,7 +72,7 @@ env = { ZHITU_TOKEN = "replace-with-your-token" }
 [mcp_servers.cn_stock_mcp]
 command = "cn-stock-mcp"
 args = ["--stdio"]
-env = { ZHITU_TOKEN = "replace-with-your-token" }
+enabled_tools = ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
 ```
 
 适用：
@@ -91,7 +91,7 @@ env = { ZHITU_TOKEN = "replace-with-your-token" }
 command = "/path/to/cn-stock-mcp/.venv/bin/python"
 args = ["-m", "cn_stock_mcp.main", "--stdio"]
 cwd = "/path/to/cn-stock-mcp"
-env = { PYTHONPATH = "src", ZHITU_TOKEN = "replace-with-your-token" }
+env = { PYTHONPATH = "src" }
 ```
 
 Codex 官方文档还提到 stdio server 可用这些字段：
@@ -109,6 +109,7 @@ Codex 官方文档还提到 stdio server 可用这些字段：
 ## 5) 推荐先做的本地自检
 
 ```bash
+cn-stock-mcp --init-config
 cn-stock-mcp --version
 cn-stock-mcp --doctor
 cn-stock-mcp --doctor-network

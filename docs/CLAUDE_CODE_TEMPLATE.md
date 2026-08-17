@@ -18,7 +18,7 @@
 ## 1) 最简单：用命令直接添加本地 stdio server
 
 ```bash
-claude mcp add --transport stdio --env ZHITU_TOKEN=replace-with-your-token cn-stock-mcp -- cn-stock-mcp --stdio
+claude mcp add --transport stdio --scope user cn-stock-mcp -- cn-stock-mcp --stdio
 ```
 
 说明：
@@ -49,10 +49,7 @@ claude mcp get cn-stock-mcp
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -75,8 +72,7 @@ claude mcp get cn-stock-mcp
       "command": "/path/to/cn-stock-mcp/.venv/bin/python",
       "args": ["-m", "cn_stock_mcp.main", "--stdio"],
       "env": {
-        "PYTHONPATH": "src",
-        "ZHITU_TOKEN": "replace-with-your-token"
+        "PYTHONPATH": "src"
       }
     }
   }
@@ -93,6 +89,7 @@ claude mcp get cn-stock-mcp
 ## 4) 推荐先做的本地自检
 
 ```bash
+cn-stock-mcp --init-config
 cn-stock-mcp --version
 cn-stock-mcp --doctor
 cn-stock-mcp --doctor-network

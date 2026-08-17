@@ -118,17 +118,17 @@ def test_zhitu_token_health_contains_observability_fields():
     provider._get_json('/hz/list/hszs')
 
     rows = provider.get_token_health()
-    by_token = {row['token']: row for row in rows}
+    by_token = {row['token_id']: row for row in rows}
 
-    assert set(by_token.keys()) == {'TOKEN_A', 'TOKEN_B'}
+    assert set(by_token.keys()) == {'zhitu_1', 'zhitu_2'}
 
-    a = by_token['TOKEN_A']
+    a = by_token['zhitu_1']
     assert a['total_requests'] == 1
     assert a['failure_count'] == 1
     assert a['rate_limit_count'] == 1
     assert a['cooldown_remaining_seconds'] >= 0
 
-    b = by_token['TOKEN_B']
+    b = by_token['zhitu_2']
     assert b['total_requests'] == 1
     assert b['success_count'] == 1
     assert b['failure_count'] == 0

@@ -1,5 +1,6 @@
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.infra.security import redact_sensitive_text
 
 
 class ProviderHealthUseCase:
@@ -28,7 +29,7 @@ class ProviderHealthUseCase:
             checks.append({
                 "name": "zhitu_quote_index",
                 "status": "error",
-                "detail": str(exc),
+                "detail": redact_sensitive_text(exc, self.settings.resolve_zhitu_tokens()),
             })
 
         try:
@@ -42,7 +43,7 @@ class ProviderHealthUseCase:
             checks.append({
                 "name": "zhitu_history_index",
                 "status": "error",
-                "detail": str(exc),
+                "detail": redact_sensitive_text(exc, self.settings.resolve_zhitu_tokens()),
             })
 
         try:
@@ -56,7 +57,7 @@ class ProviderHealthUseCase:
             checks.append({
                 "name": "zhitu_orderbook_star",
                 "status": "error",
-                "detail": str(exc),
+                "detail": redact_sensitive_text(exc, self.settings.resolve_zhitu_tokens()),
             })
 
         akshare = self.router.get_provider("akshare")
@@ -71,7 +72,7 @@ class ProviderHealthUseCase:
             checks.append({
                 "name": "akshare_search_stock",
                 "status": "error",
-                "detail": str(exc),
+                "detail": redact_sensitive_text(exc, self.settings.resolve_zhitu_tokens()),
             })
 
         try:
@@ -85,7 +86,7 @@ class ProviderHealthUseCase:
             checks.append({
                 "name": "akshare_history_stock",
                 "status": "error",
-                "detail": str(exc),
+                "detail": redact_sensitive_text(exc, self.settings.resolve_zhitu_tokens()),
             })
 
         overall = "ok"

@@ -2,10 +2,7 @@
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }

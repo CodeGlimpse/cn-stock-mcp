@@ -11,7 +11,7 @@
 先重试：
 
 ```bash
-python -m pip install cn-stock-mcp
+python -m pip install cn-stock-mcp==0.2.0
 ```
 
 如果你是源码开发环境，出现下面这种情况并不一定是坏了：
@@ -53,11 +53,13 @@ cn-stock-mcp --doctor-network
 
 ## 3) `--doctor-network` 提示没有 token，怎么办？
 
-说明宿主配置里还没有传：
+说明用户配置文件中还没有 token。先运行：
 
 ```json
-"ZHITU_TOKEN": "your-token"
+cn-stock-mcp --init-config
 ```
+
+然后由用户手动填写 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json`；不要把 token 写进宿主配置。
 
 最简单的处理方式是直接参考：
 - `.mcp.sample.json`
@@ -92,7 +94,7 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - 依赖装在别的虚拟环境里
 - `cwd` 错了
 - 源码运行时漏了 `PYTHONPATH=src`
-- 宿主没有把 `env` 透传进去
+- 用户配置文件路径不存在或没有读取权限
 
 如果你是源码目录方式挂载，优先对照：
 - `docs/HOST_CONFIG_TEMPLATES.md`

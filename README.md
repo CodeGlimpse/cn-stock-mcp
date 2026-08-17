@@ -4,6 +4,8 @@
 
 > **如果你是人类用户：** 不要先通读整个仓库，先看 `docs/START_HERE.md`。
 
+> **Windows + AI 自部署：** 先看 `docs/AI_DEPLOY_WINDOWS.md`；它是固定版本、token 脱敏和首次问答验收的执行合同。
+
 > **如果你要把这个 MCP 教给 AI / 集成到 agent：** 先看 `docs/AI_ONBOARDING.md`。
 
 > **如果你在找“给各个 agent 用的 skill 在哪里”：** 先看 `docs/AGENT_AND_SKILL_MAP.md`。
@@ -53,7 +55,7 @@
 ### 安装
 
 ```bash
-python -m pip install cn-stock-mcp
+python -m pip install cn-stock-mcp==0.2.0
 ```
 
 ### 本地自检
@@ -71,10 +73,7 @@ cn-stock-mcp --doctor-network
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -123,6 +122,8 @@ cn-stock-mcp --doctor-network
 - `docs/HERMES_TEMPLATE.md`：Hermes 单独模板
 - `docs/CODEX_TEMPLATE.md`：Codex 单独模板
 - `docs/FAQ.md`：常见错误与排查
+- `docs/AI_DEPLOY_WINDOWS.md`：交给 Windows AI agent 的自部署与验收流程
+- `docs/SECURITY.md`、`docs/PRIVACY.md`、`docs/DATA_SOURCES.md`：安全、隐私和数据来源边界
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口
 - `docs/EXAMPLES_MINIMAL.md`：最小可工作的调用示例

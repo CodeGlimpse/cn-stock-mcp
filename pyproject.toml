@@ -1,6 +1,6 @@
 [project]
 name = "cn-stock-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "MCP server for Chinese market data via AKShare and Zhitu"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from cn_stock_mcp.infra.config import Settings
+from cn_stock_mcp.infra.config import initialize_user_config
 
 
 def test_resolve_zhitu_tokens_reads_default_first_and_keeps_others(tmp_path: Path):
@@ -45,3 +46,28 @@ def test_token_config_status_reports_invalid_shape(tmp_path: Path):
     settings = Settings(zhitu_token_config_path=str(config_path), zhitu_token="")
 
     assert settings.zhitu_token_config_status()["status"] == "invalid_shape"
+
+
+def test_nested_user_config_reads_token_and_tool_profile(tmp_path: Path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        '{"tool_profile":"retail_v1_preview","zhitu":{"token":"TOKEN_NESTED"}}',
+        encoding="utf-8",
+    )
+
+    settings = Settings(zhitu_token_config_path=str(config_path), zhitu_token="")
+
+    assert settings.resolve_zhitu_tokens() == ["TOKEN_NESTED"]
+    assert settings.resolve_tool_profile() == "retail_v1_preview"
+
+
+def test_initialize_user_config_is_idempotent_and_contains_no_token(tmp_path: Path):
+    config_path = tmp_path / "config.json"
+
+    first_path, first_created = initialize_user_config(str(config_path))
+    second_path, second_created = initialize_user_config(str(config_path))
+
+    assert first_path == second_path == config_path
+    assert first_created is True
+    assert second_created is False
+    assert '"primary": ""' in config_path.read_text(encoding="utf-8")

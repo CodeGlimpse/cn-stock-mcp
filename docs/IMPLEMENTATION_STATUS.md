@@ -1,8 +1,10 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-08-15
+Last Updated: 2026-08-17
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
+
+当前目标公开版本：`0.2.0`。PyPI 与 GitHub Release 尚需完成远端发布；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
 
 ---
 
@@ -33,6 +35,7 @@ cn-stock-mcp --list-tools
 cn-stock-mcp --list-tools --json
 cn-stock-mcp --describe-tool stock_quote
 cn-stock-mcp --tool provider_health --payload '{}'
+cn-stock-mcp --init-config
 ```
 
 ### 自检能力
@@ -55,6 +58,8 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - console script 写入 `entry_points.txt`
 - `MANIFEST.in` 控制发布内容
 - sdist / wheel 不再携带 `tests/` 与 `.github/`
+- 默认 token 配置路径为每用户 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json`
+- `retail_v1_preview` 工具档包含 10 个高层工具；`full` 保持全量兼容
 
 ### 文档与交付层
 当前已具备：
@@ -63,6 +68,8 @@ cn-stock-mcp --tool provider_health --payload '{}'
 - FAQ：`docs/FAQ.md`
 - host 模板总入口：`docs/HOST_CONFIG_TEMPLATES.md`
 - host-specific 模板：OpenClaw / Claude Desktop / Claude Code / Continue / VS Code / Cursor / Cline / Windsurf / Hermes / Codex
+- Windows AI 部署与首次问答验收合同：`docs/AI_DEPLOY_WINDOWS.md`
+- 对外边界：`docs/SECURITY.md` / `docs/PRIVACY.md` / `docs/DATA_SOURCES.md` / `docs/SUPPORT.md`
 - AI 集成说明：`docs/AI_ONBOARDING.md`
 - AI 最小规则：`docs/AGENT_MINIMAL.md`
 - agent / skill 对照：`docs/AGENT_AND_SKILL_MAP.md`
@@ -72,7 +79,7 @@ cn-stock-mcp --tool provider_health --payload '{}'
 
 ## 3) 当前测试与 CI 状态
 
-### 已验证
+### 已验证（截至上一轮，历史基线）
 - 非 live 回归：`511 passed, 22 deselected`
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
 - `market_pool` 显式日期缓存命中不再先访问交易日历上游
@@ -96,14 +103,14 @@ cn-stock-mcp --tool provider_health --payload '{}'
 
 而不是基础质量门禁或定时巡检任务。
 
-### P2 实时数据与兼容性验证
+### P2 实时数据与兼容性验证（历史记录，仍未覆盖本轮新配置和免责声明）
 
 2026-08-13 在 Windows 普通 CPython 3.13.2 项目虚拟环境中完成：
 
 - 实时 smoke：13/13 通过
 - extended live：3/3 通过
 - Zhitu 市场池日期格式兼容：3/3 通过，支持 `YYYY-MM-DD` 与 `YYYYMMDD`
-- MCP stdio 进程级验证：initialize 成功、52 个工具、无效参数返回 `INVALID_ARGUMENT`
+- MCP stdio 进程级验证：initialize 成功、当时 52 个工具、无效参数返回 `INVALID_ARGUMENT`
 - `--doctor-network`：`provider_health` 通过
 - `pip check`：通过
 - 完整非 live 回归：472 通过，16 个 live 用例排除
@@ -115,7 +122,7 @@ cn-stock-mcp --tool provider_health --payload '{}'
 
 2026-08-14 已完成：
 
-- `docs/INTERFACE_SCHEMA.md` 与实际 52 个注册 tool 对齐
+- `docs/INTERFACE_SCHEMA.md` 与当时实际 52 个注册 tool 对齐
 - `docs/ERROR_MODEL.md` 增加 `meta.freshness` 成功响应契约
 - MCP 成功响应统一提供 `observed_at/as_of/basis/status/age_seconds`
 - 无法从业务 payload 识别源时间时返回 `status=unknown`，不伪造数据产生时间

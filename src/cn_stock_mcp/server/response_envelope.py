@@ -5,6 +5,10 @@ from typing import Any
 from uuid import uuid4
 
 SCHEMA_VERSION = "v1"
+USER_DISCLAIMER = (
+    "仅提供证券市场数据查询与技术分析能力，不构成投资建议、买卖建议、收益承诺或个性化风险评估；"
+    "数据可能延迟、缺失或错误，请独立核验并自行承担决策风险。"
+)
 _OBSERVABILITY_KEYS = (
     "provider_used",
     "fallback_chain",
@@ -23,6 +27,7 @@ def _merge_meta(meta: dict[str, Any] | None, request_id: str | None = None) -> d
     merged = {
         "schema_version": SCHEMA_VERSION,
         "request_id": request_id or new_request_id(),
+        "disclaimer": USER_DISCLAIMER,
     }
     if meta:
         merged.update(meta)

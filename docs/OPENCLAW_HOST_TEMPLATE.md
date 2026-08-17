@@ -15,17 +15,27 @@
 - 你只想把 `cn-stock-mcp` 挂到 OpenClaw
 - 不需要仓库内附带的 OpenClaw skill adapter
 
-将下面内容合并到：
-- `~/.openclaw/openclaw.json`
+优先使用 OpenClaw CLI 添加并实时探测：
+
+```bash
+openclaw mcp add cn-stock-mcp --command cn-stock-mcp --arg --stdio
+openclaw mcp doctor cn-stock-mcp --probe
+```
+
+也可以将下面内容合并到 OpenClaw 配置：
 
 ```json5
 {
-  mcpServers: {
-    "cn-stock-mcp": {
-      command: "cn-stock-mcp",
-      args: ["--stdio"],
-      env: {
-        ZHITU_TOKEN: "replace-with-your-token"
+  mcp: {
+    servers: {
+      "cn-stock-mcp": {
+        command: "cn-stock-mcp",
+        args: ["--stdio"],
+        transport: "stdio",
+        enabled: true,
+        toolFilter: {
+          include: ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
+        }
       }
     }
   }
@@ -56,12 +66,16 @@ cn-stock-mcp --doctor-network
 
 ```json5
 {
-  mcpServers: {
-    "cn-stock-mcp": {
-      command: "cn-stock-mcp",
-      args: ["--stdio"],
-      env: {
-        ZHITU_TOKEN: "replace-with-your-token"
+  mcp: {
+    servers: {
+      "cn-stock-mcp": {
+        command: "cn-stock-mcp",
+        args: ["--stdio"],
+        transport: "stdio",
+        enabled: true,
+        toolFilter: {
+          include: ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
+        }
       }
     }
   },
@@ -97,14 +111,16 @@ cn-stock-mcp --doctor-network
 
 ```json5
 {
-  mcpServers: {
-    "cn-stock-mcp": {
-      command: "/path/to/cn-stock-mcp/.venv/bin/python",
-      args: ["-m", "cn_stock_mcp.main", "--stdio"],
-      cwd: "/path/to/cn-stock-mcp",
-      env: {
-        PYTHONPATH: "src",
-        ZHITU_TOKEN: "replace-with-your-token"
+  mcp: {
+    servers: {
+      "cn-stock-mcp": {
+        command: "/path/to/cn-stock-mcp/.venv/bin/python",
+        args: ["-m", "cn_stock_mcp.main", "--stdio"],
+        cwd: "/path/to/cn-stock-mcp",
+        transport: "stdio",
+        env: {
+          PYTHONPATH: "src"
+        }
       }
     }
   }
@@ -118,6 +134,14 @@ cn-stock-mcp --doctor-network
 ---
 
 ## 4) OpenClaw 验证命令
+
+```bash
+openclaw mcp doctor cn-stock-mcp --probe
+openclaw mcp status --verbose
+openclaw mcp reload
+```
+
+如果启用了仓库内 skill adapter，再运行：
 
 ```bash
 openclaw skills list --eligible

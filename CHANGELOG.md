@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-08-17
+
+### Added
+- Prepared the first public AI-assisted Windows distribution path.
+- Added fixed per-user token configuration, initialization, permissions hardening, and diagnostic redaction.
+- Added response disclaimers and the bounded `retail_v1_preview` tool profile.
+- Updated Codex, Claude Code, OpenClaw, and Hermes Agent templates to avoid embedding tokens.
+- Added security, privacy, support, data-source, Windows deployment, and release documentation.
+- Added release workflow controls for dependency audit, SBOM, checksums, Trusted Publishing, and build provenance.
+
 ## [Unreleased] - 2026-08-15
 
 ### Changed

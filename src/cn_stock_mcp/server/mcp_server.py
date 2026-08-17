@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ValidationError
 from cn_stock_mcp.app.services.data_freshness import build_data_freshness
 from cn_stock_mcp.app.services.data_quality import build_data_quality
 from cn_stock_mcp.app.services.error_mapper import serialize_exception
+from cn_stock_mcp.app.services.tool_profiles import select_tool_names
 from cn_stock_mcp.app.usecases.hot_theme_tracker import HotThemeTrackerUseCase
 from cn_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
 from cn_stock_mcp.app.usecases.market_overview import MarketOverviewUseCase
@@ -64,6 +65,8 @@ from cn_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseC
 from cn_stock_mcp.app.usecases.trading_calendar import TradingCalendarUseCase
 from cn_stock_mcp.infra.logging import log_event
 from cn_stock_mcp.server.response_envelope import error_response, new_request_id, ok_response
+from cn_stock_mcp import __version__
+from cn_stock_mcp.infra.config import get_settings
 from cn_stock_mcp.server.schemas import (
     HotThemeTrackerRequest,
     MarketBriefRequest,
@@ -200,7 +203,8 @@ class MCPServerStub(BaseModel):
 
 
 def create_server() -> MCPServerStub:
-    server = MCPServerStub(name="cn-stock-mcp", version="0.1.0")
+    settings = get_settings()
+    server = MCPServerStub(name="cn-stock-mcp", version=__version__)
 
     stock_search = StockSearchUseCase()
     stock_quote = StockQuoteUseCase()
@@ -309,5 +313,10 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="fund_flow", description="Get fund flow data (主力资金流向): market-level 120-day trend (主力/超大单/大单/中单/小单), industry 90-sector ranking with net inflow, individual stock 120-day history. Sina source.", input_model=FundFlowRequest, handler=fund_flow.execute))
     server.register_tool(MCPTool(name="limit_up_pool", description="Get limit-up/limit-down pool analysis (涨停/跌停股池历史分析): limit-up, limit-down, strong/continuous, previous-day limit performance, sub-new, and broken-limit pools by trade date. EastMoney source.", input_model=LimitUpPoolRequest, handler=limit_up_pool.execute))
     server.register_tool(MCPTool(name="sec_reveal", description="Deep dragon-tiger seat reveal (龙虎榜机构席位深度): stock buy/sell seat detail, active broker seats, institution detail, and institution trace/ranking. EastMoney + Sina sources.", input_model=SecRevealRequest, handler=sec_reveal.execute))
+
+    profile = settings.resolve_tool_profile()
+    if profile != "full":
+        selected = select_tool_names(server.tools, profile)
+        server.tools = {name: tool for name, tool in server.tools.items() if name in selected}
 
     return server

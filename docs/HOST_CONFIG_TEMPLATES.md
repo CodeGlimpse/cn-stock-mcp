@@ -49,10 +49,7 @@
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -67,7 +64,8 @@
 
 适用：
 - 你的宿主支持 MCP
-- 你已经执行过 `python -m pip install cn-stock-mcp`
+- 你已经执行过 `python -m pip install cn-stock-mcp==0.2.0`
+- 你已经运行 `cn-stock-mcp --init-config`，并由用户手动填写 token
 - 宿主配置里可以填写 `command / args / env`
 
 ```json
@@ -75,10 +73,7 @@
   "mcpServers": {
     "cn-stock-mcp": {
       "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "env": {
-        "ZHITU_TOKEN": "replace-with-your-token"
-      }
+      "args": ["--stdio"]
     }
   }
 }
@@ -105,8 +100,7 @@
       "args": ["-m", "cn_stock_mcp.main", "--stdio"],
       "cwd": "/path/to/cn-stock-mcp",
       "env": {
-        "PYTHONPATH": "src",
-        "ZHITU_TOKEN": "replace-with-your-token"
+        "PYTHONPATH": "src"
       }
     }
   }

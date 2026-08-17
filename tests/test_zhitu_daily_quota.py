@@ -116,7 +116,7 @@ def test_token_health_includes_daily_quota_fields():
     provider = _Zhitu(daily_quota=500)
     provider._get_json('/test')
     rows = provider.get_token_health()
-    a = [r for r in rows if r['token'] == 'TOKEN_A'][0]
+    a = [r for r in rows if r['token_id'] == 'zhitu_1'][0]
     assert a['daily_quota'] == 500
     assert a['daily_used'] == 1
     assert a['daily_remaining'] == 499
