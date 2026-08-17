@@ -6,7 +6,7 @@ httpx==0.28.1
 tenacity==9.1.4
 cachetools==7.1.7
 orjson==3.11.9
-akshare==1.18.84
+akshare==1.18.91
 mcp==2.0.0
 pytest==9.1.1
 pytest-asyncio==1.4.0
