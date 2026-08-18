@@ -11,6 +11,7 @@ from cn_stock_mcp.app.services.metric_schema import (
 )
 from cn_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
 from cn_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
+from cn_stock_mcp.infra.security import redact_sensitive_text
 from cn_stock_mcp.providers.errors import ProviderError
 
 
@@ -31,7 +32,7 @@ class MultiTimeframeReviewUseCase:
                 for ie in card.pop("indicator_errors", []):
                     errors.append(ie)
             except Exception as exc:
-                errors.append({"interval": interval, "error_code": getattr(exc, "code", "ERROR"), "message": str(exc), "retryable": getattr(exc, "retryable", False), "provider": getattr(exc, "provider", None)})
+                errors.append({"interval": interval, "error_code": getattr(exc, "code", "ERROR"), "message": redact_sensitive_text(exc), "retryable": getattr(exc, "retryable", False), "provider": getattr(exc, "provider", None)})
 
         if not cards:
             raise ProviderError("EMPTY_RESULT", "No timeframe review results available", retryable=False)
@@ -142,7 +143,7 @@ class MultiTimeframeReviewUseCase:
                     "interval": interval,
                     "indicator": indicator,
                     "error_code": getattr(exc, "code", "PROVIDER_UNAVAILABLE"),
-                    "message": str(exc),
+                    "message": redact_sensitive_text(exc),
                     "retryable": getattr(exc, "retryable", True),
                 })
                 continue

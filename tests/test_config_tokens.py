@@ -2,6 +2,7 @@ from pathlib import Path
 
 from cn_stock_mcp.infra.config import Settings
 from cn_stock_mcp.infra.config import initialize_user_config
+from cn_stock_mcp import __version__
 
 
 def test_resolve_zhitu_tokens_reads_default_first_and_keeps_others(tmp_path: Path):
@@ -71,3 +72,9 @@ def test_initialize_user_config_is_idempotent_and_contains_no_token(tmp_path: Pa
     assert first_created is True
     assert second_created is False
     assert '"primary": ""' in config_path.read_text(encoding="utf-8")
+
+
+def test_package_version_cannot_be_overridden_by_environment(monkeypatch):
+    monkeypatch.setenv("MCP_SERVER_VERSION", "9.9.9")
+
+    assert Settings().mcp_server_version == __version__

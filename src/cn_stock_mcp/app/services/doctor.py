@@ -56,7 +56,12 @@ class DoctorReport:
         }
 
 
-def collect_doctor_report(settings: Settings, app: TransportApp, include_network: bool = False) -> DoctorReport:
+def collect_doctor_report(
+    settings: Settings,
+    app: TransportApp,
+    include_network: bool = False,
+    network_app: TransportApp | None = None,
+) -> DoctorReport:
     checks: list[DoctorCheck] = []
 
     checks.append(DoctorCheck("OK", "python", sys.executable))
@@ -98,7 +103,8 @@ def collect_doctor_report(settings: Settings, app: TransportApp, include_network
         if token_count == 0:
             checks.append(DoctorCheck("FAIL", "provider_health", "network check requested but no ZHITU token found"))
         else:
-            provider_health = app.call_tool("provider_health", {})
+            health_app = network_app or app
+            provider_health = health_app.call_tool("provider_health", {})
             provider_ok = bool(provider_health.get("success")) and provider_health.get("error") is None
             if provider_ok:
                 checks.append(DoctorCheck("OK", "provider_health", "provider_health ok"))

@@ -2,7 +2,9 @@
 
 ## Supported release
 
-首个公开版本为 `0.2.0`。发布时正式验证：Windows 11 x64、Python 3.11–3.13，以及 Codex、Claude Code、OpenClaw、Hermes Agent 的本地 stdio 接入。
+首个公开版本为 `0.2.0`。正式发布门禁验证 Windows 11 x64、普通 CPython 3.13 和共同的本地 stdio MCP 合同；Codex、Claude Code、OpenClaw、Hermes Agent 提供版本化配置文档，Host 图形界面需由用户在自己的环境完成验收。
+
+本版本不承诺四个 Host 的图形界面行为、第三方上游可用性或数据授权状态。
 
 ## Support boundary
 

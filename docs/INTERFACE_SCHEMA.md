@@ -1,6 +1,6 @@
 # Interface Schema (`cn-stock-mcp`)
 
-Last Updated: 2026-08-15
+Last Updated: 2026-08-18
 
 > 本文是当前对外契约（输入/输出与关键约束）。
 > 若与历史文档冲突，以本文与代码实现为准。
@@ -274,8 +274,8 @@ Last Updated: 2026-08-15
 |---|---|---|---|
 | `partial_failure` | bool | 本次调用存在部分数据获取失败 | margin_trading, limit_stat, multi_timeframe_review, stock_quote, stock_candidate_scan, watchlist_review 等 |
 | `errors` | list[dict] | 失败条目列表；每条含 `error_code`, `message`, `retryable`, 上下文字段（如 `exchange`, `section`, `interval`, `indicator`, `symbol`） | 同上 |
-| `provider_used` | str 或 list[str] | 实际使用的 provider；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
-| `fallback_chain` | list[str] | 主备 provider 链路；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
+| `provider_used` | str 或 list[str] | 实际使用的 provider；有实现证据时由业务 `data.meta` 提升到顶层 `meta`，否则为 unknown/缺省 | 按 tool 能力提供 |
+| `fallback_chain` | list[str] | 主备 provider 链路；有实现证据时由业务 `data.meta` 提升到顶层 `meta`，否则为 unknown/缺省 | 按 tool 能力提供 |
 | `latency_ms` | int | 调用耗时（毫秒）；统一 envelope 中优先从业务 `data.meta` 提升到顶层 `meta` | 所有 tool |
 | `freshness` | object | 成功响应的观察时间、源数据 as-of 和新鲜度状态 | 所有成功 tool |
 | `data_quality` | object | `data_quality_v1` 评分、标签、因素和 flags；仅表示数据可用性启发式 | 所有成功 tool |

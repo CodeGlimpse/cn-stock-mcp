@@ -1,6 +1,6 @@
 # Docs Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-08-15
+Last Updated: 2026-08-18
 
 本目录只保留当前有效的运行文档。
 

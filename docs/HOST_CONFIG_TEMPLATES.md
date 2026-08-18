@@ -1,6 +1,6 @@
 # Host Config Templates (`cn-stock-mcp`)
 
-这页提供可直接复制的 **host-specific / host-oriented 配置模板**。
+这页提供可直接复制的 **host-specific / host-oriented 配置模板**。模板描述的是配置形状，不等同于每个 Host 的真人安装认证。
 
 如果你只想先装起来，优先看：
 - `docs/HANDOFF_MINIMAL.md`
@@ -9,7 +9,7 @@
 
 ---
 
-## 1) 已核实可直接复制的宿主模板
+## 1) 已提供模板的宿主
 
 ### OpenClaw
 - `docs/OPENCLAW_HOST_TEMPLATE.md`
@@ -80,7 +80,8 @@
 ```
 
 说明：
-- 这是最适合最终用户的配置形态。
+- 这是最适合最终用户的配置形态；Windows 专用 venv 未加入 PATH 时，必须把 `command` 替换为部署步骤解析出的绝对 `cn-stock-mcp.exe` 路径。
+- 不要在 `env`、命令行参数或 Host 配置中放置 Zhitu token。
 - 根目录也提供了同内容示例：`.mcp.sample.json`
 
 ---

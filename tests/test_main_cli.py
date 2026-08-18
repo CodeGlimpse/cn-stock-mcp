@@ -60,6 +60,40 @@ def test_main_doctor_json_dispatches_json_output(monkeypatch):
     assert called == {"include_network": False, "json_output": True}
 
 
+def test_doctor_network_keeps_hidden_provider_health_available(monkeypatch, capsys):
+    class _Server:
+        def __init__(self, full=False):
+            self.tools = {"provider_health": object()} if full else {"stock_quote": object()}
+
+    class _App:
+        def __init__(self, profile_override=None):
+            self.server = _Server(profile_override == "full")
+
+        def list_tools(self):
+            return [{"name": name} for name in self.server.tools]
+
+        def call_tool(self, name, payload):
+            assert name == "provider_health"
+            return {"success": True, "error": None}
+
+    class _Settings:
+        mcp_server_name = "cn-stock-mcp"
+        mcp_server_version = "0.2.0"
+
+        def resolve_zhitu_tokens(self):
+            return ["configured-but-never-printed"]
+
+        def zhitu_token_config_status(self):
+            return {"path": "config.json", "status": "ok", "message": "token config parsed"}
+
+    monkeypatch.setattr(cli, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(cli, "TransportApp", _App)
+
+    assert cli._doctor(include_network=True, json_output=True) == 0
+    output = capsys.readouterr().out
+    assert '"provider_health"' in output
+
+
 def test_main_list_tools_json_requests_detailed_catalog(monkeypatch, capsys):
     class _App:
         def list_tools(self, detailed=False):

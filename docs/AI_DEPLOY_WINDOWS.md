@@ -8,7 +8,7 @@
 - 运行方式：本机 stdio MCP server
 - 默认配置文件：`%LOCALAPPDATA%\cn-stock-mcp\config.json`
 - 首选工具档：`retail_v1_preview`
-- Host：Codex、Claude Code、OpenClaw、Hermes Agent
+- 首批文档化 Host：Codex、Claude Code、OpenClaw、Hermes Agent；本版本验证的是共同的 stdio MCP 合同，Host 图形界面仍需按客户环境单独验收。
 - 该项目只查询公开市场数据，不连接券商、不保存交易账户、不下单。
 
 不要把 token 写入 MCP Host 配置、Git 仓库、命令行参数、聊天记录或诊断包。
@@ -17,7 +17,7 @@
 
 ### 1. 预检
 
-确认 Windows x64、Python 3.11–3.13 和网络可用。若没有受支持的 Python，先向用户说明将进行用户级安装，再执行官方 Python 安装流程；不要修改系统 PATH 或全局执行策略。
+确认 Windows x64、Python 3.13（普通 CPython，不是 free-threaded 版本）和网络可用。项目代码兼容 Python 3.11–3.13，但本首发 Windows 自动部署合同固定验收 3.13；若没有受支持的 Python，先向用户说明将进行用户级安装，再执行官方 Python 安装流程；不要修改系统 PATH 或全局执行策略。
 
 ### 2. 固定版本安装
 
@@ -55,7 +55,7 @@ $mcpExe = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv\Scripts\cn-stoc
 & "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --list-tools --json
 ```
 
-`--doctor` 可因跳过网络检查显示 `WARN`，但退出码必须为 0；`--doctor-network` 必须退出 0。`--list-tools --json` 必须只列出 `retail_v1_preview` 的 10 个工具。输出中只允许出现配置路径、状态和数量，不得出现 token 原文、尾号或 URL 查询参数。
+`--doctor` 可因跳过网络检查显示 `WARN`，但退出码必须为 0；`--doctor-network` 必须退出 0。`--list-tools --json` 会返回 retail 工具目录及其 schema，必须只包含 `retail_v1_preview` 的 10 个工具。输出中允许出现工具名称、schema、版本、脱敏配置路径和状态，但不得出现 token 原文、尾号或带凭据 URL 查询参数。
 
 ### 5. 配置 Host
 
@@ -72,7 +72,7 @@ $mcpExe = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv\Scripts\cn-stoc
 
 > 查询平安银行最新行情，给出数据来源、数据时间、交易时段和数据质量；不要提供投资建议。
 
-验收必须看到 symbol、source、freshness/as_of、session_context 或等价信息，并确认回答没有 token、下单指令、收益承诺或荐股结论。
+验收必须看到 symbol、数据来源（若上游未提供则明确标记 unknown）、freshness/as_of、session_context 或等价信息，并确认回答没有 token、下单指令、收益承诺或荐股结论。`data_quality` 只是数据可用性提示，不是投资置信度。
 
 ## 回滚
 

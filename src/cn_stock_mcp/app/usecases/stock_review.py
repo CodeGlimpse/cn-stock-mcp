@@ -10,6 +10,7 @@ from cn_stock_mcp.app.services.metric_schema import REVIEW_METRIC_SCHEMA, REVIEW
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
 from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.infra.security import redact_sensitive_text
 from cn_stock_mcp.providers.errors import ProviderError
 
 
@@ -538,7 +539,7 @@ class StockReviewUseCase:
                 "return_pct": None,
                 "latest_bar": None,
                 "source": None,
-                "meta": {"error": str(exc)},
+                "meta": {"error": redact_sensitive_text(exc)},
                 "range_mode": range_mode,
             }
         self.benchmark_cache.set(cache_key, result)

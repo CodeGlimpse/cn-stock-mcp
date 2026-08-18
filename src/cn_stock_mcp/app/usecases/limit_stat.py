@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.infra.security import redact_sensitive_text
 from cn_stock_mcp.app.models.limit_stat import LimitStatSummary
 from cn_stock_mcp.providers.adapters.akshare_limit_stat_adapters import (
     build_limit_stat_summary,
@@ -53,7 +54,7 @@ class LimitStatUseCase:
             self._limit_down_error = {
                 "section": "limit_down",
                 "error_code": getattr(exc, "code", "PROVIDER_UNAVAILABLE"),
-                "message": str(exc),
+                "message": redact_sensitive_text(exc),
                 "retryable": getattr(exc, "retryable", True),
                 "provider": "zhitu",
             }

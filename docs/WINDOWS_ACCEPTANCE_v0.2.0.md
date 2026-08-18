@@ -23,4 +23,4 @@ The tag-triggered Release workflow runs a separate `windows-latest` job before p
 
 ## Scope boundary
 
-No Zhitu token was entered or read during this acceptance. The first live query used AKShare. Codex, Claude Code, OpenClaw, and Hermes Agent have versioned configuration templates, but their graphical or interactive shells were not all installed on this workstation; their shared stdio contract is covered by the real MCP client test and the clean Windows release gate.
+No Zhitu token was entered or read during this acceptance. The first live query used AKShare. Codex, Claude Code, OpenClaw, and Hermes Agent have versioned configuration templates, but their graphical or interactive shells were not all installed on this workstation; their shared stdio contract is covered by the real MCP client test and the clean Windows release gate. This is documentation/stdio evidence, not a claim of four graphical Host certifications.

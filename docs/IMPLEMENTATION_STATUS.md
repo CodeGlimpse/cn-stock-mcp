@@ -1,10 +1,10 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-08-17
+Last Updated: 2026-08-18
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
-当前目标公开版本：`0.2.0`。PyPI 与 GitHub Release 尚需完成远端发布；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
+当前目标公开版本：`0.2.0`。PyPI 与 GitHub Release 由标签工作流发布并在发布后核验；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
 
 ---
 
@@ -80,7 +80,7 @@ cn-stock-mcp --init-config
 ## 3) 当前测试与 CI 状态
 
 ### 已验证（截至上一轮，历史基线）
-- 非 live 回归：`511 passed, 22 deselected`
+- 非 live 回归：`522 passed, 22 deselected`（本地发布前复核）
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
 - `market_pool` 显式日期缓存命中不再先访问交易日历上游
 - fallback 不再吞掉未预期的编程异常或结果策略异常
@@ -110,10 +110,10 @@ cn-stock-mcp --init-config
 - 实时 smoke：13/13 通过
 - extended live：3/3 通过
 - Zhitu 市场池日期格式兼容：3/3 通过，支持 `YYYY-MM-DD` 与 `YYYYMMDD`
-- MCP stdio 进程级验证：initialize 成功、当时 52 个工具、无效参数返回 `INVALID_ARGUMENT`
+- MCP stdio 进程级验证：initialize 成功、历史记录当时为 52 个工具、无效参数返回 `INVALID_ARGUMENT`
 - `--doctor-network`：`provider_health` 通过
 - `pip check`：通过
-- 完整非 live 回归：472 通过，16 个 live 用例排除
+- 完整非 live 回归：历史记录为 472 通过，16 个 live 用例排除
 - Provider 复用后首次 `create_server()` 约 0.33 秒，后续约 0.06 秒
 
 详细命令、环境和限制见 `docs/P2_DELIVERY_RECORD_2026-08-13.md`。
@@ -122,7 +122,7 @@ cn-stock-mcp --init-config
 
 2026-08-14 已完成：
 
-- `docs/INTERFACE_SCHEMA.md` 与当时实际 52 个注册 tool 对齐
+- `docs/INTERFACE_SCHEMA.md` 与当前 53 个注册 tool 对齐；旧记录中的 52 个工具数字保留为历史证据
 - `docs/ERROR_MODEL.md` 增加 `meta.freshness` 成功响应契约
 - MCP 成功响应统一提供 `observed_at/as_of/basis/status/age_seconds`
 - 无法从业务 payload 识别源时间时返回 `status=unknown`，不伪造数据产生时间
@@ -131,7 +131,7 @@ cn-stock-mcp --init-config
 
 ### P1 稳定性与使用体验
 
-2026-08-15 已完成：
+2026-08-15 至 2026-08-18 已完成：
 
 - 统一响应层将 provider、fallback、耗时等稳定可观测字段提升到顶层 `meta`，同时保留 `data.meta` 兼容旧调用方
 - freshness 支持 `source_as_of`、`source_timestamp`、`source_date` 显式 hint，优先于通用字段扫描
@@ -141,7 +141,7 @@ cn-stock-mcp --init-config
 
 ### P2 功能添加
 
-2026-08-15 已完成（本轮不包含本地持久化观察列表）：
+2026-08-15 至 2026-08-18 已完成（本轮不包含本地持久化观察列表）：
 
 - `trading_calendar` 点查询增加 `session_context`，区分交易日、开盘前、上午交易、午休、下午交易、收盘后和历史日期，并提供最近有效行情日期及收盘数据提示
 - 新增受控 `stock_snapshot`，最多 5 个标的、历史最多 60 根、总超时预算最多 60 秒（默认 30 秒），组合行情/历史/财务/估值/事件/风险，不涉及交易执行

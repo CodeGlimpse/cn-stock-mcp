@@ -1,6 +1,6 @@
 # Support Policy
 
-The first supported public release is `0.2.0`. Its documented target is Windows 11 x64 with Python 3.11-3.13 and local stdio integration with Codex, Claude Code, OpenClaw, or Hermes Agent.
+The first supported public release is `0.2.0`. Its release gate targets Windows 11 x64 with regular CPython 3.13 and the shared local stdio MCP contract. Codex, Claude Code, OpenClaw, and Hermes Agent have versioned configuration templates; graphical Host behavior must be verified in the user's own environment.
 
 Support covers installation, self-checks, MCP connectivity, tool schemas, source/freshness metadata, and redacted diagnostics. It does not guarantee third-party upstream availability, field stability, data timeliness, licensing rights, investment outcomes, or suitability for a particular decision.
 

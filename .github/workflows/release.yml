@@ -14,6 +14,8 @@ jobs:
     runs-on: windows-latest
     env:
       PIP_CONSTRAINT: ${{ github.workspace }}/constraints-release.txt
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +46,9 @@ jobs:
           $version = (& "$venv\Scripts\cn-stock-mcp.exe" --version).Trim()
           $doctor = (& "$venv\Scripts\cn-stock-mcp.exe" --doctor --json) -join "`n" | ConvertFrom-Json
           $tools = (& "$venv\Scripts\cn-stock-mcp.exe" --list-tools --json) -join "`n" | ConvertFrom-Json
-          if ($version -ne "0.2.0" -or $doctor.exit_code -ne 0 -or @($tools).Count -ne 10) { exit 1 }
+          $expectedTools = @("stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker")
+          $actualTools = @($tools | ForEach-Object { $_.name })
+          if ($version -ne "0.2.0" -or $doctor.exit_code -ne 0 -or @($actualTools).Count -ne 10 -or (@($actualTools | Where-Object { $_ -notin $expectedTools }).Count -ne 0) -or (@($expectedTools | Where-Object { $_ -notin $actualTools }).Count -ne 0)) { exit 1 }
           & "$venv\Scripts\python.exe" -c "import asyncio; from cn_stock_mcp.server.stdio_server import build_fastmcp_server; s=build_fastmcp_server(); h=s.get_request_handler('tools/list'); r=asyncio.run(h.handler(None, None)); assert len(r.tools) == 10"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           icacls $config
@@ -92,7 +96,8 @@ jobs:
       - name: Generate checksums and SBOM
         run: |
           cyclonedx-py environment --pyproject pyproject.toml --output-reproducible --output-format JSON --output-file sbom.json
-          sha256sum dist/* sbom.json > sha256sums.txt
+          (cd dist && sha256sum *) > sha256sums.txt
+          sha256sum sbom.json >> sha256sums.txt
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
@@ -101,12 +106,18 @@ jobs:
 
       - name: Publish to PyPI with Trusted Publishing
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* sha256sums.txt sbom.json \
-            --verify-tag \
-            --title "cn-stock-mcp $GITHUB_REF_NAME" \
-            --generate-notes
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* sha256sums.txt sbom.json --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* sha256sums.txt sbom.json \
+              --verify-tag \
+              --title "cn-stock-mcp $GITHUB_REF_NAME" \
+              --notes-file docs/RELEASE_NOTE_v0.2.0.md
+          fi

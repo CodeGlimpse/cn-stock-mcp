@@ -19,6 +19,20 @@ class _AppFail:
         return {"success": False, "error": {"message": "provider down"}}
 
 
+class _AppRetail:
+    def list_tools(self):
+        return [{"name": "stock_quote"}]
+
+    def call_tool(self, name, payload):
+        return {
+            "success": False,
+            "error": {
+                "error_code": "TOOL_NOT_FOUND",
+                "message": "Tool not found: provider_health",
+            },
+        }
+
+
 class _Settings:
     mcp_server_name = "cn-stock-mcp"
     mcp_server_version = "0.1.0"
@@ -66,6 +80,18 @@ def test_collect_doctor_report_network_ok_with_token_and_provider_ok():
     assert report.has_fail is False
     text = render_doctor_report(report)
     assert "provider_health ok" in text
+
+
+def test_collect_doctor_report_uses_full_network_app_for_hidden_provider_health():
+    report = collect_doctor_report(
+        settings=_Settings(tokens=["abc"]),
+        app=_AppRetail(),
+        network_app=_AppOK(),
+        include_network=True,
+    )
+
+    assert report.has_fail is False
+    assert "provider_health ok" in render_doctor_report(report)
 
 
 def test_collect_doctor_report_fails_when_tool_registry_empty():

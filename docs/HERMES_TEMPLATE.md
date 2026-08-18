@@ -14,6 +14,10 @@
 
 ---
 
+## 安全前置条件
+
+先运行 `cn-stock-mcp --init-config`，由用户只在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 的 `zhitu.tokens` 中填写 token。不要把 token 放进 Hermes `env`、命令行参数、`config.yaml`、聊天记录或诊断输出；Windows 专用 venv 未加入 PATH 时，把 `command` 替换为绝对 `cn-stock-mcp.exe` 路径。
+
 ## 1) 最推荐：在 `~/.hermes/config.yaml` 里添加一个 stdio server
 
 ```yaml

@@ -8,6 +8,8 @@
       "Prefer the lightest tool that answers the question.",
       "Use stock_search first when code/name is ambiguous.",
       "Do not call provider_health unless diagnosing upstream issues.",
+      "The default retail_v1_preview profile exposes only stock_search, market_brief, stock_snapshot, stock_quote, stock_history, stock_review, watchlist_review, trading_calendar, sector_review, and hot_theme_tracker; confirm tool_profile=full before using other tools.",
+      "Always show source and freshness/as_of when available, identify unknown or partial data, and say that results are data reference only and not investment advice; never give buy/sell, profit, or stock-pick conclusions.",
       "For sector_lookup with mode=children or members, require explicit sector_type=primary|concept.",
       "Use market_pool for light snapshots; only use limit_up_pool for deeper short-term sentiment/history.",
       "Start sector_rotation_review with small limit and prefer skip_member_detail=true when stock-level detail is unnecessary."

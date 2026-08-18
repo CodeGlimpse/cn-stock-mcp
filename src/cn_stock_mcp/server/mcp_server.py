@@ -202,7 +202,7 @@ class MCPServerStub(BaseModel):
             return error_response(err, meta={"tool": name}, request_id=request_id)
 
 
-def create_server() -> MCPServerStub:
+def create_server(profile_override: str | None = None) -> MCPServerStub:
     settings = get_settings()
     server = MCPServerStub(name="cn-stock-mcp", version=__version__)
 
@@ -314,7 +314,7 @@ def create_server() -> MCPServerStub:
     server.register_tool(MCPTool(name="limit_up_pool", description="Get limit-up/limit-down pool analysis (涨停/跌停股池历史分析): limit-up, limit-down, strong/continuous, previous-day limit performance, sub-new, and broken-limit pools by trade date. EastMoney source.", input_model=LimitUpPoolRequest, handler=limit_up_pool.execute))
     server.register_tool(MCPTool(name="sec_reveal", description="Deep dragon-tiger seat reveal (龙虎榜机构席位深度): stock buy/sell seat detail, active broker seats, institution detail, and institution trace/ranking. EastMoney + Sina sources.", input_model=SecRevealRequest, handler=sec_reveal.execute))
 
-    profile = settings.resolve_tool_profile()
+    profile = profile_override if profile_override is not None else settings.resolve_tool_profile()
     if profile != "full":
         selected = select_tool_names(server.tools, profile)
         server.tools = {name: tool for name, tool in server.tools.items() if name in selected}

@@ -98,7 +98,7 @@ cn-stock-mcp --doctor-network
 ## 当前状态
 
 当前已具备：
-- MCP Python SDK（FastMCP）stdio transport
+- MCP Python SDK stdio transport
 - AKShare / 智兔双源与 fallback
 - 核心市场数据 / 复盘 / 板块 / 技术指标 / 股池能力
 - 打包构建、非 live 回归、provider_health 自检

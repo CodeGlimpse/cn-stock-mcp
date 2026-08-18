@@ -17,8 +17,8 @@ class TransportApp:
     - local test/debug path: direct in-process registry invocation
     """
 
-    def __init__(self) -> None:
-        self.server = create_server()
+    def __init__(self, profile_override: str | None = None) -> None:
+        self.server = create_server(profile_override=profile_override)
 
     def list_tools(self, detailed: bool = False) -> list[dict[str, Any]]:
         if detailed:

@@ -12,7 +12,17 @@ from cn_stock_mcp.server.transport import TransportApp
 def _doctor(include_network: bool = False, json_output: bool = False) -> int:
     settings = get_settings()
     app = TransportApp()
-    report = collect_doctor_report(settings=settings, app=app, include_network=include_network)
+    network_app = None
+    if include_network and "provider_health" not in app.server.tools:
+        # Keep provider_health hidden from the retail tool list while making it
+        # available to the explicit diagnostic command.
+        network_app = TransportApp(profile_override="full")
+    report = collect_doctor_report(
+        settings=settings,
+        app=app,
+        include_network=include_network,
+        network_app=network_app,
+    )
     print(render_doctor_json(report) if json_output else render_doctor_report(report))
     return report.exit_code
 

@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     mcp_server_name: str = "cn-stock-mcp"
-    mcp_server_version: str = __version__
 
     default_market: str = "CN"
     default_provider_order: str = "akshare,zhitu"
@@ -51,6 +50,11 @@ class Settings(BaseSettings):
     sector_rotation_max_workers: int = 2
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @property
+    def mcp_server_version(self) -> str:
+        """Return the installed package version; never allow config drift."""
+        return __version__
 
     def _default_zhitu_token_config_path(self) -> Path:
         override = os.environ.get("CN_STOCK_MCP_CONFIG", "").strip()

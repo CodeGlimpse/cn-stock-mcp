@@ -29,11 +29,14 @@ Do **not** use this skill for 一般宏观新闻、国际政治新闻、公司�
 
 ## Hard rules
 
+- The default `retail_v1_preview` profile exposes only `stock_search`, `market_brief`, `stock_snapshot`, `stock_quote`, `stock_history`, `stock_review`, `watchlist_review`, `trading_calendar`, `sector_review`, and `hot_theme_tracker`. Before routing to another tool, confirm that the user enabled `tool_profile=full`; never loop on `TOOL_NOT_FOUND`.
 - `sector_lookup(mode=children|members)` **必须显式传** `sector_type=primary|concept`
 - `sector_lookup(children)` 表示**成员股**，不是子板块
 - 若 `requested_trade_date != trade_date`，必须说明已回退到有效交易日
 - `rotation.score` 是轮动/结构信号分，**不是** 情绪温度分
 - 遇到 `null` / `[]` / `applicable=false`，不要脑补结论
+- 输出必须标注数据来源、时间/新鲜度，以及 fallback、partial failure 或 unknown；`data_quality` 不是投资置信度。
+- 固定边界：只提供数据参考，不提供投资建议、荐股、买卖指令、收益承诺或个性化风险建议。
 
 ## Read references only when needed
 

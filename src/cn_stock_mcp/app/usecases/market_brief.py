@@ -11,6 +11,7 @@ from cn_stock_mcp.app.services.metric_schema import (
     build_sentiment_payload,
 )
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.infra.security import redact_sensitive_text
 from cn_stock_mcp.providers.errors import ProviderError
 
 
@@ -277,7 +278,7 @@ class MarketBriefUseCase:
                     }
                 )
             except Exception as exc:
-                errors.append({"symbol": symbol, "name": name, "error": str(exc)})
+                errors.append({"symbol": symbol, "name": name, "error": redact_sensitive_text(exc)})
 
         return (
             {

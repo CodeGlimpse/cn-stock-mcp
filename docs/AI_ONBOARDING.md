@@ -68,6 +68,16 @@
 4. 默认小参数：`limit/top_n=3~5`
 5. 不要一开始就上“全市场扫描”或大 payload
 
+### 首发 retail 工具档
+
+`cn-stock-mcp --init-config` 默认选择 `retail_v1_preview`，只暴露下面 10 个工具：
+
+`stock_search`、`market_brief`、`stock_snapshot`、`stock_quote`、`stock_history`、`stock_review`、`watchlist_review`、`trading_calendar`、`sector_review`、`hot_theme_tracker`。
+
+如果用户需要 `technical_indicator`、`market_pool`、`sector_lookup`、`sector_rotation_review` 或其他底层工具，先明确说明需要把 `tool_profile` 改为 `full`，再调用；不要把隐藏工具当作默认可用。
+
+所有回答都必须说明数据来源、数据时间/新鲜度和必要的降级或缺失状态。`data_quality` 只是数据可用性提示，不是投资置信度。本项目不提供投资参考、投资建议、收益承诺、个性化风险建议或荐股结论。
+
 ---
 
 ## 4) 高频问题的最短路由
