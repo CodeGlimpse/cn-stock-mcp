@@ -127,6 +127,7 @@ cn-stock-mcp --doctor-network
 - `SECURITY.md`、`SUPPORT.md`：漏洞报告与支持边界
 - `docs/AI_DEPLOY_WINDOWS.md`：交给 Windows AI agent 的自部署与验收流程
 - `docs/WINDOWS_ACCEPTANCE_v0.2.0.md`：首发 wheel 的 Windows 验收记录与干净 runner 门禁
+- `docs/WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md`：公开 PyPI 安装与真实 MCP stdio 验收补充记录
 - `docs/SECURITY.md`、`docs/PRIVACY.md`、`docs/DATA_SOURCES.md`：安全、隐私和数据来源边界
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
 - `docs/AGENT_MINIMAL.md`：给 AI agent 的最小入口
