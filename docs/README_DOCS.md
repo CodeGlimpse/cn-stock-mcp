@@ -11,25 +11,31 @@ Windows + AI 自部署请先阅读 `AI_DEPLOY_WINDOWS.md`；发布边界见 `SEC
 ### 如果你是人类用户 / 项目接收方
 先看：
 
-1. `START_HERE.md`
+1. `PRODUCT_OVERVIEW.md`
+   - 对外产品定位、功能亮点和适用场景。
+
+2. `CUSTOMER_DEPLOYMENT.md`
+   - 客户安装、智兔 token 获取、Host 接入、排障和免责声明。
+
+3. `START_HERE.md`
    - 整个仓库的最友好入口。
 
-2. `AI_DEPLOY_WINDOWS.md`
+4. `AI_DEPLOY_WINDOWS.md`
    - 固定版本安装、token 交接和首次问答验收合同。
 
-3. `HANDOFF_MINIMAL.md`
+5. `HANDOFF_MINIMAL.md`
    - 一页安装与接入说明。
 
-4. `HOST_CONFIG_TEMPLATES.md`
+6. `HOST_CONFIG_TEMPLATES.md`
    - 按宿主类型选择模板入口。
 
-5. `AI_ONBOARDING.md`
+7. `AI_ONBOARDING.md`
    - 给 AI 集成人员 / agent 作者的使用说明。
 
-6. `AGENT_AND_SKILL_MAP.md`
+8. `AGENT_AND_SKILL_MAP.md`
    - 解释哪些平台只是接 MCP，哪些才有仓库内 skill，以及 skill 文件在哪。
 
-7. `FAQ.md`
+9. `FAQ.md`
    - 常见错误与排查。
 
 ---

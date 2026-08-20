@@ -17,6 +17,8 @@
 ## 最短开始路径
 
 ### 人类用户 / 接收方
+- `docs/PRODUCT_OVERVIEW.md`：对外产品介绍与功能亮点
+- `docs/CUSTOMER_DEPLOYMENT.md`：客户安装、智兔 token、Host 接入与排障
 - `docs/START_HERE.md`：最友好的仓库入口
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
 - `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
@@ -25,6 +27,7 @@
 - `docs/FAQ.md`：常见错误与排查
 
 ### 最终用户 / 本地 AI agent
+- `docs/CUSTOMER_DEPLOYMENT.md`：客户部署与排障
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
 - `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
 - `docs/OPENCLAW_HOST_TEMPLATE.md`：OpenClaw 单独最终配置块
@@ -107,6 +110,8 @@ cn-stock-mcp --doctor-network
 
 ## 文档导航
 
+- `docs/PRODUCT_OVERVIEW.md`：对外产品介绍与功能亮点
+- `docs/CUSTOMER_DEPLOYMENT.md`：客户部署、智兔 token 获取、Host 接入与免责声明
 - `docs/START_HERE.md`：给人类用户的最友好入口
 - `docs/AI_ONBOARDING.md`：给 AI 集成人员 / agent 作者的说明
 - `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 的使用方式与 skill 对照
