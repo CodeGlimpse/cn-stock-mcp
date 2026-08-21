@@ -868,8 +868,8 @@ class AKShareProvider:
         """Fetch daily dragon-tiger board detail from ak.stock_lhb_detail_em()."""
         from cn_stock_mcp.providers.adapters.akshare_dragon_tiger_adapters import adapt_daily_detail_row
         lib = self._require_ak()
-        if end_date is None:
-            end_date = start_date
+        start_date = start_date.replace("-", "")
+        end_date = (end_date or start_date).replace("-", "")
         try:
             df = self._call_ak_quietly(lib.stock_lhb_detail_em, start_date=start_date, end_date=end_date)
         except Exception as exc:
@@ -879,8 +879,8 @@ class AKShareProvider:
     def get_dragon_tiger_institution(self, start_date: str, end_date: str | None = None) -> list[dict]:
         """Fetch institution buy/sell stats from ak.stock_lhb_jgmmtj_em()."""
         lib = self._require_ak()
-        if end_date is None:
-            end_date = start_date
+        start_date = start_date.replace("-", "")
+        end_date = (end_date or start_date).replace("-", "")
         try:
             df = self._call_ak_quietly(lib.stock_lhb_jgmmtj_em, start_date=start_date, end_date=end_date)
         except Exception as exc:
@@ -890,8 +890,8 @@ class AKShareProvider:
     def get_dragon_tiger_active_broker(self, start_date: str, end_date: str | None = None) -> list[dict]:
         """Fetch active broker data from ak.stock_lhb_hyyyb_em()."""
         lib = self._require_ak()
-        if end_date is None:
-            end_date = start_date
+        start_date = start_date.replace("-", "")
+        end_date = (end_date or start_date).replace("-", "")
         try:
             df = self._call_ak_quietly(lib.stock_lhb_hyyyb_em, start_date=start_date, end_date=end_date)
         except Exception as exc:
@@ -1316,8 +1316,17 @@ class AKShareProvider:
         period: YYYY年报/YYYY一季/YYYY半年/YYYY三季
         """
         lib = self._require_ak()
+        normalized_period = period
+        for suffix in ("一季", "半年", "三季"):
+            if normalized_period.endswith(suffix):
+                normalized_period = f"{normalized_period}报"
+                break
         try:
-            df = self._call_ak_quietly(lib.stock_report_disclosure, market=market, period=period)
+            df = self._call_ak_quietly(
+                lib.stock_report_disclosure,
+                market=market,
+                period=normalized_period,
+            )
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare disclosure_calendar failed: {exc}", retryable=True) from exc
         return df.to_dict(orient="records")
@@ -1356,16 +1365,55 @@ class AKShareProvider:
     # ── Stock Warrant (权证/期权) ──────────────────────────
 
     def get_etf_option(self, symbol: str = "50ETF期权") -> list[dict]:
-        """Fetch ETF option quotes from ak.option_sina_sse().
+        """Fetch a bounded ETF option snapshot using current Sina APIs.
 
-        symbol: 50ETF期权/300ETF期权/500ETF期权/创业板ETF期权/科创50ETF期权
+        Recent AKShare releases removed ``option_sina_sse``.  The replacement
+        enumerates contract codes, then fetches each quote as a key/value
+        table.  The fan-out is deliberately bounded for one tool call.
         """
         lib = self._require_ak()
+        underlying_map = {
+            "50ETF期权": ("50ETF", "510050"),
+            "300ETF期权": ("300ETF", "510300"),
+            "500ETF期权": ("500ETF", "510500"),
+            "创业板ETF期权": ("创业板ETF", "159915"),
+            "科创50ETF期权": ("科创50ETF", "588000"),
+        }
+        etf_name, underlying = underlying_map.get(symbol, ("50ETF", "510050"))
         try:
-            df = self._call_ak_quietly(lib.option_sina_sse, symbol=symbol, exchange="null")
+            months = self._call_ak_quietly(lib.option_sse_list_sina, symbol=etf_name, exchange="null")
+            if not months:
+                return []
+            trade_month = str(months[0])
+            codes: list[str] = []
+            for option_type in ("认购", "认沽"):
+                frame = self._call_ak_quietly(
+                    lib.option_sse_codes_sina,
+                    symbol=option_type,
+                    trade_date=trade_month,
+                    underlying=underlying,
+                )
+                if frame is None:
+                    continue
+                for row in frame.to_dict(orient="records"):
+                    code = row.get("期权代码") or row.get("期权 代码")
+                    if code and str(code) not in codes:
+                        codes.append(str(code))
+            rows: list[dict] = []
+            for code in codes[:20]:
+                frame = self._call_ak_quietly(lib.option_sse_spot_price_sina, symbol=code)
+                if frame is None:
+                    continue
+                row: dict[str, object] = {"代码": code, "合约代码": code}
+                for item in frame.to_dict(orient="records"):
+                    key = str(item.get("字段", item.get("字 段", ""))).replace(" ", "")
+                    if key:
+                        row[key] = item.get("值")
+                row["合约名称"] = row.get("期权合约简称") or code
+                rows.append(row)
+            return rows
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare etf_option failed: {exc}", retryable=True) from exc
-        return df.to_dict(orient="records")
 
     def get_commodity_option(self, exchange: str = "郑商所") -> list[dict]:
         """Fetch commodity option quotes from ak.option_sina_sse().
@@ -1434,7 +1482,7 @@ class AKShareProvider:
         """Fetch raw limit-up pool from ak.stock_zt_pool_em()."""
         lib = self._require_ak()
         try:
-            kwargs = {"date": date} if date else {}
+            kwargs = {"date": date.replace("-", "")} if date else {}
             df = self._call_ak_quietly(lib.stock_zt_pool_em, **kwargs)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare limit_up_pool failed: {exc}", retryable=True) from exc
@@ -1444,7 +1492,7 @@ class AKShareProvider:
         """Fetch limit-down pool from ak.stock_zt_pool_dtgc_em()."""
         lib = self._require_ak()
         try:
-            kwargs = {"date": date} if date else {}
+            kwargs = {"date": date.replace("-", "")} if date else {}
             df = self._call_ak_quietly(lib.stock_zt_pool_dtgc_em, **kwargs)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare limit_down_pool failed: {exc}", retryable=True) from exc
@@ -1454,7 +1502,7 @@ class AKShareProvider:
         """Fetch strong/continuous limit-up pool from ak.stock_zt_pool_strong_em()."""
         lib = self._require_ak()
         try:
-            kwargs = {"date": date} if date else {}
+            kwargs = {"date": date.replace("-", "")} if date else {}
             df = self._call_ak_quietly(lib.stock_zt_pool_strong_em, **kwargs)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare strong_pool failed: {exc}", retryable=True) from exc
@@ -1464,7 +1512,7 @@ class AKShareProvider:
         """Fetch previous day limit-up performance from ak.stock_zt_pool_previous_em()."""
         lib = self._require_ak()
         try:
-            kwargs = {"date": date} if date else {}
+            kwargs = {"date": date.replace("-", "")} if date else {}
             df = self._call_ak_quietly(lib.stock_zt_pool_previous_em, **kwargs)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare previous_limit_pool failed: {exc}", retryable=True) from exc
@@ -1474,7 +1522,7 @@ class AKShareProvider:
         """Fetch sub-new stock limit-up pool from ak.stock_zt_pool_sub_new_em()."""
         lib = self._require_ak()
         try:
-            kwargs = {"date": date} if date else {}
+            kwargs = {"date": date.replace("-", "")} if date else {}
             df = self._call_ak_quietly(lib.stock_zt_pool_sub_new_em, **kwargs)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare sub_new_pool failed: {exc}", retryable=True) from exc
@@ -1484,7 +1532,7 @@ class AKShareProvider:
         """Fetch broken limit-up pool from ak.stock_zt_pool_zbgc_em()."""
         lib = self._require_ak()
         try:
-            kwargs = {"date": date} if date else {}
+            kwargs = {"date": date.replace("-", "")} if date else {}
             df = self._call_ak_quietly(lib.stock_zt_pool_zbgc_em, **kwargs)
         except Exception as exc:
             raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare broken_pool failed: {exc}", retryable=True) from exc

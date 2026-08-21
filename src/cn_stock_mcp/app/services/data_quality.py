@@ -56,6 +56,19 @@ def _has_empty_result(data: Any, meta: Mapping[str, Any]) -> bool:
         value = mapping.get(key)
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)) and not value:
             return True
+    # Domain tools often expose named sections (summary/detail/rank/history)
+    # instead of a generic ``items`` field.  A zero count alongside an empty
+    # section is still an explicit empty provider result and must lower the
+    # quality score rather than appear as a high-quality success.
+    for count_key, count in mapping.items():
+        if not (isinstance(count, int) and not isinstance(count, bool) and count == 0):
+            continue
+        if count_key == "count":
+            return True
+        if count_key.endswith("_count"):
+            section = mapping.get(count_key[:-6])
+            if isinstance(section, Sequence) and not isinstance(section, (str, bytes, bytearray)) and not section:
+                return True
     return False
 
 

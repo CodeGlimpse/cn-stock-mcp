@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import math
+
 from cn_stock_mcp.app.models.stock_warrant import OptionItem
 
 
 def _to_float(value):
-    if value is None or value == "" or value == "NaN" or value == "-" or value == "--":
+    if value is None or value == "" or value == "-" or value == "--":
         return None
     try:
-        return float(value)
+        result = float(value)
+        return result if math.isfinite(result) else None
     except (TypeError, ValueError):
         return None
 
@@ -16,21 +19,21 @@ def _clean_str(value):
     if value is None:
         return None
     s = str(value).strip()
-    return s if s and s != "NaN" and s != "NaT" and s != "--" and s != "-" else None
+    return s if s and s.lower() not in {"nan", "nat", "--", "-"} else None
 
 
 def adapt_option_row(row: dict) -> OptionItem:
     return OptionItem(
-        symbol=_clean_str(row.get("合约名称", row.get("代码", row.get("合约代码")))),
-        name=_clean_str(row.get("合约名称", row.get("名称"))),
+        symbol=_clean_str(row.get("代码", row.get("合约代码", row.get("合约名称")))),
+        name=_clean_str(row.get("合约名称", row.get("期权合约简称", row.get("名称")))),
         latest_price=_to_float(row.get("最新价", row.get("现价", row.get("收盘价")))),
-        change_pct=_to_float(row.get("涨跌幅", row.get("涨跌"))),
+        change_pct=_to_float(row.get("涨跌幅", row.get("涨幅", row.get("涨跌")))),
         change_amt=_to_float(row.get("涨跌额", row.get("涨跌值"))),
         volume=_to_float(row.get("成交量", row.get("总成交量"))),
         open_interest=_to_float(row.get("持仓量", row.get("空盘量"))),
         strike=_to_float(row.get("行权价", row.get("执行价格"))),
         expiry=_clean_str(row.get("到期日", row.get("最后交易日"))),
-        option_type=None,
+        option_type=("认购" if "购" in str(row.get("合约名称", row.get("期权合约简称", ""))) else "认沽" if "沽" in str(row.get("合约名称", row.get("期权合约简称", ""))) else None),
     )
 
 

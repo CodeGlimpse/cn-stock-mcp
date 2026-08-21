@@ -31,7 +31,7 @@ def _clean_str(value):
     if value is None:
         return None
     s = str(value).strip()
-    return s if s and s not in {"NaN", "NaT", "--", "-"} else None
+    return s if s and s.lower() not in {"nan", "nat", "--", "-"} else None
 
 
 def adapt_seat_detail_row(row: dict, side: str | None = None) -> SeatDetailItem:

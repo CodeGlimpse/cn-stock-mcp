@@ -1,4 +1,5 @@
 from cn_stock_mcp.app.usecases.market_brief import MarketBriefUseCase
+from cn_stock_mcp.app.models.quote import Quote
 
 
 class _Bar:
@@ -14,16 +15,35 @@ class _Bar:
 
 
 class _Provider:
-    def __init__(self, name: str, should_fail: bool):
+    def __init__(self, name: str, should_fail: bool, empty_overview: bool = False):
         self.name = name
         self.should_fail = should_fail
+        self.empty_overview = empty_overview
 
     def get_market_overview(self, market):
         if self.should_fail:
             from cn_stock_mcp.providers.errors import ProviderError
 
             raise ProviderError("PROVIDER_UNAVAILABLE", "overview failed", retryable=True)
-        return {"market": market, "indices": []}
+        if self.empty_overview:
+            return {"market": market, "indices": []}
+        return {
+            "market": market,
+            "indices": [
+                Quote(
+                    symbol="000001.SH",
+                    name="上证指数",
+                    sec_type="index",
+                    exchange="SH",
+                    board="index",
+                    price=101.0,
+                    prev_close=100.0,
+                    change=1.0,
+                    change_percent=1.0,
+                    source=self.name,
+                )
+            ],
+        }
 
     def get_market_pool(self, pool_type, trade_date):
         if self.should_fail:
@@ -153,3 +173,38 @@ def test_market_brief_review_mode_uses_historical_overview_and_builds_ranking():
     assert result["sentiment"]["label_zh"]
     assert result["sentiment"]["score_semantics"] == "sentiment_temperature_v1"
     assert result["structure"]["index_count"] == 4
+
+
+def test_market_brief_rejects_empty_index_overview():
+    from cn_stock_mcp.app.services.provider_types import ProviderSelection
+    from cn_stock_mcp.providers.errors import ProviderError
+
+    class _EmptyRouter:
+        def choose_provider(self, **kwargs):
+            return ProviderSelection(primary="akshare", fallback=[])
+
+        def get_provider(self, name):
+            return _Provider(name, should_fail=False, empty_overview=True)
+
+    uc = MarketBriefUseCase()
+    uc.router = _EmptyRouter()
+    req = type(
+        "Req",
+        (),
+        {
+            "brief_type": "close",
+            "market": "CN",
+            "trade_date": None,
+            "include_pools": False,
+            "top_n": 1,
+            "provider": "mixed",
+        },
+    )()
+
+    try:
+        uc.execute(req)
+    except ProviderError as exc:
+        assert exc.code == "PROVIDER_UNAVAILABLE"
+        assert "no index data" in exc.message
+    else:
+        raise AssertionError("market_brief must reject an empty index overview")

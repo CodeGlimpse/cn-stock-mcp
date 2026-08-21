@@ -7,7 +7,7 @@ def _clean_str(value):
     if value is None:
         return None
     s = str(value).strip()
-    if not s or s == "NaN" or s == "NaT":
+    if not s or s.lower() in {"nan", "nat"}:
         return None
     return s
 

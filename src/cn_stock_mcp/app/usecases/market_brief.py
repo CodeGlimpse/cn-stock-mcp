@@ -26,6 +26,10 @@ class MarketBriefUseCase:
     def __init__(self) -> None:
         self.router = ProviderRouter()
 
+    @staticmethod
+    def _has_index_data(value) -> bool:
+        return isinstance(value, dict) and bool(value.get("indices"))
+
     def execute(self, request):
         requested_trade_date = request.trade_date or datetime.now().strftime("%Y-%m-%d")
         review_mode = request.trade_date is not None
@@ -53,6 +57,7 @@ class MarketBriefUseCase:
                 self.router,
                 overview_selection,
                 lambda provider: provider.get_market_overview(request.market),
+                should_fallback_result=lambda value: not self._has_index_data(value),
             )
             overview_meta = {
                 "selected_primary": overview_meta.selected_primary,
@@ -62,6 +67,13 @@ class MarketBriefUseCase:
                 "used_fallback": overview_meta.used_fallback,
                 "mode": "realtime",
             }
+
+        if not self._has_index_data(overview):
+            raise ProviderError(
+                "PROVIDER_UNAVAILABLE",
+                "Market brief returned no index data from enabled providers",
+                retryable=True,
+            )
 
         pools: dict[str, dict] = {}
         pools_meta: dict[str, dict] = {}

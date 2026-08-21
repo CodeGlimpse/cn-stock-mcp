@@ -59,4 +59,5 @@ markers = [
   "slow: slower or broader live regression checks",
   "transport: MCP transport/tool layer checks",
   "provider: direct upstream provider checks",
+  "functional: end-to-end functional coverage and data invariants",
 ]

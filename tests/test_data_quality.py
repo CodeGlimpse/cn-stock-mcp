@@ -56,3 +56,18 @@ def test_data_quality_detects_per_symbol_fallback_and_errors():
 
     assert "provider_fallback" in quality["flags"]
     assert "partial_failure" in quality["flags"]
+
+
+def test_data_quality_detects_empty_named_sections_by_count():
+    quality = build_data_quality(
+        {
+            "summary": [],
+            "summary_count": 0,
+            "detail": [],
+            "detail_count": 0,
+        },
+        {"status": "unknown", "age_seconds": None},
+    )
+
+    assert quality["factors"]["empty_result"] is True
+    assert "empty_result" in quality["flags"]

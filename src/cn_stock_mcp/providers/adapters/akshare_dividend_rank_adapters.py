@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from cn_stock_mcp.app.models.dividend_rank import (
     DividendDetailItem,
     DividendPlanItem,
@@ -12,7 +14,8 @@ def _to_float(value):
     if value is None or value == "" or value == "-" or value == "NaN":
         return None
     try:
-        return float(value)
+        result = float(value)
+        return result if math.isfinite(result) else None
     except (TypeError, ValueError):
         return None
 
