@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import anyio
@@ -8,6 +7,7 @@ import anyio
 from cn_stock_mcp.server.mcp_server import create_server
 from cn_stock_mcp.server.stdio_server import build_fastmcp_server, run_stdio_server
 from cn_stock_mcp.app.services.tool_catalog import build_tool_catalog, find_tool
+from cn_stock_mcp.infra.json_utils import dumps_json
 
 
 class TransportApp:
@@ -40,18 +40,10 @@ class TransportApp:
 
     def to_stdio_payload(self, name: str, payload: dict[str, Any]) -> str:
         result = self.call_tool(name, payload)
-        return json.dumps(result, ensure_ascii=False, default=_json_default, indent=2)
+        return dumps_json(result, indent=2)
 
     def run_stdio_once(self, name: str, payload: dict[str, Any]) -> None:
         print(self.to_stdio_payload(name, payload))
 
     def run_stdio(self) -> None:
         anyio.run(run_stdio_server, build_fastmcp_server())
-
-
-def _json_default(value: Any):
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, set):
-        return list(value)
-    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")

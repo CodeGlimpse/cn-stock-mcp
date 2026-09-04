@@ -5,6 +5,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from cn_stock_mcp.infra.security import redact_sensitive_value
+
 
 def setup_logging(level: str = "INFO") -> None:
     logging.basicConfig(
@@ -17,6 +19,6 @@ def log_event(logger: logging.Logger, event: str, **fields: Any) -> None:
     payload = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "event": event,
-        **fields,
+        **{key: redact_sensitive_value(value) for key, value in fields.items()},
     }
     logger.info(json.dumps(payload, ensure_ascii=False, default=str))

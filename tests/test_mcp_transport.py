@@ -117,3 +117,32 @@ def test_mcp_server_returns_unknown_tool_as_mcp_error():
     assert result.is_error is True
     payload = json.loads(result.content[0].text)
     assert payload["error"]["error_code"] == "TOOL_NOT_FOUND"
+
+
+def test_mcp_server_rejects_non_object_arguments_without_raising():
+    registry = stdio_server.create_server()
+    payload = registry.call_tool("stock_quote", ["not", "an", "object"])
+
+    assert payload["success"] is False
+    assert payload["error"]["error_code"] == "INVALID_ARGUMENT"
+    assert "object" in payload["error"]["message"]
+
+
+def test_mcp_server_validation_error_does_not_echo_submitted_input():
+    server = build_fastmcp_server()
+    handler = server.get_request_handler("tools/call")
+    assert handler is not None
+
+    result = _run(
+        handler.handler(
+            None,
+            types.CallToolRequestParams(
+                name="stock_quote",
+                arguments={"symbols": "SECRET_TOKEN"},
+            ),
+        )
+    )
+
+    payload = json.loads(result.content[0].text)
+    assert payload["error"]["error_code"] == "INVALID_ARGUMENT"
+    assert "SECRET_TOKEN" not in result.content[0].text

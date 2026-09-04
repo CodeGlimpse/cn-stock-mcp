@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
+from collections.abc import Mapping
 from typing import Any, Callable
 
 from pydantic import BaseModel, Field, ValidationError
@@ -64,6 +64,7 @@ from cn_stock_mcp.app.usecases.stock_search import StockSearchUseCase
 from cn_stock_mcp.app.usecases.technical_indicator import TechnicalIndicatorUseCase
 from cn_stock_mcp.app.usecases.trading_calendar import TradingCalendarUseCase
 from cn_stock_mcp.infra.logging import log_event
+from cn_stock_mcp.infra.security import safe_validation_error_details
 from cn_stock_mcp.server.response_envelope import error_response, new_request_id, ok_response
 from cn_stock_mcp import __version__
 from cn_stock_mcp.infra.config import get_settings
@@ -130,8 +131,8 @@ class EmptyRequest(BaseModel):
 
 
 def _validation_error_details(exc: ValidationError) -> list[dict[str, Any]]:
-    """Return JSON-safe validation error details for envelopes/stdio."""
-    return json.loads(exc.json())
+    """Return diagnostic-safe validation details for envelopes/stdio."""
+    return safe_validation_error_details(exc)
 
 
 class MCPTool(BaseModel):
@@ -153,7 +154,7 @@ class MCPServerStub(BaseModel):
     def register_tool(self, tool: MCPTool) -> None:
         self.tools[tool.name] = tool
 
-    def call_tool(self, name: str, payload: dict[str, Any]) -> Any:
+    def call_tool(self, name: str, payload: Mapping[str, Any] | None) -> Any:
         request_id = new_request_id()
         tool = self.tools.get(name)
         if not tool:
@@ -169,9 +170,24 @@ class MCPServerStub(BaseModel):
                 request_id=request_id,
             )
 
+        if payload is None:
+            payload = {}
+        if not isinstance(payload, Mapping):
+            return error_response(
+                {
+                    "error_code": "INVALID_ARGUMENT",
+                    "message": "Invalid request payload: expected a JSON object",
+                    "retryable": False,
+                    "provider": None,
+                    "details": [{"type": "dict_type", "loc": [], "msg": "Input should be a JSON object"}],
+                },
+                meta={"tool": name},
+                request_id=request_id,
+            )
+
         try:
-            request = tool.input_model(**payload)
-        except ValidationError as exc:
+            request = tool.input_model(**dict(payload))
+        except (ValidationError, TypeError) as exc:
             details = _validation_error_details(exc)
             log_event(logger, "tool_validation_error", request_id=request_id, tool=name, errors=details)
             return error_response(

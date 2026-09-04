@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from mcp import types
@@ -8,18 +7,11 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
 from cn_stock_mcp.server.mcp_server import MCPServerStub, create_server
-
-
-def _json_default(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, set):
-        return list(value)
-    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+from cn_stock_mcp.infra.json_utils import dumps_json, to_json_safe
 
 
 def _json_text(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, default=_json_default)
+    return dumps_json(value)
 
 
 def _build_tool_schema(tool: Any) -> types.Tool:
@@ -37,6 +29,7 @@ def _build_mcp_handlers(registry: MCPServerStub):
 
     async def call_tool(_ctx: Any, params: types.CallToolRequestParams) -> types.CallToolResult:
         result = registry.call_tool(params.name, params.arguments or {})
+        result = to_json_safe(result)
         is_error = not bool(result.get("success")) if isinstance(result, dict) else False
         return types.CallToolResult(
             content=[types.TextContent(text=_json_text(result))],
