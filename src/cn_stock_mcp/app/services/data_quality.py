@@ -72,6 +72,58 @@ def _has_empty_result(data: Any, meta: Mapping[str, Any]) -> bool:
     return False
 
 
+_QUALITY_VALUE_KEYS = {
+    "price",
+    "latest_price",
+    "close",
+    "open",
+    "high",
+    "low",
+    "value",
+    "change",
+    "change_percent",
+    "change_pct",
+    "turnover",
+    "volume",
+    "market_cap",
+    "pe",
+    "pb",
+    "net_profit",
+    "revenue",
+}
+
+
+def _is_missing_value(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str) and value.strip().lower() in {"", "nan", "nat", "none", "null", "-", "--"}:
+        return True
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return True
+    return False
+
+
+def _count_empty_records(data: Any) -> int:
+    """Count records that expose market-value keys but no usable value."""
+
+    mapping = _as_mapping(data)
+    if mapping is None:
+        return 0
+    count = 0
+    for value in mapping.values():
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            for item in value:
+                item_mapping = _as_mapping(item)
+                if not item_mapping:
+                    continue
+                candidates = [item_mapping[key] for key in _QUALITY_VALUE_KEYS if key in item_mapping]
+                if candidates and all(_is_missing_value(candidate) for candidate in candidates):
+                    count += 1
+        elif isinstance(value, Mapping):
+            count += _count_empty_records(value)
+    return count
+
+
 def _collect_anomalies(value: Any, path: tuple[str, ...] = (), found: list[str] | None = None) -> list[str]:
     found = found if found is not None else []
     if len(found) >= 20:
@@ -110,6 +162,7 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
     if not isinstance(missing_fields, list):
         missing_fields = []
     anomalies = _collect_anomalies(data)
+    empty_record_count = _count_empty_records(data)
 
     status = freshness.get("status", "unknown")
     age_seconds = freshness.get("age_seconds")
@@ -135,6 +188,10 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
         "partial_failure": 25 if partial_failure else 0,
         "stale": 25 if stale else 0,
         "empty_result": 20 if empty_result else 0,
+        # A record with no usable market value is materially different from a
+        # merely missing optional field; one such record should leave the
+        # result below the ``high`` quality band.
+        "empty_records": min(40, empty_record_count * 25),
         "missing_fields": min(25, len(missing_fields) * 5),
         "anomalies": min(20, len(anomalies) * 10),
         "age": age_penalty,
@@ -152,6 +209,8 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
         flags.append("stale_cache")
     if empty_result:
         flags.append("empty_result")
+    if empty_record_count:
+        flags.append("empty_records")
     if missing_fields:
         flags.append("missing_fields")
     if anomalies:
@@ -173,6 +232,7 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
             "empty_result": empty_result,
             "missing_field_count": len(missing_fields),
             "missing_fields": missing_fields,
+            "empty_record_count": empty_record_count,
             "anomaly_count": len(anomalies),
             "anomaly_fields": anomalies,
             "freshness_status": status,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from datetime import date
+from threading import RLock
 from typing import Any
 
 import httpx
@@ -71,7 +72,20 @@ class ZhituProvider:
             }
             for token in self.tokens
         }
+        self._state_lock = RLock()
         self.last_batch_meta: dict[str, Any] | None = None
+
+    def _state_guard(self):
+        """Return the provider state lock (lazy for lightweight test doubles)."""
+        lock = getattr(self, "_state_lock", None)
+        if lock is None:
+            lock = RLock()
+            self._state_lock = lock
+        return lock
+
+    def _set_batch_meta(self, value: dict[str, Any] | None) -> None:
+        with self._state_guard():
+            self.last_batch_meta = value
 
     def _now(self) -> float:
         return time.time()
@@ -94,113 +108,132 @@ class ZhituProvider:
             ) from exc
 
     def _ensure_daily_counter(self, token: str) -> dict[str, int | str]:
-        if token not in self._daily_counters:
-            self._daily_counters[token] = {"date": "", "count": 0}
-        counter = self._daily_counters[token]
-        today = self._today_str()
-        if counter["date"] != today:
-            counter["date"] = today
-            counter["count"] = 0
-        return counter
+        with self._state_guard():
+            if token not in self._daily_counters:
+                self._daily_counters[token] = {"date": "", "count": 0}
+            counter = self._daily_counters[token]
+            today = self._today_str()
+            if counter["date"] != today:
+                counter["date"] = today
+                counter["count"] = 0
+            return counter
 
     def _daily_remaining(self, token: str) -> int:
-        counter = self._ensure_daily_counter(token)
-        return max(0, self._daily_quota - int(counter.get("count", 0)))
+        with self._state_guard():
+            counter = self._ensure_daily_counter(token)
+            return max(0, self._daily_quota - int(counter.get("count", 0)))
 
     def _increment_daily(self, token: str) -> None:
-        counter = self._ensure_daily_counter(token)
-        counter["count"] = int(counter.get("count", 0)) + 1
+        with self._state_guard():
+            counter = self._ensure_daily_counter(token)
+            counter["count"] = int(counter.get("count", 0)) + 1
 
     def _ensure_token_state(self, token: str):
-        if token not in self._token_stats:
-            self._token_stats[token] = {
-                "total_requests": 0,
-                "success_count": 0,
-                "failure_count": 0,
-                "rate_limit_count": 0,
-                "last_success_at": None,
-                "last_failure_at": None,
-            }
+        with self._state_guard():
+            if token not in self._token_stats:
+                self._token_stats[token] = {
+                    "total_requests": 0,
+                    "success_count": 0,
+                    "failure_count": 0,
+                    "rate_limit_count": 0,
+                    "last_success_at": None,
+                    "last_failure_at": None,
+                }
 
     def _token_score(self, token: str, now: float | None = None) -> float:
-        self._ensure_token_state(token)
-        stats = self._token_stats[token]
-        now = now if now is not None else self._now()
+        with self._state_guard():
+            self._ensure_token_state(token)
+            stats = self._token_stats[token]
+            now = now if now is not None else self._now()
 
-        total = int(stats.get("total_requests", 0) or 0)
-        success = int(stats.get("success_count", 0) or 0)
-        failures = int(stats.get("failure_count", 0) or 0)
-        rate_limits = int(stats.get("rate_limit_count", 0) or 0)
-        cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
-        last_failure_at = stats.get("last_failure_at")
+            total = int(stats.get("total_requests", 0) or 0)
+            success = int(stats.get("success_count", 0) or 0)
+            failures = int(stats.get("failure_count", 0) or 0)
+            rate_limits = int(stats.get("rate_limit_count", 0) or 0)
+            cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
+            last_failure_at = stats.get("last_failure_at")
 
-        success_rate = (success / total) if total > 0 else 0.5
-        base = success_rate * 100.0
-        penalty = failures * 1.5 + rate_limits * 8.0
+            success_rate = (success / total) if total > 0 else 0.5
+            base = success_rate * 100.0
+            penalty = failures * 1.5 + rate_limits * 8.0
 
-        if cooldown_until > now:
-            penalty += 100.0
+            if cooldown_until > now:
+                penalty += 100.0
 
-        if self._daily_remaining(token) <= 0:
-            penalty += 200.0
+            if self._daily_remaining(token) <= 0:
+                penalty += 200.0
 
-        if isinstance(last_failure_at, (int, float)):
-            age = max(0.0, now - float(last_failure_at))
-            if age < 300:
-                penalty += (300 - age) / 30.0
+            if isinstance(last_failure_at, (int, float)):
+                age = max(0.0, now - float(last_failure_at))
+                if age < 300:
+                    penalty += (300 - age) / 30.0
 
-        return base - penalty
+            return base - penalty
 
     def _available_tokens(self) -> list[str]:
-        if not self.tokens:
-            return []
+        with self._state_guard():
+            if not self.tokens:
+                return []
 
-        now = self._now()
-        available = [token for token in self.tokens if self._token_cooldowns.get(token, 0) <= now]
-        # If all available tokens have exhausted daily quota, fall back to
-        # the full list so we can still try (the upstream may allow some
-        # overage or the quota config might be too conservative).
-        candidates = available or list(self.tokens)
-        with_quota = [t for t in candidates if self._daily_remaining(t) > 0]
-        if with_quota:
-            candidates = with_quota
-        return sorted(candidates, key=lambda token: self._token_score(token, now), reverse=True)
+            now = self._now()
+            available = [token for token in self.tokens if self._token_cooldowns.get(token, 0) <= now]
+            candidates = [token for token in available if self._daily_remaining(token) > 0]
+            return sorted(candidates, key=lambda token: self._token_score(token, now), reverse=True)
 
     def _mark_token_rate_limited(self, token: str):
-        cooldown_seconds = max(int(getattr(self.settings, "zhitu_token_cooldown_seconds", 60) or 60), 1)
-        self._token_cooldowns[token] = self._now() + cooldown_seconds
-        self._record_token_failure(token, rate_limited=True)
+        with self._state_guard():
+            cooldown_seconds = max(int(getattr(self.settings, "zhitu_token_cooldown_seconds", 60) or 60), 1)
+            self._token_cooldowns[token] = self._now() + cooldown_seconds
+            self._record_token_failure(token, rate_limited=True)
 
     def _record_token_success(self, token: str):
-        self._ensure_token_state(token)
-        self._increment_daily(token)
-        stats = self._token_stats[token]
-        stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
-        stats["success_count"] = int(stats.get("success_count", 0) or 0) + 1
-        stats["last_success_at"] = self._now()
+        with self._state_guard():
+            self._ensure_token_state(token)
+            stats = self._token_stats[token]
+            stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
+            stats["success_count"] = int(stats.get("success_count", 0) or 0) + 1
+            stats["last_success_at"] = self._now()
 
     def _record_token_failure(self, token: str, rate_limited: bool = False):
-        self._ensure_token_state(token)
-        self._increment_daily(token)
-        stats = self._token_stats[token]
-        stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
-        stats["failure_count"] = int(stats.get("failure_count", 0) or 0) + 1
-        if rate_limited:
-            stats["rate_limit_count"] = int(stats.get("rate_limit_count", 0) or 0) + 1
-        stats["last_failure_at"] = self._now()
+        with self._state_guard():
+            self._ensure_token_state(token)
+            stats = self._token_stats[token]
+            stats["total_requests"] = int(stats.get("total_requests", 0) or 0) + 1
+            stats["failure_count"] = int(stats.get("failure_count", 0) or 0) + 1
+            if rate_limited:
+                stats["rate_limit_count"] = int(stats.get("rate_limit_count", 0) or 0) + 1
+            stats["last_failure_at"] = self._now()
 
     def _get_json(self, path: str, params: dict | None = None):
+        if not self.tokens:
+            raise ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu token is empty", retryable=False)
         tokens = self._available_tokens()
         if not tokens:
-            raise ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu token is empty", retryable=False)
+            raise ProviderRateLimitError(
+                "PROVIDER_RATE_LIMIT",
+                "All Zhitu tokens are cooling down or have reached the configured daily quota",
+                retryable=True,
+            )
 
         url = f"{self.base_url}{path}"
         last_error: Exception | None = None
 
+        attempted_any = False
         for idx, token in enumerate(tokens):
             request_params = params.copy() if params else {}
             request_params["token"] = token
-            self.token = token
+            with self._state_guard():
+                # Re-check while holding the lock: another worker may have
+                # consumed the last remaining request since the candidate list
+                # was built.
+                if self._token_cooldowns.get(token, 0) > self._now() or self._daily_remaining(token) <= 0:
+                    continue
+                self.token = token
+                # Reserve before the network call so concurrent requests
+                # cannot all observe the same remaining quota and overshoot it.
+                # Failed attempts are intentionally counted as upstream work.
+                self._increment_daily(token)
+                attempted_any = True
             try:
                 response = self.client.get(url, params=request_params)
                 response.raise_for_status()
@@ -235,7 +268,13 @@ class ZhituProvider:
 
         if last_error:
             raise last_error
-        raise ProviderAuthError("PROVIDER_AUTH_FAILED", "Zhitu token is empty", retryable=False)
+        if not attempted_any:
+            raise ProviderRateLimitError(
+                "PROVIDER_RATE_LIMIT",
+                "All Zhitu tokens are cooling down or have reached the configured daily quota",
+                retryable=True,
+            )
+        raise ProviderError("PROVIDER_UNAVAILABLE", "Zhitu request failed without a response", retryable=True)
 
     def _cache_instrument_name(self, sec_type: str, symbol: str | None, name: str | None):
         if symbol and name:
@@ -276,6 +315,34 @@ class ZhituProvider:
         if name:
             quote.name = name
         return quote
+
+    @staticmethod
+    def _unwrap_record(raw, context: str) -> dict:
+        """Validate a single-record Zhitu response before adaptation."""
+        if isinstance(raw, dict):
+            if raw.get("error"):
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu {context} unavailable: {raw.get('error')}", retryable=True)
+            nested = raw.get("data") or raw.get("item")
+            if isinstance(nested, list):
+                raw = nested[0] if nested else None
+            elif isinstance(nested, dict):
+                raw = nested
+        elif isinstance(raw, list):
+            raw = raw[0] if raw else None
+        if not isinstance(raw, dict):
+            raise ProviderError("PROVIDER_EMPTY", f"Zhitu {context} returned no usable record", retryable=True)
+        return raw
+
+    @staticmethod
+    def _unwrap_list(raw, context: str) -> list:
+        """Validate list-shaped Zhitu responses and normalize envelope wrappers."""
+        if isinstance(raw, dict):
+            if raw.get("error"):
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu {context} unavailable: {raw.get('error')}", retryable=True)
+            raw = raw.get("data") or raw.get("items") or raw.get("list") or []
+        if not isinstance(raw, list):
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu {context} returned an unexpected payload", retryable=True)
+        return raw
 
     def search_instruments(self, query: str, sec_types=None, market: str | None = None, limit: int = 10):
         sec_types = sec_types or ["stock", "index", "fund"]
@@ -598,53 +665,39 @@ class ZhituProvider:
         board = detect_board(normalized, sec_type)
 
         if sec_type == "index" and normalized.endswith(".BJ"):
-            raw = self._get_json(f"/bj/index/real/ssjy/{code}")
-            if isinstance(raw, list):
-                raw = raw[0]
+            raw = self._unwrap_record(self._get_json(f"/bj/index/real/ssjy/{code}"), "quote")
             quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange="BJ", board="index")
             return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "index":
-            raw = self._get_json(f"/hz/real/ssjy/{normalized}")
-            if isinstance(raw, list):
-                raw = raw[0]
+            raw = self._unwrap_record(self._get_json(f"/hz/real/ssjy/{normalized}"), "quote")
             quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
             return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "fund":
-            raw = self._get_json(f"/fund/real/ssjy/{code}")
-            if isinstance(raw, list):
-                raw = raw[0]
+            raw = self._unwrap_record(self._get_json(f"/fund/real/ssjy/{code}"), "quote")
             quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board="fund")
             return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "stock" and normalized.endswith(".BJ"):
-            raw = self._get_json(f"/bj/stock/real/ssjy/{code}")
-            if isinstance(raw, list):
-                raw = raw[0]
+            raw = self._unwrap_record(self._get_json(f"/bj/stock/real/ssjy/{code}"), "quote")
             quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange="BJ", board="beijing")
             return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "stock" and code.startswith("688"):
-            raw = self._get_json(f"/tech/real/ssjy/{code}")
-            if isinstance(raw, list):
-                raw = raw[0]
+            raw = self._unwrap_record(self._get_json(f"/tech/real/ssjy/{code}"), "quote")
             quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange="SH", board="star")
             return self._fill_quote_name(quote, sec_type, normalized)
 
         if sec_type == "stock" and exchange in {"SH", "SZ"}:
-            raw = self._get_json(f"/hs/real/ssjy/{code}")
-            if isinstance(raw, list):
-                raw = raw[0]
-            if isinstance(raw, dict) and raw.get("error"):
-                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu quote unavailable for {symbol}: {raw.get('error')}", retryable=True)
+            raw = self._unwrap_record(self._get_json(f"/hs/real/ssjy/{code}"), "quote")
             quote = adapt_zhitu_quote(raw, normalized, sec_type, exchange=exchange, board=board)
             return self._fill_quote_name(quote, sec_type, normalized)
 
         raise ProviderError("UNSUPPORTED_MARKET", f"Zhitu quote route not implemented for {symbol}/{sec_type}", retryable=False)
 
     def get_quotes_with_meta(self, symbols: list[str], sec_type: str | None = None) -> tuple[list[Quote], dict[str, Any]]:
-        self.last_batch_meta = None
+        self._set_batch_meta(None)
         resolved_sec_type = sec_type or "stock"
         if resolved_sec_type != "stock":
             quotes = [self.get_quote(symbol, resolved_sec_type) for symbol in symbols]
@@ -660,7 +713,7 @@ class ZhituProvider:
                 "missing_symbols": [],
                 "per_symbol": {},
             }
-            self.last_batch_meta = meta
+            self._set_batch_meta(meta)
             return quotes, meta
 
         main_board_items = []
@@ -791,12 +844,12 @@ class ZhituProvider:
             "missing_symbols": [sym for sym in symbols if sym not in results],
             "per_symbol": per_symbol_meta,
         }
-        self.last_batch_meta = meta
+        self._set_batch_meta(meta)
         return ordered, meta
 
     def get_quotes(self, symbols: list[str], sec_type: str | None = None):
         quotes, meta = self.get_quotes_with_meta(symbols, sec_type)
-        self.last_batch_meta = meta
+        self._set_batch_meta(meta)
         return quotes
 
     def _map_zhitu_interval(self, interval: str) -> str:
@@ -841,9 +894,7 @@ class ZhituProvider:
 
         if sec_type == "index":
             params = self._build_zhitu_history_params(start=start, end=end, limit=limit)
-            raw = self._get_json(f"/hz/history/fsjy/{normalized}/{mapped}", params=params)
-            if isinstance(raw, dict) and raw.get("error"):
-                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu history unavailable for {symbol}: {raw.get('error')}", retryable=True)
+            raw = self._unwrap_list(self._get_json(f"/hz/history/fsjy/{normalized}/{mapped}", params=params), "history")
             if limit and isinstance(raw, list):
                 raw = raw[-limit:]
             return [adapt_zhitu_bar(item) for item in raw]
@@ -853,9 +904,7 @@ class ZhituProvider:
 
         adjust_code = self._map_zhitu_adjust(interval, adjust)
         params = self._build_zhitu_history_params(start=start, end=end, limit=limit)
-        raw = self._get_json(f"/hs/history/{normalized}/{mapped}/{adjust_code}", params=params)
-        if isinstance(raw, dict) and raw.get("error"):
-            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu history unavailable for {symbol}: {raw.get('error')}", retryable=True)
+        raw = self._unwrap_list(self._get_json(f"/hs/history/{normalized}/{mapped}/{adjust_code}", params=params), "history")
         if limit and isinstance(raw, list):
             raw = raw[-limit:]
         return [adapt_zhitu_bar(item) for item in raw]
@@ -884,18 +933,14 @@ class ZhituProvider:
         params = self._build_zhitu_history_params(start=start, end=end, limit=limit)
 
         if sec_type == "index":
-            raw = self._get_json(f"/hz/history/{indicator}/{normalized}/{mapped}", params=params)
-            if isinstance(raw, dict) and raw.get("error"):
-                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu indicator unavailable for {symbol}: {raw.get('error')}", retryable=True)
+            raw = self._unwrap_list(self._get_json(f"/hz/history/{indicator}/{normalized}/{mapped}", params=params), "indicator")
             return adapt_zhitu_indicator_series(normalized, sec_type, interval, indicator, raw)
 
         if sec_type != "stock":
             raise ProviderError("UNSUPPORTED_SEC_TYPE", "Zhitu indicator currently supports stock and index routes only", retryable=False)
 
         adjust_code = self._map_zhitu_adjust(interval, "none")
-        raw = self._get_json(f"/hs/history/{indicator}/{normalized}/{mapped}/{adjust_code}", params=params)
-        if isinstance(raw, dict) and raw.get("error"):
-            raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu indicator unavailable for {symbol}: {raw.get('error')}", retryable=True)
+        raw = self._unwrap_list(self._get_json(f"/hs/history/{indicator}/{normalized}/{mapped}/{adjust_code}", params=params), "indicator")
         return adapt_zhitu_indicator_series(normalized, sec_type, interval, indicator, raw)
 
     def get_market_overview(self, market: str = "CN"):
@@ -921,51 +966,64 @@ class ZhituProvider:
             "limit_up": f"/hs/pool/ztgc/{normalized_trade_date}",
             "limit_down": f"/hs/pool/dtgc/{normalized_trade_date}",
             "strong": f"/hs/pool/qsgc/{normalized_trade_date}",
+            "sub_new": f"/hs/pool/cxgc/{normalized_trade_date}",
+            "broken_limit": f"/hs/pool/zbgc/{normalized_trade_date}",
         }
         path = path_map.get(pool_type)
         if not path:
             raise ProviderError("INVALID_ARGUMENT", f"Unsupported pool_type: {pool_type}", retryable=False)
         raw = self._get_json(path)
+        if isinstance(raw, dict):
+            if raw.get("error"):
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"Zhitu market pool unavailable: {raw.get('error')}", retryable=True)
+            raw = raw.get("data") or raw.get("items") or raw.get("list") or []
+        if not isinstance(raw, list):
+            raise ProviderError("PROVIDER_UNAVAILABLE", "Zhitu market pool returned an unexpected payload", retryable=True)
         if pool_type == "limit_up":
             return [adapt_zhitu_limit_up_item(item) for item in raw]
         if pool_type == "limit_down":
             return [adapt_zhitu_limit_down_item(item) for item in raw]
+        if pool_type == "sub_new":
+            return [adapt_zhitu_sub_new_item(item) for item in raw]
+        if pool_type == "broken_limit":
+            return [adapt_zhitu_broken_limit_item(item) for item in raw]
         return [adapt_zhitu_strong_item(item) for item in raw]
 
     def get_token_health(self) -> list[dict]:
-        now = self._now()
-        rows: list[dict] = []
-        for index, token in enumerate(self.tokens, start=1):
-            self._ensure_token_state(token)
-            stats = self._token_stats[token]
-            total = int(stats.get("total_requests", 0) or 0)
-            success = int(stats.get("success_count", 0) or 0)
-            failures = int(stats.get("failure_count", 0) or 0)
-            rate_limits = int(stats.get("rate_limit_count", 0) or 0)
-            cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
-            success_rate = (success / total) if total > 0 else None
-            daily_used = int(self._ensure_daily_counter(token).get("count", 0))
-            rows.append(
-                {
-                    "token_id": f"zhitu_{index}",
-                    "score": round(self._token_score(token, now), 3),
-                    "total_requests": total,
-                    "success_count": success,
-                    "failure_count": failures,
-                    "rate_limit_count": rate_limits,
-                    "success_rate": success_rate,
-                    "cooldown_until": cooldown_until if cooldown_until > now else None,
-                    "cooldown_remaining_seconds": max(0, int(cooldown_until - now)) if cooldown_until > now else 0,
-                    "last_success_at": stats.get("last_success_at"),
-                    "last_failure_at": stats.get("last_failure_at"),
-                    "is_current": token == self.token,
-                    "daily_quota": self._daily_quota,
-                    "daily_used": daily_used,
-                    "daily_remaining": max(0, self._daily_quota - daily_used),
-                }
-            )
-        rows.sort(key=lambda item: item["score"], reverse=True)
-        return rows
+        with self._state_guard():
+            now = self._now()
+            rows: list[dict] = []
+            for index, token in enumerate(list(self.tokens), start=1):
+                self._ensure_token_state(token)
+                stats = self._token_stats[token]
+                total = int(stats.get("total_requests", 0) or 0)
+                success = int(stats.get("success_count", 0) or 0)
+                failures = int(stats.get("failure_count", 0) or 0)
+                rate_limits = int(stats.get("rate_limit_count", 0) or 0)
+                cooldown_until = float(self._token_cooldowns.get(token, 0) or 0)
+                success_rate = (success / total) if total > 0 else None
+                daily_used = int(self._ensure_daily_counter(token).get("count", 0))
+                rows.append(
+                    {
+                        "token_id": f"zhitu_{index}",
+                        "score": round(self._token_score(token, now), 3),
+                        "total_requests": total,
+                        "success_count": success,
+                        "failure_count": failures,
+                        "rate_limit_count": rate_limits,
+                        "success_rate": success_rate,
+                        "cooldown_until": cooldown_until if cooldown_until > now else None,
+                        "cooldown_remaining_seconds": max(0, int(cooldown_until - now)) if cooldown_until > now else 0,
+                        "last_success_at": stats.get("last_success_at"),
+                        "last_failure_at": stats.get("last_failure_at"),
+                        "is_current": token == self.token,
+                        "daily_quota": self._daily_quota,
+                        "daily_used": daily_used,
+                        "daily_remaining": max(0, self._daily_quota - daily_used),
+                    }
+                )
+            rows.sort(key=lambda item: item["score"], reverse=True)
+            return rows
 
     def get_profile(self, symbol: str, include: list[str] | None = None):
         from cn_stock_mcp.app.models.profile import StockProfile, StockProfileDetail

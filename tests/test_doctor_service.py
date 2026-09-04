@@ -47,6 +47,21 @@ class _Settings:
         return {"path": "config/zhitu_tokens.json", "status": "ok", "message": "token config parsed"}
 
 
+class _AppDegraded:
+    def list_tools(self):
+        return [{"name": "provider_health"}]
+
+    def call_tool(self, name, payload):
+        return {
+            "success": True,
+            "error": None,
+            "data": {
+                "overall": "degraded",
+                "checks": [{"name": "zhitu_history_index", "status": "error"}],
+            },
+        }
+
+
 def test_collect_doctor_report_local_warns_but_does_not_fail_without_token():
     report = collect_doctor_report(settings=_Settings(tokens=[]), app=_AppOK(), include_network=False)
     assert report.has_fail is False
@@ -113,3 +128,11 @@ def test_collect_doctor_report_warns_on_invalid_token_config():
 
     assert any(check.name == "zhitu_token_config" and check.status == "WARN" for check in report.checks)
     assert "config/zhitu_tokens.json" in render_doctor_report(report)
+
+
+def test_collect_doctor_report_fails_on_successful_but_degraded_health_report():
+    report = collect_doctor_report(settings=_Settings(tokens=["abc"]), app=_AppDegraded(), include_network=True)
+
+    assert report.has_fail is True
+    assert any(check.name == "provider_health" and check.status == "FAIL" for check in report.checks)
+    assert "degraded" in render_doctor_report(report)

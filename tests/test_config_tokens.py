@@ -78,3 +78,59 @@ def test_package_version_cannot_be_overridden_by_environment(monkeypatch):
     monkeypatch.setenv("MCP_SERVER_VERSION", "9.9.9")
 
     assert Settings().mcp_server_version == __version__
+
+
+def test_file_token_takes_precedence_over_legacy_environment_value(tmp_path: Path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text('{"zhitu":{"token":"FILE_TOKEN"}}', encoding="utf-8")
+
+    settings = Settings(zhitu_token_config_path=str(config_path), zhitu_token="ENV_TOKEN")
+
+    assert settings.resolve_zhitu_token() == "FILE_TOKEN"
+
+
+def test_posix_permission_check_flags_group_readable_token_file(tmp_path: Path, monkeypatch):
+    from cn_stock_mcp.infra import config as config_module
+
+    path = tmp_path / "config.json"
+    path.write_text("{}", encoding="utf-8")
+    path.chmod(0o644)
+    monkeypatch.setattr(config_module.os, "name", "posix")
+
+    status, _message = config_module._config_permission_status(path)
+
+    assert status == "insecure"
+
+
+def test_windows_acl_hardening_keeps_interactive_user_access(tmp_path: Path, monkeypatch):
+    from types import SimpleNamespace
+    from cn_stock_mcp.infra import config as config_module
+
+    path = tmp_path / "config.json"
+    path.write_text("{}", encoding="utf-8")
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(stdout="DESKTOP\\Sandbox\n")
+
+    monkeypatch.setattr(config_module.os, "name", "nt")
+    monkeypatch.setenv("USERDOMAIN", "DESKTOP")
+    monkeypatch.setenv("USERNAME", "Customer")
+    monkeypatch.setattr(config_module.subprocess, "run", fake_run)
+
+    config_module._harden_config_permissions(path)
+
+    assert len(calls) == 2
+    acl_args = calls[1]
+    assert "DESKTOP\\Customer:F" in acl_args
+    assert "SYSTEM:F" in acl_args
+
+
+def test_non_string_token_values_are_ignored(tmp_path: Path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text('{"zhitu":{"tokens":{"bad":{"value":1},"ok":"TOKEN"}}}', encoding="utf-8")
+
+    settings = Settings(zhitu_token_config_path=str(config_path))
+
+    assert settings.resolve_zhitu_tokens() == ["TOKEN"]

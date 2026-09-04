@@ -1,4 +1,5 @@
 import time
+from collections.abc import Mapping, Sequence
 
 from cn_stock_mcp.app.services.cache_service import CacheService
 from cn_stock_mcp.app.services.error_mapper import serialize_exception
@@ -66,6 +67,68 @@ class StockQuoteUseCase:
                 return False
         return True
 
+    @staticmethod
+    def _quote_map(quotes) -> dict[str, object]:
+        """Normalize provider batch output (list or legacy mapping) by symbol."""
+        if isinstance(quotes, Mapping):
+            values = list(quotes.values())
+        elif isinstance(quotes, Sequence) and not isinstance(quotes, (str, bytes, bytearray)):
+            values = list(quotes)
+        else:
+            values = []
+        result: dict[str, object] = {}
+        for quote in values:
+            symbol = quote.get("symbol") if isinstance(quote, Mapping) else getattr(quote, "symbol", None)
+            if symbol:
+                result[str(symbol).upper()] = quote
+        return result
+
+    def _append_single_quote(
+        self,
+        raw_symbol: str,
+        resolved,
+        selection: ProviderSelection,
+        errors: list,
+        items: list,
+        meta_items: list,
+        batch_meta: dict | None = None,
+        root_selection: ProviderSelection | None = None,
+    ) -> bool:
+        """Try one symbol through a provider selection and append metadata."""
+        try:
+            quote, fallback_meta = run_with_fallback_meta(
+                self.router,
+                selection,
+                lambda provider: provider.get_quote(resolved.symbol, resolved.sec_type),
+            )
+            items.append(quote)
+            reported_selection = root_selection or selection
+            final_provider = fallback_meta.final_provider or selection.primary
+            meta_items.append(
+                {
+                    "symbol": raw_symbol,
+                    "resolved_symbol": resolved.symbol,
+                    "sec_type": resolved.sec_type,
+                    "selected_primary": reported_selection.primary,
+                    "selected_fallback": reported_selection.fallback,
+                    "attempted": [reported_selection.primary, *fallback_meta.attempted] if root_selection else fallback_meta.attempted,
+                    "final_provider": final_provider,
+                    "used_fallback": final_provider != reported_selection.primary,
+                    "provider_used": final_provider,
+                    "fallback_chain": [reported_selection.primary, *reported_selection.fallback],
+                    "latency_ms": 0,
+                    "batch_attempted": bool(batch_meta),
+                    "batch_failed": bool(batch_meta),
+                    "batch_fallback_used": bool(batch_meta),
+                    "batch_fallback_mode": "single_quote" if batch_meta else None,
+                    "batch_error": batch_meta,
+                }
+            )
+            return True
+        except Exception as exc:
+            errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
+            return False
+
     def execute(self, request):
         started_at = time.perf_counter()
         items = []
@@ -122,9 +185,9 @@ class StockQuoteUseCase:
                     quotes = provider.get_quotes([sym for sym, _ in resolved_symbols], request.sec_type)
                     batch_meta = getattr(provider, "last_batch_meta", None) or {}
 
-                quote_by_symbol = {q.symbol: q for q in quotes}
+                quote_by_symbol = self._quote_map(quotes)
                 for raw_symbol, resolved in resolved_symbols:
-                    quote = quote_by_symbol.get(resolved.symbol)
+                    quote = quote_by_symbol.get(resolved.symbol.upper())
                     symbol_batch_meta = (batch_meta.get("per_symbol") or {}).get(raw_symbol, {}) if isinstance(batch_meta, dict) else {}
                     if quote is not None:
                         items.append(quote)
@@ -154,7 +217,30 @@ class StockQuoteUseCase:
                             "message": "symbol missing from batch result",
                             "retryable": True,
                         }
-                        errors.append({"symbol": raw_symbol, **err})
+                        # Zhitu may already have attempted its own single
+                        # quote fallback.  If an alternate provider is
+                        # configured, try it now rather than returning a
+                        # silent partial result.
+                        fallback_selection = None
+                        if selection.fallback:
+                            fallback_selection = ProviderSelection(
+                                primary=selection.fallback[0], fallback=selection.fallback[1:]
+                            )
+                        attempted_provider_fallback = fallback_selection is not None
+                        if fallback_selection is not None:
+                            if self._append_single_quote(
+                                raw_symbol,
+                                resolved,
+                                fallback_selection,
+                                errors,
+                                items,
+                                meta_items,
+                                batch_meta=err,
+                                root_selection=selection,
+                            ):
+                                continue
+                        if not attempted_provider_fallback:
+                            errors.append({"symbol": raw_symbol, **err})
                         meta_items.append(
                             {
                                 "symbol": raw_symbol,
@@ -177,22 +263,35 @@ class StockQuoteUseCase:
                         )
             except Exception as exc:
                 for raw_symbol, resolved in resolved_symbols:
-                    errors.append({"symbol": raw_symbol, **serialize_exception(exc)})
-                    meta_items.append(
-                        {
-                            "symbol": raw_symbol,
-                            "resolved_symbol": resolved.symbol,
-                            "sec_type": resolved.sec_type,
-                            "selected_primary": selection.primary,
-                            "selected_fallback": selection.fallback,
-                            "attempted": [selection.primary],
-                            "final_provider": None,
-                            "used_fallback": False,
-                            "provider_used": None,
-                            "fallback_chain": [selection.primary, *selection.fallback],
-                            "latency_ms": 0,
-                        }
-                    )
+                    if not self._append_single_quote(
+                        raw_symbol,
+                        resolved,
+                        selection,
+                        errors,
+                        items,
+                        meta_items,
+                        batch_meta=serialize_exception(exc),
+                    ):
+                        meta_items.append(
+                            {
+                                "symbol": raw_symbol,
+                                "resolved_symbol": resolved.symbol,
+                                "sec_type": resolved.sec_type,
+                                "selected_primary": selection.primary,
+                                "selected_fallback": selection.fallback,
+                                "attempted": [selection.primary, *selection.fallback],
+                                "final_provider": None,
+                                "used_fallback": False,
+                                "provider_used": None,
+                                "fallback_chain": [selection.primary, *selection.fallback],
+                                "latency_ms": 0,
+                                "batch_attempted": True,
+                                "batch_failed": True,
+                                "batch_fallback_used": False,
+                                "batch_fallback_mode": None,
+                                "batch_error": serialize_exception(exc),
+                            }
+                        )
         else:
             for raw_symbol, resolved in resolved_symbols:
                 sym_selection = forced_selection or self.router.choose_provider(
@@ -263,6 +362,16 @@ class StockQuoteUseCase:
                             "latency_ms": 0,
                         }
                     )
+
+        # Batch fallback paths can append recovered symbols after the primary
+        # batch items. Preserve the caller's requested order in both data and
+        # per-symbol metadata so hosts can correlate rows deterministically.
+        requested_order = {resolved.symbol: index for index, (_, resolved) in enumerate(resolved_symbols)}
+        def _quote_symbol(quote):
+            return quote.get("symbol", "") if isinstance(quote, Mapping) else getattr(quote, "symbol", "")
+
+        items.sort(key=lambda quote: requested_order.get(_quote_symbol(quote), len(requested_order)))
+        meta_items.sort(key=lambda entry: requested_order.get(entry.get("resolved_symbol"), len(requested_order)))
 
         return {
             "items": items,

@@ -86,6 +86,14 @@ def test_index_enhance_equal_weight():
     assert result["industry_coverage"]["unknown_count"] == 3
 
 
+def test_index_return_uses_first_and_last_bar_for_a_range():
+    from cn_stock_mcp.providers.adapters.index_enhance_adapters import calc_index_return
+
+    assert calc_index_return(
+        [SimpleNamespace(close=100.0), SimpleNamespace(close=110.0)]
+    ) == 10.0
+
+
 def test_index_enhance_schema_rejects_empty_index_code():
     try:
         IndexEnhanceRequest(index_code="  ")

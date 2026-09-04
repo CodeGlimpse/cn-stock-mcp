@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class StockCompareItem(BaseModel):
@@ -19,7 +21,7 @@ class StockCompareItem(BaseModel):
     market_cap: float | None = None
     float_market_cap: float | None = None
     turnover_rate: float | None = None
-    # financial fields (AKShare)
+    # financial fields (AKShare); ratio fields are percentage points
     revenue: float | None = None
     net_profit: float | None = None
     roe: float | None = None
@@ -35,7 +37,10 @@ class StockCompareItem(BaseModel):
 
 
 class StockCompareResult(BaseModel):
-    items: list[StockCompareItem] = []
+    items: list[StockCompareItem] = Field(default_factory=list)
     total_count: int = 0
-    symbols_compared: list[str] = []
+    symbols_compared: list[str] = Field(default_factory=list)
     summary: str = ""
+    partial_failure: bool = False
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    meta: dict[str, Any] = Field(default_factory=dict)

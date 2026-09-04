@@ -15,8 +15,12 @@ def test_stock_history_interval_alias_normalization():
 def test_stock_history_rejects_1m_interval():
     with pytest.raises(ValidationError) as exc:
         StockHistoryRequest(symbol="000001.SH", sec_type="index", interval="1m")
-
     assert "1m is not supported" in str(exc.value)
+
+
+def test_monthly_canonical_interval_1M_is_accepted():
+    req = StockHistoryRequest(symbol="000001.SH", sec_type="index", interval="1M")
+    assert req.interval == "1M"
 
 
 def test_technical_indicator_alias_normalization():
@@ -57,6 +61,14 @@ def test_stock_candidate_scan_normalizes_pool_and_deduplicates_inputs():
     assert req.pool_type == "limit_up"
     assert req.symbols == ["600519.SH", "000001.SZ"]
     assert req.sector_names == ["1000信息", "1000工业"]
+
+
+def test_ranked_only_return_mode_is_part_of_public_candidate_and_watchlist_contract():
+    candidate = StockCandidateScanRequest(symbols=["600519.SH"], return_mode="ranked_only")
+    watchlist = WatchlistReviewRequest(symbols=["600519.SH"], return_mode="ranked_only")
+
+    assert candidate.return_mode == "ranked_only"
+    assert watchlist.return_mode == "ranked_only"
 
 
 def test_market_pool_request_supports_new_pool_aliases():

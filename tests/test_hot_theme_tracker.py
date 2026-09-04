@@ -194,3 +194,26 @@ def test_hot_theme_tracker_raises_when_resolved_sectors_too_few():
         assert False, "expected ProviderError"
     except ProviderError as exc:
         assert exc.code == "INVALID_ARGUMENT"
+
+
+def test_hot_theme_tracker_pool_failure_is_partial_not_total_failure():
+    class _FailPool:
+        def execute(self, request):
+            raise ProviderError("PROVIDER_UNAVAILABLE", "pool offline", retryable=True)
+
+    uc = HotThemeTrackerUseCase()
+    uc.sector_lookup = _SectorLookup()
+    uc.sector_rotation = _SectorRotation()
+    uc.market_pool = _FailPool()
+    req = HotThemeTrackerRequest(
+        sector_names=["1000信息", "1000工业"],
+        trade_date="2026-05-06",
+        include_pool_snapshot=True,
+    )
+
+    result = uc.execute(req)
+
+    assert result["themes"]
+    assert result["partial_failure"] is True
+    assert result["pool_snapshot"]["limit_up"]["count"] is None
+    assert len(result["errors"]) == 2

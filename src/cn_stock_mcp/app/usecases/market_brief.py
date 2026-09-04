@@ -4,6 +4,7 @@ from datetime import datetime
 
 from cn_stock_mcp.app.models.quote import Quote
 from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
+from cn_stock_mcp.app.services.error_mapper import serialize_exception
 from cn_stock_mcp.app.services.metric_schema import (
     REVIEW_ENVELOPE_SCHEMA,
     REVIEW_METRIC_SCHEMA,
@@ -75,35 +76,66 @@ class MarketBriefUseCase:
                 retryable=True,
             )
 
+        # Make coverage explicit: a provider can return a successful envelope
+        # with only a subset of the benchmark indices.
+        overview_indices = overview.get("indices", []) if isinstance(overview, dict) else []
+        returned_index_symbols = {
+            self._value(item, "symbol") for item in overview_indices if self._value(item, "symbol")
+        }
+        expected_index_symbols = {symbol for symbol, _ in self.REVIEW_INDICES}
+        missing_index_symbols = sorted(expected_index_symbols - returned_index_symbols)
+        if missing_index_symbols:
+            overview_meta = dict(overview_meta)
+            overview_meta["partial_failure"] = True
+            overview_meta.setdefault("errors", [])
+            overview_meta["errors"] = [
+                *overview_meta.get("errors", []),
+                {
+                    "error_code": "PARTIAL_RESULT",
+                    "message": "overview did not return all benchmark indices",
+                    "missing_symbols": missing_index_symbols,
+                    "retryable": True,
+                },
+            ]
+
         pools: dict[str, dict] = {}
         pools_meta: dict[str, dict] = {}
+        pool_errors: list[dict] = []
         if request.include_pools:
             for pool_type in ("limit_up", "limit_down", "strong"):
-                pool_selection = self.router.choose_provider(
-                    tool_name="market_pool",
-                    sec_type="stock",
-                    preferred=(getattr(request, "provider", None) or "zhitu"),
-                )
-                items, pool_meta = run_with_fallback_meta(
-                    self.router,
-                    pool_selection,
-                    lambda provider, _pool_type=pool_type: provider.get_market_pool(
-                        pool_type=_pool_type,
-                        trade_date=effective_trade_date,
-                    ),
-                )
+                pool_selection = None
+                try:
+                    pool_selection = self.router.choose_provider(
+                        tool_name="market_pool",
+                        sec_type="stock",
+                        preferred=(getattr(request, "provider", None) or "zhitu"),
+                    )
+                    items, pool_meta = run_with_fallback_meta(
+                        self.router,
+                        pool_selection,
+                        lambda provider, _pool_type=pool_type: provider.get_market_pool(
+                            pool_type=_pool_type,
+                            trade_date=effective_trade_date,
+                        ),
+                    )
+                except Exception as exc:
+                    items = []
+                    pool_errors.append({"pool_type": pool_type, **serialize_exception(exc)})
+                    pool_meta = None
                 top_items = items[: request.top_n] if request.top_n else items
                 pools[pool_type] = {
-                    "count": len(items),
+                    "count": len(items) if pool_meta is not None else None,
                     "top_items": top_items,
-                    "source": pool_meta.final_provider or pool_selection.primary,
+                    "source": (pool_meta.final_provider if pool_meta else None) or (pool_selection.primary if pool_selection else None),
+                    "available": pool_meta is not None,
                 }
                 pools_meta[pool_type] = {
-                    "selected_primary": pool_meta.selected_primary,
-                    "selected_fallback": pool_meta.selected_fallback,
-                    "attempted": pool_meta.attempted,
-                    "final_provider": pool_meta.final_provider,
-                    "used_fallback": pool_meta.used_fallback,
+                    "selected_primary": pool_meta.selected_primary if pool_meta else None,
+                    "selected_fallback": pool_meta.selected_fallback if pool_meta else [],
+                    "attempted": pool_meta.attempted if pool_meta else [],
+                    "final_provider": pool_meta.final_provider if pool_meta else None,
+                    "used_fallback": pool_meta.used_fallback if pool_meta else False,
+                    "failed": pool_meta is None,
                 }
 
         indices = overview.get("indices", []) if isinstance(overview, dict) else []
@@ -114,8 +146,9 @@ class MarketBriefUseCase:
 
         stats = self._build_stats(index_ranking, breadth)
         continuity = self._build_continuity(index_ranking)
-        leaders = self._build_item_cards(index_ranking[: request.top_n], mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date)
-        laggards = self._build_item_cards(list(reversed(index_ranking[-request.top_n:])), mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date) if index_ranking and request.top_n else []
+        known_ranking = [item for item in index_ranking if item.get("change_percent") is not None]
+        leaders = self._build_item_cards(known_ranking[: request.top_n], mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date)
+        laggards = self._build_item_cards(list(reversed(known_ranking[-request.top_n:])), mode=("trade_date_review" if review_mode else "realtime_brief"), trade_date=effective_trade_date) if known_ranking and request.top_n else []
         rankings = self._build_rankings(leaders, laggards, index_ranking, request.top_n, effective_trade_date, review_mode)
         buckets = self._build_buckets(pools, request.top_n, effective_trade_date, review_mode)
         benchmark_summary = self._build_benchmark_summary(index_ranking)
@@ -134,8 +167,9 @@ class MarketBriefUseCase:
             highlights=highlights,
         )
 
-        partial_failure = bool(overview_meta.get("partial_failure"))
+        partial_failure = bool(overview_meta.get("partial_failure")) or bool(pool_errors)
         errors = list(overview_meta.get("errors", []))
+        errors.extend(pool_errors)
 
         return {
             "subject_type": "market",
@@ -184,6 +218,7 @@ class MarketBriefUseCase:
                 "calendar": calendar_meta,
                 "overview": overview_meta,
                 "pools": pools_meta,
+                "partial_failure": partial_failure,
             },
         }
 
@@ -323,51 +358,69 @@ class MarketBriefUseCase:
                     "source": q.source,
                 }
             )
-        ranked.sort(key=lambda x: (-9999 if x["change_percent"] is None else -x["change_percent"], x["symbol"]))
+        ranked.sort(
+            key=lambda x: (
+                x["change_percent"] is None,
+                0 if x["change_percent"] is None else -float(x["change_percent"]),
+                x["symbol"],
+            )
+        )
         return ranked
 
     def _build_breadth(self, pools: dict[str, dict]) -> dict:
-        limit_up_count = pools.get("limit_up", {}).get("count", 0)
-        limit_down_count = pools.get("limit_down", {}).get("count", 0)
-        strong_count = pools.get("strong", {}).get("count", 0)
-        ratio = None
-        if limit_down_count == 0:
-            ratio = None if limit_up_count == 0 else float(limit_up_count)
-        else:
-            ratio = round(limit_up_count / limit_down_count, 4)
+        def _count(pool_type: str):
+            if pool_type not in pools:
+                return None
+            pool = pools.get(pool_type, {})
+            if pool and pool.get("available", True) is False:
+                return None
+            return pool.get("count", 0)
+
+        limit_up_count = _count("limit_up")
+        limit_down_count = _count("limit_down")
+        strong_count = _count("strong")
+        # A zero denominator means the ratio is undefined; returning the raw
+        # up-count here used to be misread as a 1:N ratio.
+        ratio = round(limit_up_count / limit_down_count, 4) if limit_up_count is not None and limit_down_count else None
+        spread = limit_up_count - limit_down_count if limit_up_count is not None and limit_down_count is not None else None
         return {
             "limit_up_count": limit_up_count,
             "limit_down_count": limit_down_count,
             "strong_count": strong_count,
-            "limit_up_down_spread": limit_up_count - limit_down_count,
+            "limit_up_down_spread": spread,
             "limit_up_down_ratio": ratio,
+            "limit_up_down_ratio_defined": bool(limit_down_count),
         }
 
     def _build_sentiment(self, index_ranking: list[dict], breadth: dict) -> dict:
         score = 0.0
-        up = breadth.get("limit_up_count", 0)
-        down = breadth.get("limit_down_count", 0)
-        strong = breadth.get("strong_count", 0)
+        up = breadth.get("limit_up_count")
+        down = breadth.get("limit_down_count")
+        strong = breadth.get("strong_count")
 
-        if up >= 80:
-            score += 2.0
-        elif up >= 40:
-            score += 1.0
+        if up is not None:
+            if up >= 80:
+                score += 2.0
+            elif up >= 40:
+                score += 1.0
 
-        if down <= 5:
-            score += 1.0
-        elif down >= 20:
-            score -= 2.0
-        elif down >= 10:
-            score -= 1.0
+        if down is not None:
+            if down <= 5:
+                score += 1.0
+            elif down >= 20:
+                score -= 2.0
+            elif down >= 10:
+                score -= 1.0
 
-        if strong >= 300:
-            score += 1.0
-        elif strong >= 150:
-            score += 0.5
+        if strong is not None:
+            if strong >= 300:
+                score += 1.0
+            elif strong >= 150:
+                score += 0.5
 
-        strongest = index_ranking[0].get("change_percent") if index_ranking else None
-        weakest = index_ranking[-1].get("change_percent") if index_ranking else None
+        known = [item for item in index_ranking if item.get("change_percent") is not None]
+        strongest = known[0].get("change_percent") if known else None
+        weakest = known[-1].get("change_percent") if known else None
         if strongest is not None and strongest >= 1.5:
             score += 1.0
         if weakest is not None and weakest <= -1.5:
@@ -376,19 +429,24 @@ class MarketBriefUseCase:
         return build_sentiment_payload(score)
 
     def _build_highlights(self, index_ranking: list[dict], breadth: dict) -> dict:
-        strongest = index_ranking[0] if index_ranking else None
-        weakest = index_ranking[-1] if index_ranking else None
+        known = [item for item in index_ranking if item.get("change_percent") is not None]
+        strongest = known[0] if known else None
+        weakest = known[-1] if known else None
         return {
             "strongest_index": strongest,
             "weakest_index": weakest,
-            "limit_up_leads_limit_down": breadth.get("limit_up_count", 0) > breadth.get("limit_down_count", 0),
+            "limit_up_leads_limit_down": (
+                breadth.get("limit_up_count") is not None
+                and breadth.get("limit_down_count") is not None
+                and breadth.get("limit_up_count") > breadth.get("limit_down_count")
+            ),
         }
 
     def _build_structure(self, index_ranking: list[dict], breadth: dict) -> dict:
         index_count = len(index_ranking)
         advancing_count = sum(1 for item in index_ranking if item.get("change_percent") is not None and item.get("change_percent") > 0)
         declining_count = sum(1 for item in index_ranking if item.get("change_percent") is not None and item.get("change_percent") < 0)
-        spread = breadth.get("limit_up_down_spread", 0)
+        spread = breadth.get("limit_up_down_spread") or 0
         tags: list[str] = []
 
         if spread > 0:
@@ -396,7 +454,7 @@ class MarketBriefUseCase:
         elif spread < 0:
             tags.append("limit_down_pressure")
 
-        if breadth.get("strong_count", 0) >= 150:
+        if (breadth.get("strong_count") or 0) >= 150:
             tags.append("broad_activity")
 
         if advancing_count >= max(3, index_count):
@@ -460,9 +518,10 @@ class MarketBriefUseCase:
         }
 
     def _build_rotation(self, index_ranking: list[dict], breadth: dict, review_mode: bool) -> dict:
-        strongest = index_ranking[0].get("change_percent") if index_ranking else None
-        weakest = index_ranking[-1].get("change_percent") if index_ranking else None
-        spread = breadth.get("limit_up_down_spread", 0)
+        known = [item for item in index_ranking if item.get("change_percent") is not None]
+        strongest = known[0].get("change_percent") if known else None
+        weakest = known[-1].get("change_percent") if known else None
+        spread = breadth.get("limit_up_down_spread") or 0
         score = 0.0
         if spread > 0:
             score += 1.0
@@ -491,8 +550,8 @@ class MarketBriefUseCase:
             "weak_trend_ratio": None,
             "top1_return_contribution": None,
             "top3_return_contribution": None,
-            "leader_symbols": [self._value(item, "symbol") for item in index_ranking[:1] if self._value(item, "symbol")],
-            "laggard_symbols": [self._value(item, "symbol") for item in index_ranking[-1:] if self._value(item, "symbol")],
+            "leader_symbols": [self._value(item, "symbol") for item in known[:1] if self._value(item, "symbol")],
+            "laggard_symbols": [self._value(item, "symbol") for item in known[-1:] if self._value(item, "symbol")],
             "range_mode": review_mode,
             "applicable": review_mode,
         }
@@ -601,9 +660,13 @@ class MarketBriefUseCase:
 
         pool_part = ""
         if pools:
-            up = pools.get("limit_up", {}).get("count", 0)
-            down = pools.get("limit_down", {}).get("count", 0)
-            strong = pools.get("strong", {}).get("count", 0)
+            def _display_count(pool_type: str):
+                value = pools.get(pool_type, {}).get("count")
+                return value if value is not None else "未知"
+
+            up = _display_count("limit_up")
+            down = _display_count("limit_down")
+            strong = _display_count("strong")
             pool_part = f"；涨停 {up} 家，跌停 {down} 家，强势 {strong} 家"
 
         index_text = "，".join(index_parts) if index_parts else "指数概览暂不可用"

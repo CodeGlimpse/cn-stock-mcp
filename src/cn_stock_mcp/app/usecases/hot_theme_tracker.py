@@ -10,10 +10,13 @@ from cn_stock_mcp.app.usecases.market_pool import MarketPoolUseCase
 from cn_stock_mcp.app.usecases.sector_lookup import SectorLookupUseCase
 from cn_stock_mcp.app.usecases.sector_rotation_review import SectorRotationReviewUseCase
 from cn_stock_mcp.providers.errors import ProviderError
+from cn_stock_mcp.infra.config import get_settings
+from cn_stock_mcp.app.services.error_mapper import serialize_exception
 
 
 class HotThemeTrackerUseCase:
     def __init__(self) -> None:
+        self.settings = get_settings()
         self.sector_lookup = SectorLookupUseCase()
         self.sector_rotation = SectorRotationReviewUseCase()
         self.market_pool = MarketPoolUseCase()
@@ -22,6 +25,15 @@ class HotThemeTrackerUseCase:
         sector_names = self._resolve_sector_names(request)
         if len(sector_names) < 2:
             raise ProviderError("INVALID_ARGUMENT", "hot_theme_tracker requires at least 2 sector names", retryable=False)
+
+        total_member_budget = max(
+            len(sector_names),
+            int(getattr(self.settings, "hot_theme_total_member_budget", 300) or 300),
+        )
+        effective_member_limit = min(
+            request.member_limit,
+            max(1, total_member_budget // len(sector_names)),
+        )
 
         rot_req = SimpleNamespace(
             sector_names=sector_names,
@@ -34,7 +46,7 @@ class HotThemeTrackerUseCase:
             sort_by=request.sort_by,
             descending=request.descending,
             top_n=max(request.top_n, 3),
-            limit=request.member_limit,
+            limit=effective_member_limit,
             member_top_n=request.member_top_n,
             min_relative_strength=request.min_relative_strength,
             min_return=request.min_return,
@@ -50,7 +62,7 @@ class HotThemeTrackerUseCase:
         theme_items = [self._to_theme_item(it) for it in items]
         ranked = sorted(theme_items, key=lambda x: x["theme_score"], reverse=True)
 
-        pools = self._build_pool_snapshot(request)
+        pools, pool_errors = self._build_pool_snapshot(request)
         leaders = ranked[: request.top_n]
         laggards = list(reversed(ranked[-request.top_n:])) if ranked else []
 
@@ -76,8 +88,8 @@ class HotThemeTrackerUseCase:
             "sentiment": rotation.get("sentiment"),
             "pool_snapshot": pools,
             "summary": self._build_summary(ranked, rotation.get("trade_date"), pools),
-            "partial_failure": bool(rotation.get("partial_failure", False)),
-            "errors": list(rotation.get("errors", [])),
+            "partial_failure": bool(rotation.get("partial_failure", False)) or bool(pool_errors),
+            "errors": [*list(rotation.get("errors", [])), *pool_errors],
             "meta": {
                 "review_envelope_schema": REVIEW_ENVELOPE_SCHEMA,
                 "sentiment_score_schema": SENTIMENT_SCORE_SCHEMA,
@@ -102,6 +114,9 @@ class HotThemeTrackerUseCase:
                     "market_pool": request.include_pool_snapshot,
                 },
                 "source_sector_names": sector_names,
+                "requested_member_limit": request.member_limit,
+                "effective_member_limit": effective_member_limit,
+                "total_member_budget": total_member_budget,
             },
         }
 
@@ -165,14 +180,20 @@ class HotThemeTrackerUseCase:
             "summary": item.get("summary"),
         }
 
-    def _build_pool_snapshot(self, request) -> dict | None:
+    def _build_pool_snapshot(self, request) -> tuple[dict | None, list[dict]]:
         if not request.include_pool_snapshot:
-            return None
+            return None, []
 
         result: dict[str, dict] = {}
+        errors: list[dict] = []
         for pool_type in ("limit_up", "strong"):
             req = SimpleNamespace(pool_type=pool_type, trade_date=request.trade_date, limit=request.pool_top_n, provider="zhitu")
-            pool_result = self.market_pool.execute(req)
+            try:
+                pool_result = self.market_pool.execute(req)
+            except Exception as exc:
+                errors.append({"scope": "market_pool", "pool_type": pool_type, **serialize_exception(exc)})
+                result[pool_type] = {"count": None, "top_items": [], "available": False}
+                continue
             if isinstance(pool_result, dict):
                 items = list(pool_result.get("items", []))
                 count = int(pool_result.get("count", len(items)) or 0)
@@ -182,8 +203,9 @@ class HotThemeTrackerUseCase:
             result[pool_type] = {
                 "count": count,
                 "top_items": items[: request.pool_top_n],
+                "available": True,
             }
-        return result
+        return result, errors
 
     def _build_summary(self, ranked: list[dict], trade_date: str | None, pools: dict | None) -> str:
         top = ranked[0] if ranked else None

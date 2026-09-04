@@ -208,3 +208,41 @@ def test_market_brief_rejects_empty_index_overview():
         assert "no index data" in exc.message
     else:
         raise AssertionError("market_brief must reject an empty index overview")
+
+
+def test_market_brief_without_pools_marks_breadth_unavailable():
+    uc = MarketBriefUseCase()
+    uc.router = _Router()
+    req = type(
+        "Req",
+        (),
+        {"brief_type": "close", "market": "CN", "trade_date": None, "include_pools": False, "top_n": 1, "provider": "mixed"},
+    )()
+
+    result = uc.execute(req)
+
+    assert result["breadth"]["limit_up_count"] is None
+    assert result["breadth"]["limit_down_count"] is None
+
+
+def test_market_brief_marks_failed_optional_pool_unknown_not_zero():
+    class _PoolFailRouter(_Router):
+        def choose_provider(self, tool_name, **kwargs):
+            from cn_stock_mcp.app.services.provider_types import ProviderSelection
+            if tool_name == "market_overview":
+                return ProviderSelection(primary="akshare", fallback=[])
+            return ProviderSelection(primary="zhitu", fallback=[])
+
+    uc = MarketBriefUseCase()
+    uc.router = _PoolFailRouter()
+    req = type(
+        "Req",
+        (),
+        {"brief_type": "close", "market": "CN", "trade_date": None, "include_pools": True, "top_n": 1, "provider": "mixed"},
+    )()
+
+    result = uc.execute(req)
+
+    assert result["partial_failure"] is True
+    assert result["pools"]["limit_up"]["count"] is None
+    assert result["breadth"]["limit_up_count"] is None

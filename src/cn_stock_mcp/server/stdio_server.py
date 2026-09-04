@@ -2,12 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
+import anyio
 from mcp import types
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
 from cn_stock_mcp.server.mcp_server import MCPServerStub, create_server
 from cn_stock_mcp.infra.json_utils import dumps_json, to_json_safe
+
+
+# Provider calls are synchronous (AKShare/httpx wrappers), so keep them off
+# the MCP event loop.  The limiter bounds concurrent upstream work when a host
+# sends several tools/call requests at once.
+_CALL_LIMITER = anyio.CapacityLimiter(4)
 
 
 def _json_text(value: Any) -> str:
@@ -28,7 +35,12 @@ def _build_mcp_handlers(registry: MCPServerStub):
         return types.ListToolsResult(tools=tools)
 
     async def call_tool(_ctx: Any, params: types.CallToolRequestParams) -> types.CallToolResult:
-        result = registry.call_tool(params.name, params.arguments or {})
+        result = await anyio.to_thread.run_sync(
+            registry.call_tool,
+            params.name,
+            params.arguments or {},
+            limiter=_CALL_LIMITER,
+        )
         result = to_json_safe(result)
         is_error = not bool(result.get("success")) if isinstance(result, dict) else False
         return types.CallToolResult(

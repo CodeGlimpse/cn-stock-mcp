@@ -26,7 +26,19 @@ class StockReviewBatchUseCase:
             if isinstance(review, Exception):
                 errors.append({"symbol": symbol, **serialize_exception(review)})
                 continue
-            items.append(self._to_card(review))
+            card = self._to_card(review)
+            items.append(card)
+            if review.get("partial_failure"):
+                nested_errors = review.get("errors") or [
+                    {
+                        "error_code": "PARTIAL_RESULT",
+                        "message": "single-stock review reported a partial failure",
+                        "retryable": True,
+                    }
+                ]
+                for nested in nested_errors:
+                    if isinstance(nested, dict):
+                        errors.append({"symbol": symbol, **nested})
 
         filtered_items = self._apply_filters(items, request)
         sorted_items = self._sort_items(filtered_items, request.sort_by, request.descending)
@@ -56,6 +68,8 @@ class StockReviewBatchUseCase:
             "summary": self._build_summary(top_items, request.sort_by, groups),
             "meta": {
                 "metric_schema": REVIEW_METRIC_SCHEMA,
+                "max_workers": max(1, min(len(request.symbols), int(getattr(self.settings, "stock_review_batch_max_workers", 4) or 4))),
+                "completed_count": len(items),
                 "score_fields": {
                     "relative_strength": "relative_strength_pct",
                     "return": "return_pct",

@@ -39,6 +39,10 @@ class StockCandidateScanRequest(BaseModel):
     exclude_risk_flags: list[str] | None = Field(default=None, max_length=20)
     must_have_reason_tags: list[str] | None = Field(default=None, max_length=30)
     exclude_reason_tags: list[str] | None = Field(default=None, max_length=30)
+    return_mode: Literal["full", "ranked_only"] = Field(
+        default="full",
+        description="full returns all filtered items; ranked_only returns only the top_n ranked items",
+    )
 
     @model_validator(mode="after")
     def validate_request(self):
@@ -91,6 +95,10 @@ class WatchlistReviewRequest(BaseModel):
     min_return: float | None = None
     max_drawdown_limit: float | None = None
     min_volume_ratio: float | None = None
+    return_mode: Literal["full", "ranked_only"] = Field(
+        default="full",
+        description="full returns all filtered items; ranked_only returns only the top_n ranked items",
+    )
 
     @model_validator(mode="after")
     def validate_request(self):

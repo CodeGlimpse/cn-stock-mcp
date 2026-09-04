@@ -72,7 +72,9 @@ class IndexEnhanceUseCase:
             interval="1d",
             start_date=request.start_date,
             end_date=request.end_date,
-            limit=1,
+            # Keep enough bars to calculate the requested interval return;
+            # limit=1 silently reduced range requests to a one-day snapshot.
+            limit=1000 if (request.start_date or request.end_date) else 2,
             adjust=None,
         ))
         benchmark_return = calc_index_return(history.get("items", []))

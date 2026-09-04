@@ -15,6 +15,9 @@ _SECRET_ASSIGNMENT = re.compile(
     r"(?i)(\b(?:token|access[_-]?token|api[-_ ]?key|secret|password|authorization|bearer|credential|cookie)\b\s*[:=]\s*)([^\s,;&}\"']+)"
 )
 _BEARER_VALUE = re.compile(r"(?i)(\bBearer\s+)([^\s,;&}\"']+)")
+_SECRET_BARE_VALUE = re.compile(
+    r"(?i)(\b(?:access[_-]?token|api[-_ ]?key|secret|password|credential)\b\s+)([A-Za-z0-9._~+/=-]{8,})"
+)
 _URL_SECRET = re.compile(
     r"(?i)([?&](?:token|access[_-]?token|api[-_ ]?key|secret|password|authorization)=)([^&#\s]+)"
 )
@@ -48,7 +51,8 @@ def redact_sensitive_text(value: object, secrets: Iterable[str] | None = None) -
     text = _URL_SECRET.sub(r"\1<redacted>", text)
     text = _SECRET_ASSIGNMENT_QUOTED.sub(r"\1\2<redacted>\4", text)
     text = _SECRET_ASSIGNMENT.sub(r"\1<redacted>", text)
-    return _BEARER_VALUE.sub(r"\1<redacted>", text)
+    text = _BEARER_VALUE.sub(r"\1<redacted>", text)
+    return _SECRET_BARE_VALUE.sub(r"\1<redacted>", text)
 
 
 def redact_sensitive_value(value: Any, secrets: Iterable[str] | None = None) -> Any:
@@ -87,7 +91,10 @@ def safe_validation_error_details(exc: Exception, secrets: Iterable[str] | None 
         # Pydantic includes the submitted value under ``input``.  Omitting it
         # entirely prevents a malformed request from echoing a token or other
         # secret in the MCP response; the location/type/message remain useful.
-        item = {key: value for key, value in raw.items() if key != "input"}
+        # ``ctx`` may contain an exception whose message embeds the submitted
+        # value; it is not needed by an MCP caller once ``type``/``msg`` and
+        # ``loc`` are present, so omit it along with ``input``.
+        item = {key: value for key, value in raw.items() if key not in {"input", "ctx"}}
         item = redact_sensitive_value(item, secrets)
         if isinstance(item, Mapping):
             details.append(dict(item))

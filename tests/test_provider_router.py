@@ -96,3 +96,35 @@ def test_explicit_preference_overrides_default_provider_order():
 
     assert sel.primary == "zhitu"
     assert sel.fallback == ["akshare"]
+
+
+def test_catalog_routes_match_symbol_aware_runtime_defaults():
+    for name in ("stock_quote", "stock_history", "technical_indicator"):
+        route = ProviderRouter.describe_route(name)
+        assert route["primary"] == "zhitu"
+        assert route["fallback"] == ["akshare"]
+
+
+def test_market_pool_route_advertises_akshare_fallback():
+    route = ProviderRouter.describe_route("market_pool")
+    assert route["primary"] == "zhitu"
+    assert route["fallback"] == ["akshare"]
+
+
+def test_fund_indicator_uses_akshare_derived_route():
+    router = ProviderRouter()
+    selection = router.choose_provider(
+        tool_name="technical_indicator", symbol="510050.SH", sec_type="fund"
+    )
+    assert selection.primary == "akshare"
+    assert selection.fallback == []
+
+
+def test_market_overview_runtime_matches_catalog_even_with_default_order():
+    router = ProviderRouter()
+    router._settings.default_provider_order = "akshare,zhitu"
+
+    selection = router.choose_provider(tool_name="market_overview", sec_type="index")
+
+    assert selection.primary == "zhitu"
+    assert selection.fallback == ["akshare"]

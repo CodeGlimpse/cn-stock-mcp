@@ -9,7 +9,7 @@ class _Bar:
 
 class _Series:
     def model_dump(self):
-        return {"symbol": "600519.SH", "indicator": "macd", "items": []}
+        return {"symbol": "600519.SH", "indicator": "macd", "items": [{"time": "2026-05-07", "values": {"macd": 1.0}}]}
 
 
 class _ProviderHistory:

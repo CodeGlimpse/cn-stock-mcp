@@ -357,6 +357,15 @@ def test_sector_rotation_review_uses_limit_for_inner_sector_review_scope():
     assert captured == [("电力设备", 6, 7), ("通信设备", 6, 7)]
 
 
+def test_sector_rotation_caps_total_member_expansion_budget():
+    uc = SectorRotationReviewUseCase()
+    uc.settings.sector_rotation_member_limit = 100
+    uc.settings.sector_rotation_total_member_budget = 30
+    request = type("Req", (), {"sector_names": ["A", "B", "C"], "limit": 100})()
+
+    assert uc._effective_member_limit(request) == 10
+
+
 def test_sector_rotation_review_collects_results_in_input_order_even_when_parallel():
     uc = SectorRotationReviewUseCase()
 

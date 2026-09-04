@@ -4,9 +4,10 @@ from bisect import bisect_left, bisect_right
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime, timedelta
 from io import StringIO
-from threading import Lock, local
+from threading import Lock, RLock, local
 
 import requests
+import time
 
 from cn_stock_mcp.infra.time_utils import normalize_symbol
 from cn_stock_mcp.infra.config import Settings, get_settings
@@ -27,7 +28,7 @@ from cn_stock_mcp.providers.adapters.akshare_adapters import (
     adapt_akshare_index_list_row,
     adapt_akshare_stock_list_row,
 )
-from cn_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_bar_row, adapt_akshare_quote_row, adapt_akshare_tx_bar_row
+from cn_stock_mcp.providers.adapters.akshare_market_adapters import adapt_akshare_bar_row, adapt_akshare_market_pool_row, adapt_akshare_quote_row, adapt_akshare_tx_bar_row
 from cn_stock_mcp.providers.adapters.akshare_capital_flow_adapters import (
     adapt_akshare_individual_fund_flow,
     adapt_akshare_market_fund_flow,
@@ -51,6 +52,7 @@ from cn_stock_mcp.providers.adapters.akshare_northbound_adapters import (
 )
 from cn_stock_mcp.app.models.capital_flow import CapitalFlowRecord, MarketFundFlowSummary, SectorFundFlowItem
 from cn_stock_mcp.app.models.financial import FinancialDetailItem, FinancialSnapshot, FinancialHistoryPoint
+from cn_stock_mcp.app.models.indicator import IndicatorPoint, IndicatorSeries
 from cn_stock_mcp.app.models.limit_stat import BrokenLimitItem, LimitUpItem, PreviousDayLimitItem
 from cn_stock_mcp.app.models.northbound import NorthboundFlowRecord, NorthboundDailySummary
 from cn_stock_mcp.infra.time_utils import normalize_symbol
@@ -58,6 +60,7 @@ from cn_stock_mcp.infra.time_utils import normalize_symbol
 
 _request_timeout_state = local()
 _request_patch_lock = Lock()
+_ak_output_lock = RLock()
 _original_session_request = requests.sessions.Session.request
 
 
@@ -87,6 +90,8 @@ class AKShareProvider:
         self.settings = settings or get_settings()
         self.akshare_timeout_seconds = max(int(self.settings.akshare_timeout_seconds or 20), 1)
         self._trade_dates_cache: list[str] | None = None
+        self._trade_dates_cache_fetched_at: float | None = None
+        self._cache_lock = RLock()
         self._bj_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
         self._bj_spot_cache_ttl: int = 10  # seconds
         self._kc_spot_cache: tuple[float, dict[str, dict]] | None = None  # (fetched_at, code->row)
@@ -128,8 +133,12 @@ class AKShareProvider:
         )
         sink = StringIO()
         try:
-            with redirect_stdout(sink), redirect_stderr(sink):
-                return fn(*args, **kwargs)
+            # AKShare occasionally writes to process-global stdout/stderr;
+            # serialize the redirection so concurrent MCP calls cannot mix
+            # streams or restore another request's descriptors.
+            with _ak_output_lock:
+                with redirect_stdout(sink), redirect_stderr(sink):
+                    return fn(*args, **kwargs)
         finally:
             if previous_timeout is None:
                 del _request_timeout_state.timeout
@@ -142,15 +151,23 @@ class AKShareProvider:
                 _request_timeout_state.proxies = previous_proxies
 
     def _load_trade_dates(self) -> list[str]:
-        if self._trade_dates_cache is not None:
-            return self._trade_dates_cache
-        lib = self._require_ak()
-        try:
-            df = self._call_ak_quietly(lib.tool_trade_date_hist_sina)
-        except Exception as exc:
-            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare trading calendar failed: {exc}", retryable=True) from exc
-        self._trade_dates_cache = [str(v) for v in df["trade_date"].tolist()]
-        return self._trade_dates_cache
+        ttl = max(int(getattr(self.settings, "cache_ttl_list_seconds", 86400) or 86400), 60)
+        with self._cache_lock:
+            now = time.time()
+            if (
+                self._trade_dates_cache is not None
+                and self._trade_dates_cache_fetched_at is not None
+                and now - self._trade_dates_cache_fetched_at < ttl
+            ):
+                return list(self._trade_dates_cache)
+            lib = self._require_ak()
+            try:
+                df = self._call_ak_quietly(lib.tool_trade_date_hist_sina)
+            except Exception as exc:
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare trading calendar failed: {exc}", retryable=True) from exc
+            self._trade_dates_cache = [str(v) for v in df["trade_date"].tolist()]
+            self._trade_dates_cache_fetched_at = now
+            return list(self._trade_dates_cache)
 
     def _to_tx_symbol(self, normalized: str) -> str:
         code, exchange = normalized.split(".", 1)
@@ -476,6 +493,39 @@ class AKShareProvider:
                 bars = bars[-limit:]
             return bars
 
+        if sec_type == "fund":
+            # ETF/LOF funds share the EastMoney historical-bar shape. Open
+            # ended funds without a listed market code receive an explicit
+            # provider error rather than a misleading empty success.
+            if interval not in {"1d", "1w", "1M"}:
+                raise ProviderError("UNSUPPORTED_INTERVAL", "AKShare fund history supports 1d/1w/1M only", retryable=False)
+            normalized = normalize_symbol(symbol)
+            code = normalized.split(".", 1)[0]
+            endpoint = "fund_lof_hist_em" if code.startswith("16") else "fund_etf_hist_em"
+            fn = getattr(lib, endpoint, None)
+            if fn is None:
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare endpoint unavailable: {endpoint}", retryable=True)
+            period_map = {"1d": "daily", "1w": "weekly", "1M": "monthly"}
+            adjust_map = {"none": "", "qfq": "qfq", "hfq": "hfq"}
+            try:
+                frame = self._call_ak_quietly(
+                    fn,
+                    symbol=code,
+                    period=period_map[interval],
+                    start_date=self._prepush_start(start),
+                    end_date=(end or "20500101").replace("-", ""),
+                    adjust=adjust_map.get(adjust or "none", ""),
+                )
+            except Exception as exc:
+                raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare fund history failed: {exc}", retryable=True) from exc
+            rows = frame.to_dict(orient="records")
+            bars = [adapt_akshare_bar_row(row) for row in rows]
+            bars = self._fill_prev_close(bars)
+            bars = self._trim_before(bars, original_start)
+            if limit:
+                bars = bars[-limit:]
+            return bars
+
         if sec_type != "stock":
             raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare history minimal version supports stock only", retryable=False)
         if interval not in {"1d", "1w", "1M"}:
@@ -547,13 +597,155 @@ class AKShareProvider:
         raise ProviderError("UNSUPPORTED_MARKET", "AKShare orderbook not implemented", retryable=False)
 
     def get_indicator(self, symbol: str, sec_type: str, interval: str, indicator: str, start=None, end=None, limit=None):
-        raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare indicator not implemented", retryable=False)
+        if indicator not in {"macd", "ma", "boll", "kdj"}:
+            raise ProviderError("INVALID_ARGUMENT", f"Unsupported indicator: {indicator}", retryable=False)
+        if interval not in {"1d", "1w", "1M"}:
+            raise ProviderError("UNSUPPORTED_INTERVAL", "AKShare derived indicators support 1d/1w/1M only", retryable=False)
+
+        requested_limit = max(int(limit or 200), 1)
+        warmup = 80 if indicator in {"macd", "ma"} else 30
+        # Leave start open while fetching a bounded tail so rolling indicators
+        # have enough warm-up bars, then apply the requested range afterwards.
+        bars = self.get_history(
+            symbol=symbol,
+            sec_type=sec_type,
+            interval=interval,
+            start=None,
+            end=end,
+            limit=min(requested_limit + warmup, 2000),
+            adjust="none",
+        )
+        if not bars:
+            raise ProviderError("PROVIDER_EMPTY", f"AKShare returned no history for {indicator}", retryable=True)
+
+        values = self._calculate_indicator_values(bars, indicator)
+        points = [IndicatorPoint(time=bar.time, values=row) for bar, row in zip(bars, values)]
+        if start:
+            start_key = str(start)[:10]
+            points = [point for point in points if str(point.time)[:10] >= start_key]
+        if end:
+            end_key = str(end)[:10]
+            points = [point for point in points if str(point.time)[:10] <= end_key]
+        points = points[-requested_limit:]
+        return IndicatorSeries(
+            symbol=normalize_symbol(symbol),
+            sec_type=sec_type,
+            interval=interval,
+            indicator=indicator,
+            items=points,
+            source="akshare_derived",
+        )
+
+    @staticmethod
+    def _ema(values: list[float | None], period: int) -> list[float | None]:
+        alpha = 2.0 / (period + 1)
+        result: list[float | None] = []
+        previous: float | None = None
+        for value in values:
+            if value is None:
+                result.append(previous)
+                continue
+            previous = float(value) if previous is None else alpha * float(value) + (1 - alpha) * previous
+            result.append(previous)
+        return result
+
+    @classmethod
+    def _calculate_indicator_values(cls, bars: list[Bar], indicator: str) -> list[dict[str, float | None]]:
+        closes = [float(bar.close) if bar.close is not None else None for bar in bars]
+
+        if indicator == "macd":
+            ema12 = cls._ema(closes, 12)
+            ema26 = cls._ema(closes, 26)
+            dif = [
+                (left - right) if left is not None and right is not None else None
+                for left, right in zip(ema12, ema26)
+            ]
+            dea = cls._ema(dif, 9)
+            return [
+                {
+                    "dif": d,
+                    "dea": signal,
+                    "macd": 2 * (d - signal) if d is not None and signal is not None else None,
+                    "ema12": fast,
+                    "ema26": slow,
+                }
+                for d, signal, fast, slow in zip(dif, dea, ema12, ema26)
+            ]
+
+        if indicator == "ma":
+            periods = (5, 10, 20, 60)
+            rows: list[dict[str, float | None]] = []
+            for index in range(len(closes)):
+                row = {}
+                for period in periods:
+                    window = closes[max(0, index - period + 1) : index + 1]
+                    valid = [value for value in window if value is not None]
+                    row[f"ma{period}"] = sum(valid) / len(valid) if len(valid) == period else None
+                rows.append(row)
+            return rows
+
+        if indicator == "boll":
+            rows = []
+            for index in range(len(closes)):
+                window = closes[max(0, index - 19) : index + 1]
+                valid = [value for value in window if value is not None]
+                if len(valid) < 20:
+                    rows.append({"mid": None, "upper": None, "lower": None})
+                    continue
+                mid = sum(valid) / len(valid)
+                std = (sum((value - mid) ** 2 for value in valid) / len(valid)) ** 0.5
+                rows.append({"mid": mid, "upper": mid + 2 * std, "lower": mid - 2 * std})
+            return rows
+
+        rows = []
+        k_value = 50.0
+        d_value = 50.0
+        for index, bar in enumerate(bars):
+            window = bars[max(0, index - 8) : index + 1]
+            highs = [float(item.high) for item in window if item.high is not None]
+            lows = [float(item.low) for item in window if item.low is not None]
+            close = float(bar.close) if bar.close is not None else None
+            if close is None or not highs or not lows or max(highs) == min(lows):
+                rsv = None
+            else:
+                rsv = (close - min(lows)) / (max(highs) - min(lows)) * 100
+                k_value = (2 * k_value + rsv) / 3
+                d_value = (2 * d_value + k_value) / 3
+            rows.append(
+                {
+                    "k": k_value if rsv is not None else None,
+                    "d": d_value if rsv is not None else None,
+                    "j": (3 * k_value - 2 * d_value) if rsv is not None else None,
+                    "rsv": rsv,
+                }
+            )
+        return rows
 
     def get_market_overview(self, market: str = "CN"):
         return {"market": market, "indices": [], "source": "akshare"}
 
     def get_market_pool(self, pool_type: str, trade_date: str | None = None):
-        raise ProviderError("UNSUPPORTED_SEC_TYPE", "AKShare market pool not implemented", retryable=False)
+        endpoint_map = {
+            "limit_up": "stock_zt_pool_em",
+            "limit_down": "stock_zt_pool_dtgc_em",
+            "strong": "stock_zt_pool_strong_em",
+            "sub_new": "stock_zt_pool_sub_new_em",
+            "broken_limit": "stock_zt_pool_zbgc_em",
+        }
+        endpoint = endpoint_map.get(pool_type)
+        if not endpoint:
+            raise ProviderError("INVALID_ARGUMENT", f"Unsupported pool_type: {pool_type}", retryable=False)
+        lib = self._require_ak()
+        fn = getattr(lib, endpoint, None)
+        if fn is None:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare endpoint unavailable: {endpoint}", retryable=True)
+        try:
+            kwargs = {"date": trade_date.replace("-", "")} if trade_date else {}
+            frame = self._call_ak_quietly(fn, **kwargs)
+            rows = frame.to_dict(orient="records")
+        except Exception as exc:
+            raise ProviderError("PROVIDER_UNAVAILABLE", f"AKShare market pool ({pool_type}) failed: {exc}", retryable=True) from exc
+        return [adapt_akshare_market_pool_row(row, pool_type) for row in rows]
 
     def get_trading_calendar(self, market: str = "CN", date: str | None = None, start_date: str | None = None, end_date: str | None = None, recent_limit: int = 5):
         if market != "CN":

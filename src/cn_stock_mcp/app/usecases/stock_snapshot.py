@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from cn_stock_mcp.app.services.error_mapper import serialize_exception
+from cn_stock_mcp.app.services.data_freshness import build_data_freshness
 from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
 from cn_stock_mcp.app.usecases.stock_financial import StockFinancialUseCase
 from cn_stock_mcp.app.usecases.stock_history import StockHistoryUseCase
@@ -278,10 +279,20 @@ class StockSnapshotUseCase:
             executor.shutdown(wait=False, cancel_futures=True)
 
         missing_fields = []
+        section_freshness: dict[str, dict[str, dict[str, Any]]] = {}
+        section_coverage: dict[str, dict[str, Any]] = {}
         for item in items:
+            symbol_key = str(item["symbol"])
+            section_freshness[symbol_key] = {}
+            section_coverage[symbol_key] = {}
             for section in include:
                 if item.get(section) is None:
                     missing_fields.append(f"{item['symbol']}.{section}")
+                    section_coverage[symbol_key][section] = {"present": False}
+                    section_freshness[symbol_key][section] = build_data_freshness(None)
+                else:
+                    section_coverage[symbol_key][section] = {"present": True}
+                    section_freshness[symbol_key][section] = build_data_freshness(item.get(section))
 
         successful_items = sum(1 for item in items if not item["errors"])
         return {
@@ -298,6 +309,8 @@ class StockSnapshotUseCase:
                 "max_total_timeout_seconds": request.max_total_timeout_seconds,
                 "timed_out": timed_out,
                 "missing_fields": missing_fields,
+                "section_freshness": section_freshness,
+                "section_coverage": section_coverage,
                 "latency_ms": int((time.perf_counter() - started_at) * 1000),
                 "transaction_support": False,
             },

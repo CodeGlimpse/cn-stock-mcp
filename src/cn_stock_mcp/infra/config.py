@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import stat
 import subprocess
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from cn_stock_mcp import __version__
+from cn_stock_mcp.app.services.tool_profiles import SAFE_FALLBACK_PROFILE, TOOL_PROFILES
 
 
 class Settings(BaseSettings):
@@ -48,6 +51,9 @@ class Settings(BaseSettings):
 
     stock_review_batch_max_workers: int = 4
     sector_rotation_max_workers: int = 2
+    sector_rotation_member_limit: int = 100
+    sector_rotation_total_member_budget: int = 300
+    hot_theme_total_member_budget: int = 300
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -104,7 +110,16 @@ class Settings(BaseSettings):
     def zhitu_token_config_status(self) -> dict[str, str]:
         path = self._resolve_zhitu_token_config_path()
         _, status, message = self._read_zhitu_token_config()
-        return {"path": str(path), "status": status, "message": message}
+        result = {"path": str(path), "status": status, "message": message}
+        if status == "ok":
+            permission_status, permission_message = _config_permission_status(path)
+            result["permission_status"] = permission_status
+            if permission_status == "insecure":
+                result["status"] = "insecure_permissions"
+                result["message"] = f"{message}; {permission_message}"
+            elif permission_status == "unknown":
+                result["message"] = f"{message}; file permissions could not be verified"
+        return result
 
     def _load_zhitu_token_config(self) -> dict:
         data, status, _ = self._read_zhitu_token_config()
@@ -114,11 +129,16 @@ class Settings(BaseSettings):
         ordered_tokens: list[str] = []
 
         def add_token(value: str | None):
-            token = str(value or "").strip()
+            if value is None:
+                return
+            # Do not stringify arbitrary JSON objects/numbers into a token;
+            # malformed configuration should never produce a surprising
+            # credential-like request.
+            if not isinstance(value, str):
+                return
+            token = value.strip()
             if token and token not in ordered_tokens:
                 ordered_tokens.append(token)
-
-        add_token(self.zhitu_token)
 
         data = self._load_zhitu_token_config()
         source = data.get("zhitu", data)
@@ -133,6 +153,12 @@ class Settings(BaseSettings):
         if isinstance(source, dict):
             add_token(source.get("token"))
 
+        # The user-owned file is the documented source of truth.  Keep the
+        # legacy environment-backed field as a final compatibility fallback;
+        # this prevents a stale process environment from silently overriding a
+        # token the user just placed in the config file.
+        add_token(self.zhitu_token)
+
         return ordered_tokens
 
     def resolve_zhitu_token(self) -> str:
@@ -145,7 +171,10 @@ class Settings(BaseSettings):
         profile = str(self.tool_profile or "full").strip()
         if profile == "full" and isinstance(configured, str) and configured.strip():
             profile = configured.strip()
-        return profile or "full"
+        profile = profile or "full"
+        if profile not in TOOL_PROFILES:
+            return SAFE_FALLBACK_PROFILE
+        return profile
 
 
 def get_settings() -> Settings:
@@ -173,9 +202,21 @@ def _harden_config_permissions(path: Path) -> None:
             account = subprocess.run(
                 ["whoami"], capture_output=True, text=True, check=True, timeout=5
             ).stdout.strip()
-            if account:
+            accounts: list[str] = [account] if account else []
+            # A local AI sandbox/service can run under a different account
+            # from the interactive customer.  Keep the customer account from
+            # the standard Windows environment when available, otherwise the
+            # ACL hardening step can lock the person out of their own config.
+            username = os.environ.get("USERNAME", "").strip()
+            domain = os.environ.get("USERDOMAIN", "").strip()
+            interactive = f"{domain}\\{username}" if domain and username else username
+            if interactive and interactive.casefold() not in {item.casefold() for item in accounts}:
+                accounts.append(interactive)
+            grants = [f"{item}:F" for item in accounts if item]
+            grants.append("SYSTEM:F")
+            if grants:
                 subprocess.run(
-                    ["icacls", str(path), "/inheritance:r", "/grant:r", f"{account}:F", "SYSTEM:F"],
+                    ["icacls", str(path), "/inheritance:r", "/grant:r", *grants],
                     capture_output=True,
                     text=True,
                     check=False,
@@ -188,3 +229,41 @@ def _harden_config_permissions(path: Path) -> None:
         path.chmod(0o600)
     except OSError:
         return
+
+
+def _config_permission_status(path: Path) -> tuple[str, str]:
+    """Best-effort check that a token file is not broadly readable."""
+
+    try:
+        if path.is_symlink():
+            return "insecure", "token config is a symbolic link; use a regular user-owned file"
+    except OSError:
+        return "unknown", "token config path type could not be verified"
+
+    if os.name != "nt":
+        try:
+            mode = stat.S_IMODE(path.stat().st_mode)
+        except OSError:
+            return "unknown", "token config permissions could not be read"
+        if mode & 0o077:
+            return "insecure", f"token config mode is {mode:04o}; restrict it to the owner (0600)"
+        return "secure", "token config is owner-only"
+
+    try:
+        result = subprocess.run(
+            ["icacls", str(path)], capture_output=True, text=True, check=False, timeout=10
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unknown", "icacls is unavailable"
+    if result.returncode != 0:
+        return "unknown", "icacls could not inspect the token config"
+
+    # Avoid matching ``C:\Users`` in the path itself; inspect permission
+    # entries for broad principals and inherited ACEs only.
+    permission_lines = [line for line in result.stdout.splitlines() if ")" in line or ":" in line]
+    broad = re.compile(r"(?i)(?:^|\\)(?:everyone|authenticated users|builtin\\users|users)\s*:")
+    if any(broad.search(line) for line in permission_lines):
+        return "insecure", "token config grants access to a broad Windows account group"
+    if any("(I)" in line for line in permission_lines):
+        return "insecure", "token config inherits permissions; rerun --init-config or restrict its ACL"
+    return "secure", "token config ACL does not show broad or inherited access"

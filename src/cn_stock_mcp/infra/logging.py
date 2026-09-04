@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
 from typing import Any
 
 from cn_stock_mcp.infra.security import redact_sensitive_value
+from cn_stock_mcp.infra.json_utils import dumps_json
 
 
 def setup_logging(level: str = "INFO") -> None:
@@ -21,4 +21,4 @@ def log_event(logger: logging.Logger, event: str, **fields: Any) -> None:
         "event": event,
         **{key: redact_sensitive_value(value) for key, value in fields.items()},
     }
-    logger.info(json.dumps(payload, ensure_ascii=False, default=str))
+    logger.info(dumps_json(payload))

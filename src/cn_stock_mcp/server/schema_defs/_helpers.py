@@ -74,7 +74,13 @@ INDICATOR_ALIAS: dict[str, str] = {
 
 def normalize_interval(raw: str) -> str:
     """Normalize interval string. Raises ValueError if unsupported."""
-    mapped = INTERVAL_ALIAS.get(raw.strip().lower())
+    value = str(raw).strip()
+    # ``1M`` is the documented monthly interval; lower-casing it to ``1m``
+    # would incorrectly collide with the intentionally unsupported one-minute
+    # interval.
+    if value == "1M":
+        return "1M"
+    mapped = INTERVAL_ALIAS.get(value.lower())
     if mapped is None:
         raise ValueError(
             "interval must be one of: 5/15/30/60/d/w/m/y or 5m/15m/30m/60m/1d/1w/1M/1y; 1m is not supported in current version"

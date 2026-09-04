@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from cn_stock_mcp.app.models.bar import Bar
+from cn_stock_mcp.app.models.market_pool import MarketPoolItem
 from cn_stock_mcp.app.models.quote import Quote
-from cn_stock_mcp.infra.time_utils import detect_board, normalize_time_string
+from cn_stock_mcp.infra.time_utils import detect_board, normalize_symbol, normalize_time_string
 
 
 def _to_float(value):
@@ -65,4 +66,29 @@ def adapt_akshare_tx_bar_row(row: dict) -> Bar:
         volume=_to_float(row.get("volume") or row.get("成交量")),
         turnover=_to_float(row.get("amount") or row.get("成交额")),
         prev_close=_to_float(row.get("prev_close") or row.get("前收")),
+    )
+
+
+def adapt_akshare_market_pool_row(row: dict, pool_type: str) -> MarketPoolItem:
+    """Adapt an EastMoney limit-pool row to the provider-neutral model."""
+
+    code = str(row.get("代码") or row.get("code") or "").strip()
+    symbol = normalize_symbol(code)
+    return MarketPoolItem(
+        symbol=symbol,
+        name=str(row.get("名称") or row.get("name") or ""),
+        price=_to_float(row.get("最新价") or row.get("price")),
+        change_percent=_to_float(row.get("涨跌幅") or row.get("change_percent")),
+        turnover=_to_float(row.get("成交额") or row.get("turnover")),
+        turnover_rate=_to_float(row.get("换手率") or row.get("转手率") or row.get("turnover_rate")),
+        market_cap=_to_float(row.get("总市值") or row.get("market_cap")),
+        float_market_cap=_to_float(row.get("流通市值") or row.get("float_market_cap")),
+        extra={
+            "pool_type": pool_type,
+            "limit_price": _to_float(row.get("涨停价") or row.get("limit_price")),
+            "limit_count": row.get("连板数") or row.get("涨停统计"),
+            "first_limit_time": row.get("首次封板时间"),
+            "last_limit_time": row.get("最后封板时间"),
+            "industry": row.get("所属行业") or row.get("industry"),
+        },
     )

@@ -26,12 +26,13 @@ class SectorRotationReviewUseCase:
         errors: list[dict] = []
 
         skip_detail = getattr(request, "skip_member_detail", False)
+        effective_member_limit = self._effective_member_limit(request)
         # Tighter inner_top_n: only fetch what we'll actually display
         # member_top_n is per-sector display count; top_n is ranking count
         # We need at most member_top_n members per sector for leaders/laggards
         inner_top_n = request.member_top_n if skip_detail else min(
             request.member_top_n * 3,  # 3x buffer for filtering/sorting
-            request.limit,
+            effective_member_limit,
         )
 
         results = self._collect_sector_results(request, inner_top_n, skip_detail)
@@ -154,8 +155,21 @@ class SectorRotationReviewUseCase:
                     "max_drawdown_limit": request.max_drawdown_limit,
                     "min_volume_ratio": request.min_volume_ratio,
                 },
+                "member_limit": min(
+                    effective_member_limit,
+                    int(getattr(self.settings, "sector_rotation_member_limit", 100) or 100),
+                ),
+                "requested_member_limit": int(getattr(request, "limit", 100) or 100),
+                "total_member_budget": int(getattr(self.settings, "sector_rotation_total_member_budget", 300) or 300),
             },
         }
+
+    def _effective_member_limit(self, request) -> int:
+        sector_count = max(1, len(getattr(request, "sector_names", []) or []))
+        per_sector_cap = max(1, int(getattr(self.settings, "sector_rotation_member_limit", 100) or 100))
+        total_budget = max(sector_count, int(getattr(self.settings, "sector_rotation_total_member_budget", 300) or 300))
+        budget_share = max(1, total_budget // sector_count)
+        return min(int(getattr(request, "limit", 100) or 100), per_sector_cap, budget_share)
 
     def _collect_sector_results(self, request, inner_top_n: int, skip_detail: bool = False) -> dict[str, dict | Exception]:
         sector_names = list(request.sector_names)
@@ -192,7 +206,7 @@ class SectorRotationReviewUseCase:
                 sort_by="relative_strength",
                 descending=True,
                 top_n=inner_top_n,
-                limit=request.limit,
+                limit=self._effective_member_limit(request),
                 min_relative_strength=request.min_relative_strength,
                 min_return=request.min_return,
                 max_drawdown_limit=request.max_drawdown_limit,
@@ -219,7 +233,7 @@ class SectorRotationReviewUseCase:
                 mode="children",
                 sector_type=getattr(request, "sector_type", "primary"),
                 sector_name=sector_name,
-                limit=getattr(request, "limit", 100),
+                limit=self._effective_member_limit(request),
                 provider=request.provider,
             ))
         except Exception:

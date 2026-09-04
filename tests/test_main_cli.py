@@ -118,3 +118,22 @@ def test_main_describe_tool_prints_catalog_entry(monkeypatch, capsys):
     cli.main(["--describe-tool", "stock_quote"])
 
     assert '"name": "stock_quote"' in capsys.readouterr().out
+
+
+def test_main_docs_path_prints_customer_docs_location(monkeypatch, capsys, tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "CUSTOMER_DEPLOYMENT.md").write_text("# docs", encoding="utf-8")
+    monkeypatch.setattr(cli, "_installed_docs_path", lambda: docs)
+
+    cli.main(["--docs-path"])
+
+    assert str(docs) in capsys.readouterr().out
+
+
+def test_main_rejects_invalid_tool_payload_without_echoing_input(capsys):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--tool", "stock_quote", "--payload", "not-json-SECRET_TOKEN"])
+
+    assert exc.value.code == 2
+    assert "SECRET_TOKEN" not in capsys.readouterr().err

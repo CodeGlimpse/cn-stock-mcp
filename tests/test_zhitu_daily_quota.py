@@ -1,5 +1,6 @@
 """Tests for Zhitu daily quota tracking and per-token exhaustion."""
 import httpx
+from concurrent.futures import ThreadPoolExecutor
 
 from cn_stock_mcp.providers.errors import ProviderRateLimitError
 from cn_stock_mcp.providers.zhitu_provider import ZhituProvider
@@ -92,14 +93,16 @@ def test_exhausted_token_is_skipped():
     assert provider.client.calls[-1]['token'] == 'TOKEN_B'
 
 
-def test_all_tokens_exhausted_still_tries():
-    """When all tokens have quota=0, we still try (the upstream may allow overage)."""
+def test_all_tokens_exhausted_stops_before_unconfigured_overage():
     provider = _Zhitu(daily_quota=1)
     provider._get_json('/test1')  # uses TOKEN_A, quota now 0
     provider._get_json('/test2')  # uses TOKEN_B, quota now 0
-    # Both exhausted, but should still try (not raise)
-    provider._get_json('/test3')  # falls back to highest-score token
-    assert len(provider.client.calls) == 3
+    try:
+        provider._get_json('/test3')
+        assert False, "expected ProviderRateLimitError"
+    except ProviderRateLimitError as exc:
+        assert exc.code == "PROVIDER_RATE_LIMIT"
+    assert len(provider.client.calls) == 2
 
 
 def test_daily_counter_resets_on_new_day():
@@ -120,3 +123,21 @@ def test_token_health_includes_daily_quota_fields():
     assert a['daily_quota'] == 500
     assert a['daily_used'] == 1
     assert a['daily_remaining'] == 499
+
+
+def test_concurrent_calls_do_not_overshoot_configured_quota():
+    provider = _Zhitu(daily_quota=1)
+
+    def call(index):
+        try:
+            provider._get_json(f'/test{index}')
+            return True
+        except ProviderRateLimitError:
+            return False
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(executor.map(call, range(10)))
+
+    assert sum(results) == 2
+    assert len(provider.client.calls) == 2
+    assert all(provider._daily_counters[token]['count'] <= 1 for token in provider.tokens)

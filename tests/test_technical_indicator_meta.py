@@ -69,3 +69,34 @@ def test_technical_indicator_response_contains_meta():
     assert "meta" in result
     assert result["meta"]["used_fallback"] is True
     assert result["meta"]["final_provider"] == "akshare"
+
+
+def test_technical_indicator_falls_back_when_primary_returns_empty():
+    class _Empty:
+        def get_indicator(self, **kwargs):
+            return _Series()
+
+    class _FilledSeries:
+        def model_dump(self):
+            return {"symbol": "000001.SH", "indicator": "macd", "items": [{"time": "2026-05-01", "values": {"macd": 1.0}}]}
+
+    class _Filled:
+        def get_indicator(self, **kwargs):
+            return _FilledSeries()
+
+    router = _Router()
+    router.providers = {"zhitu": _Empty(), "akshare": _Filled()}
+    uc = TechnicalIndicatorUseCase()
+    uc.router = router
+    uc.resolver = _Resolver()
+    req = type(
+        "Req",
+        (),
+        {"symbol": "000001.SH", "sec_type": "index", "interval": "1d", "indicator": "macd", "start_date": None, "end_date": None, "limit": 31, "provider": None},
+    )()
+
+    result = uc.execute(req)
+
+    assert result["items"]
+    assert result["meta"]["used_fallback"] is True
+    assert result["meta"]["final_provider"] == "akshare"

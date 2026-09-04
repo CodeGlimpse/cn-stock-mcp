@@ -31,7 +31,14 @@ class StockHistoryUseCase:
                 limit=request.limit,
                 adjust=request.adjust,
             ),
+            should_fallback_result=lambda value: not value,
         )
+        if not items:
+            raise ProviderError(
+                "PROVIDER_EMPTY",
+                f"No history returned for {resolved.symbol} from enabled providers",
+                retryable=True,
+            )
         provider_used = fallback_meta.final_provider or selection.primary
         latency_ms = int((time.perf_counter() - started_at) * 1000)
         meta = {

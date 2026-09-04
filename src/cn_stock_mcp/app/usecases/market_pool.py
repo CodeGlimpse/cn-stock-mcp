@@ -113,7 +113,14 @@ class MarketPoolUseCase:
                 pool_type=request.pool_type,
                 trade_date=effective_trade_date,
             ),
+            should_fallback_result=lambda value: not value,
         )
+        if not items:
+            raise ProviderError(
+                "PROVIDER_EMPTY",
+                f"No {request.pool_type} pool rows returned for {effective_trade_date}",
+                retryable=True,
+            )
         items = self._annotate_anomalies(items)
         # Cache the full result before applying limit
         cached_result = {

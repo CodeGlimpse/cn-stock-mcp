@@ -189,14 +189,19 @@ class StockCandidateScanUseCase:
         errors: list[dict] = []
         sector_details: list[dict] = []
         source_breakdown = {"manual": 0, "sector_members": 0, "pool_members": 0}
+        truncated = False
 
         def add_symbol(raw_symbol: str, source_tag: str, source_bucket: str):
+            nonlocal truncated
             try:
                 symbol = self._normalize_symbol(raw_symbol)
             except Exception as exc:
                 errors.append({"scope": "symbol_resolve", "symbol": raw_symbol, **serialize_exception(exc)})
                 return
             if symbol not in source_tags:
+                if len(symbols) >= self.MAX_UNIVERSE_SYMBOLS:
+                    truncated = True
+                    return
                 symbols.append(symbol)
                 source_tags[symbol] = []
             if source_tag not in source_tags[symbol]:
@@ -208,12 +213,13 @@ class StockCandidateScanUseCase:
 
         for sector_name in request.sector_names or []:
             try:
+                remaining = max(1, self.MAX_UNIVERSE_SYMBOLS - len(symbols))
                 resp = self.sector_lookup.execute(
                     SimpleNamespace(
                         mode="children",
                         sector_type=request.sector_type,
                         sector_name=sector_name,
-                        limit=request.limit,
+                        limit=min(request.limit, remaining),
                         provider="zhitu",
                     )
                 )
@@ -239,11 +245,12 @@ class StockCandidateScanUseCase:
         if request.pool_type:
             pool_reference_date = request.trade_date or request.end_date or request.start_date
             try:
+                remaining = max(1, self.MAX_UNIVERSE_SYMBOLS - len(symbols))
                 resp = self.market_pool.execute(
                     SimpleNamespace(
                         pool_type=request.pool_type,
                         trade_date=pool_reference_date,
-                        limit=request.limit,
+                        limit=min(request.limit, remaining),
                         provider="zhitu",
                     )
                 )
@@ -263,7 +270,6 @@ class StockCandidateScanUseCase:
             except Exception as exc:
                 errors.append({"scope": "market_pool", "pool_type": request.pool_type, **serialize_exception(exc)})
 
-        truncated = False
         if len(symbols) > self.MAX_UNIVERSE_SYMBOLS:
             symbols = symbols[: self.MAX_UNIVERSE_SYMBOLS]
             source_tags = {symbol: source_tags[symbol] for symbol in symbols}

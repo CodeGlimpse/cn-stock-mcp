@@ -38,6 +38,12 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
     "disclosure_calendar": ("akshare", []),
     "stock_repurchase":   ("akshare", []),
     "stock_compare":      ("zhitu", ["akshare"]),
+    # Symbol-aware tools default to Zhitu and fall back to AKShare.  Keep
+    # these entries explicit so generated catalog/docs match runtime routing
+    # (the previous generic route incorrectly advertised AKShare first).
+    "stock_quote":        ("zhitu", ["akshare"]),
+    "stock_history":      ("zhitu", ["akshare"]),
+    "technical_indicator": ("zhitu", ["akshare"]),
     "stock_snapshot":     ("composite", ["zhitu", "akshare"]),
     "industry_chain":     ("akshare", []),
     "stock_warrant":      ("akshare", []),
@@ -45,7 +51,7 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
     "limit_up_pool":      ("akshare", []),
     "sec_reveal":         ("akshare", []),
     # ── Zhitu-only ──
-    "market_pool":          ("zhitu", []),
+    "market_pool":          ("zhitu", ["akshare"]),
     "stock_orderbook":      ("zhitu", []),
     "stock_profile":        ("zhitu", []),
     "event_calendar":       ("zhitu", []),
@@ -61,7 +67,7 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
 
 # Default for tools not in the table
 _DEFAULT_ROUTE: tuple[str, list[str]] = ("akshare", ["zhitu"])
-_DEFAULT_ORDER_TOOLS = {"stock_search", "market_overview"}
+_DEFAULT_ORDER_TOOLS = {"stock_search"}
 
 
 @lru_cache(maxsize=1)
@@ -178,6 +184,8 @@ class ProviderRouter:
         if tool_name == "technical_indicator":
             if sec_type in ("stock", "index"):
                 return ProviderSelection(primary="zhitu", fallback=["akshare"])
+            if sec_type == "fund":
+                return ProviderSelection(primary="akshare", fallback=[])
             return ProviderSelection(primary="zhitu", fallback=[])
 
         return None

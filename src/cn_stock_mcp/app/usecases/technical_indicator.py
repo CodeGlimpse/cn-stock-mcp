@@ -43,6 +43,7 @@ class TechnicalIndicatorUseCase:
                 end=request.end_date,
                 limit=request.limit,
             ),
+            should_fallback_result=lambda value: not self._has_indicator_items(value),
         )
         payload = result.model_dump() if hasattr(result, "model_dump") else result
         if isinstance(payload, dict):
@@ -56,5 +57,15 @@ class TechnicalIndicatorUseCase:
                     "used_fallback": fallback_meta.used_fallback,
                 }
             )
+            if not self._has_indicator_items(result):
+                payload["meta"]["provider_empty_result"] = True
         self.indicator_cache.set(cache_key, payload)
         return payload
+
+    @staticmethod
+    def _has_indicator_items(value) -> bool:
+        if hasattr(value, "model_dump"):
+            value = value.model_dump()
+        if isinstance(value, dict):
+            return bool(value.get("items"))
+        return bool(getattr(value, "items", None))

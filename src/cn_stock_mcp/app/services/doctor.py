@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from cn_stock_mcp.infra.config import Settings
+from cn_stock_mcp.app.services.error_mapper import serialize_exception
 from cn_stock_mcp.server.transport import TransportApp
 
 
@@ -104,12 +105,31 @@ def collect_doctor_report(
             checks.append(DoctorCheck("FAIL", "provider_health", "network check requested but no ZHITU token found"))
         else:
             health_app = network_app or app
-            provider_health = health_app.call_tool("provider_health", {})
-            provider_ok = bool(provider_health.get("success")) and provider_health.get("error") is None
-            if provider_ok:
-                checks.append(DoctorCheck("OK", "provider_health", "provider_health ok"))
-            else:
-                err = provider_health.get("error") or {}
+            try:
+                provider_health = health_app.call_tool("provider_health", {})
+                data = provider_health.get("data") if isinstance(provider_health, dict) else None
+                overall = data.get("overall") if isinstance(data, dict) else None
+                provider_ok = bool(provider_health.get("success")) and provider_health.get("error") is None
+                # A successful envelope can still contain an explicitly
+                # degraded health report. Treat that as a failed network gate
+                # and include the failing check names in the guidance.
+                if provider_ok and overall not in {None, "ok"}:
+                    failed = [
+                        str(item.get("name"))
+                        for item in (data.get("checks") or [])
+                        if isinstance(item, dict) and item.get("status") not in {"ok", "resolved"}
+                    ]
+                    detail = "provider_health degraded"
+                    if failed:
+                        detail += f": {', '.join(failed)}"
+                    checks.append(DoctorCheck("FAIL", "provider_health", detail))
+                elif provider_ok:
+                    checks.append(DoctorCheck("OK", "provider_health", "provider_health ok"))
+                else:
+                    err = provider_health.get("error") or {}
+                    checks.append(DoctorCheck("FAIL", "provider_health", err.get("message", "provider_health failed")))
+            except Exception as exc:
+                err = serialize_exception(exc)
                 checks.append(DoctorCheck("FAIL", "provider_health", err.get("message", "provider_health failed")))
     else:
         checks.append(DoctorCheck("WARN", "provider_health", "network check skipped; run --doctor-network to verify upstream access"))

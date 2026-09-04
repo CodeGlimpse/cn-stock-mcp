@@ -12,9 +12,9 @@ def test_full_profile_preserves_all_names():
     assert select_tool_names(names, "full") == names
 
 
-def test_unknown_profile_fails_open_to_full_for_backward_compatibility():
+def test_unknown_profile_falls_back_to_bounded_retail_surface():
     names = {"stock_quote", "provider_health"}
-    assert select_tool_names(names, "future_profile") == names
+    assert select_tool_names(names, "future_profile") == {"stock_quote"}
 
 
 def test_server_applies_profile_from_user_config(tmp_path, monkeypatch):

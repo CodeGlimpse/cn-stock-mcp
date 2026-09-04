@@ -35,6 +35,20 @@ def normalize_stock_symbol(value: str, exchange: str | None = None) -> str:
 def calc_index_return(history_items: list) -> float | None:
     if not history_items:
         return None
+    # For a requested range compare the first and last available closes.  The
+    # previous implementation always used only the last bar, which made a
+    # multi-day enhancement request report a one-day return.
+    if len(history_items) >= 2:
+        first = history_items[0]
+        latest = history_items[-1]
+        first_close = getattr(first, "close", None)
+        latest_close = getattr(latest, "close", None)
+        if isinstance(first, dict):
+            first_close = first.get("close", first_close)
+        if isinstance(latest, dict):
+            latest_close = latest.get("close", latest_close)
+        if first_close not in (None, 0) and latest_close is not None:
+            return (float(latest_close) - float(first_close)) / float(first_close) * 100.0
     latest = history_items[-1]
     change_pct = getattr(latest, "change_percent", None)
     if change_pct is None and isinstance(latest, dict):

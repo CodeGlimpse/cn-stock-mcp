@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 from cn_stock_mcp.app.models.stock_compare import StockCompareItem, StockCompareResult
+from cn_stock_mcp.app.services.error_mapper import serialize_exception
+from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
 from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
 from cn_stock_mcp.providers.adapters.akshare_stock_compare_adapters import (
@@ -22,112 +26,244 @@ class StockCompareUseCase:
         sec_type = getattr(request, "sec_type", "stock")
         include = request.include
 
-        # Resolve all symbols
         resolved_map = {}
+        errors: list[dict] = []
         for sym in symbols:
-            resolved = self.resolver.resolve(sym, sec_type)
-            resolved_map[resolved.symbol] = resolved
+            try:
+                resolved = self.resolver.resolve(sym, sec_type)
+                resolved_map[resolved.symbol] = resolved
+            except Exception as exc:
+                errors.append({"symbol": sym, **serialize_exception(exc)})
 
-        # Initialize items
         items = [StockCompareItem(symbol=sym, name="") for sym in resolved_map]
+        layer_meta: dict = {}
 
-        # Layer 1: quote (from stock_screen Sina cache — 0 requests if cached)
         if "quote" in include:
-            items = self._merge_quote_layer(items)
+            items, layer_errors, layer_info = self._merge_quote_layer(items, resolved_map, sec_type)
+            errors.extend(layer_errors)
+            layer_meta["quote"] = layer_info
 
-        # Layer 2: valuation (Zhitu batch — 1 request)
         if "valuation" in include:
-            items = self._merge_valuation_layer(items, resolved_map, sec_type)
+            items, layer_errors, layer_info = self._merge_valuation_layer(
+                items, resolved_map, sec_type, getattr(request, "provider", None)
+            )
+            errors.extend(layer_errors)
+            layer_meta["valuation"] = layer_info
 
-        # Layer 3: financial (AKShare — N requests)
         if "financial" in include:
-            items = self._merge_financial_layer(items, resolved_map)
+            items, layer_errors = self._merge_financial_layer(items)
+            errors.extend(layer_errors)
+            layer_meta["financial"] = {"provider": "akshare"}
 
-        # Layer 4: dividend (from dividend_rank cache — 0 requests if cached)
         if "dividend" in include:
-            items = self._merge_dividend_layer(items)
-
-        summary = build_compare_summary(items, include)
+            items, layer_errors, layer_info = self._merge_dividend_layer(items)
+            errors.extend(layer_errors)
+            layer_meta["dividend"] = layer_info
 
         result = StockCompareResult(
             items=items,
             total_count=len(items),
             symbols_compared=list(resolved_map.keys()),
-            summary=summary,
+            summary=build_compare_summary(items, include),
+            partial_failure=bool(errors),
+            errors=errors,
+            meta={"layers": layer_meta},
         )
         return result.model_dump()
 
-    def _merge_quote_layer(self, items: list[StockCompareItem]) -> list[StockCompareItem]:
-        """Use stock_screen's Sina spot cache."""
+    def _merge_quote_layer(
+        self,
+        items: list[StockCompareItem],
+        resolved_map: dict,
+        sec_type: str,
+    ) -> tuple[list[StockCompareItem], list[dict], dict]:
+        """Use the shared Sina cache, then fetch symbols missing from it."""
+
+        errors: list[dict] = []
+        cached_count = 0
+        fetched_count = 0
         try:
             from cn_stock_mcp.app.usecases.stock_screen import StockScreenUseCase
-            screen_uc = StockScreenUseCase()
-            raw_rows = screen_uc.spot_cache.get("screen:spot_all")
-            if raw_rows is None:
-                return items
-            result = []
-            for item in items:
-                matched = False
-                for row in raw_rows:
-                    merged = merge_quote(item, row)
-                    if merged.source_quote:
-                        result.append(merged)
-                        matched = True
-                        break
-                if not matched:
-                    result.append(item)
-            return result
-        except Exception:
-            return items
 
-    def _merge_valuation_layer(self, items: list[StockCompareItem], resolved_map: dict, sec_type: str) -> list[StockCompareItem]:
-        """Use Zhitu batch quote — 1 request for up to 10 symbols."""
-        try:
-            provider = self.router.get_provider("zhitu")
-            symbols_list = list(resolved_map.keys())
-            quotes = provider.get_quotes(symbols_list, sec_type=sec_type)
-            # quotes is a dict: {orig_symbol: Quote}
-            result = []
-            for item in items:
-                quote = quotes.get(item.symbol)
-                if quote is not None:
-                    result.append(merge_valuation(item, quote))
+            raw_rows = StockScreenUseCase().spot_cache.get("screen:spot_all") or []
+        except Exception as exc:
+            raw_rows = []
+            errors.append({"layer": "quote", **serialize_exception(exc)})
+
+        result: list[StockCompareItem] = []
+        for item in items:
+            merged_item = item
+            for row in raw_rows:
+                candidate = merge_quote(item, row)
+                if candidate.source_quote:
+                    merged_item = candidate
+                    cached_count += 1
+                    break
+            result.append(merged_item)
+
+        # Cache misses previously became silent empty successes. Fetch each
+        # missing symbol through the regular fallback chain instead.
+        for index, item in enumerate(result):
+            if item.source_quote:
+                continue
+            try:
+                resolved = resolved_map.get(item.symbol)
+                symbol_sec_type = getattr(resolved, "sec_type", sec_type)
+                selection = self.router.choose_provider(
+                    "stock_quote", symbol=item.symbol, sec_type=symbol_sec_type
+                )
+                quote, _meta = run_with_fallback_meta(
+                    self.router,
+                    selection,
+                    lambda provider, symbol=item.symbol, st=symbol_sec_type: provider.get_quote(symbol, st),
+                )
+                merged_item = merge_quote(item, quote)
+                result[index] = merged_item
+                if merged_item.source_quote:
+                    fetched_count += 1
                 else:
-                    result.append(item)
-            return result
-        except Exception:
-            return items
+                    errors.append(
+                        {
+                            "layer": "quote",
+                            "symbol": item.symbol,
+                            "error_code": "PARTIAL_RESULT",
+                            "message": "quote provider returned an unusable result",
+                            "retryable": True,
+                        }
+                    )
+            except Exception as exc:
+                errors.append({"layer": "quote", "symbol": item.symbol, **serialize_exception(exc)})
 
-    def _merge_financial_layer(self, items: list[StockCompareItem], resolved_map: dict) -> list[StockCompareItem]:
-        """Use AKShare stock_financial_abstract — N requests."""
+        return result, errors, {"cached": cached_count, "fetched": fetched_count}
+
+    def _merge_valuation_layer(
+        self,
+        items: list[StockCompareItem],
+        resolved_map: dict,
+        sec_type: str,
+        preferred: str | None = None,
+    ) -> tuple[list[StockCompareItem], list[dict], dict]:
+        """Fetch valuation quotes through the declared route and fallback."""
+
+        errors: list[dict] = []
+        symbols_list = list(resolved_map.keys())
+        try:
+            selection = self.router.choose_provider(
+                "stock_compare", sec_type=sec_type, preferred=preferred
+            )
+            quotes, fallback_meta = run_with_fallback_meta(
+                self.router,
+                selection,
+                lambda provider: provider.get_quotes(symbols_list, sec_type=sec_type),
+                should_fallback_result=lambda value: not self._quote_sequence(value),
+            )
+            quote_map = self._quote_map(quotes)
+            result: list[StockCompareItem] = []
+            for item in items:
+                quote = quote_map.get(item.symbol)
+                if quote is None:
+                    result.append(item)
+                    errors.append(
+                        {
+                            "layer": "valuation",
+                            "symbol": item.symbol,
+                            "error_code": "PARTIAL_RESULT",
+                            "message": "symbol missing from valuation provider result",
+                            "retryable": True,
+                        }
+                    )
+                else:
+                    result.append(merge_valuation(item, quote, source=fallback_meta.final_provider))
+            return result, errors, {
+                "selected_primary": fallback_meta.selected_primary,
+                "selected_fallback": fallback_meta.selected_fallback,
+                "attempted": fallback_meta.attempted,
+                "final_provider": fallback_meta.final_provider,
+                "used_fallback": fallback_meta.used_fallback,
+            }
+        except Exception as exc:
+            errors.append({"layer": "valuation", **serialize_exception(exc)})
+            return items, errors, {}
+
+    def _merge_financial_layer(self, items: list[StockCompareItem]) -> tuple[list[StockCompareItem], list[dict]]:
+        """Fetch the current tuple-based AKShare financial contract."""
+
+        errors: list[dict] = []
         try:
             provider = self.router.get_provider("akshare")
-            result = []
-            for item in items:
-                code = item.symbol.split(".", 1)[0]
-                try:
-                    raw_rows = provider.get_financial_abstract(symbol=code)
-                    result.append(merge_financial(item, raw_rows))
-                except Exception:
-                    result.append(item)
-            return result
-        except Exception:
-            return items
+        except Exception as exc:
+            return items, [{"layer": "financial", **serialize_exception(exc)}]
 
-    def _merge_dividend_layer(self, items: list[StockCompareItem]) -> list[StockCompareItem]:
+        result: list[StockCompareItem] = []
+        for item in items:
+            code = item.symbol.split(".", 1)[0]
+            try:
+                raw_result = provider.get_financial_abstract(symbol=code)
+                merged = merge_financial(item, raw_result)
+                result.append(merged)
+                if not merged.source_financial:
+                    errors.append(
+                        {
+                            "layer": "financial",
+                            "symbol": item.symbol,
+                            "error_code": "PARTIAL_RESULT",
+                            "message": "financial provider returned no usable metrics",
+                            "retryable": True,
+                        }
+                    )
+            except Exception as exc:
+                result.append(item)
+                errors.append({"layer": "financial", "symbol": item.symbol, **serialize_exception(exc)})
+        return result, errors
+
+    @staticmethod
+    def _quote_sequence(value) -> list:
+        if isinstance(value, Mapping):
+            return list(value.values())
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            return list(value)
+        return []
+
+    @classmethod
+    def _quote_map(cls, value) -> dict[str, object]:
+        from cn_stock_mcp.infra.time_utils import normalize_symbol
+
+        result: dict[str, object] = {}
+        for quote in cls._quote_sequence(value):
+            symbol = quote.get("symbol") if isinstance(quote, Mapping) else getattr(quote, "symbol", None)
+            if not symbol:
+                continue
+            try:
+                normalized = normalize_symbol(str(symbol))
+            except Exception:
+                normalized = str(symbol)
+            result[normalized] = quote
+        return result
+
+    def _merge_dividend_layer(self, items: list[StockCompareItem]) -> tuple[list[StockCompareItem], list[dict], dict]:
         """Use dividend_rank cache, filter by symbol."""
+
         try:
             from cn_stock_mcp.app.usecases.dividend_rank import DividendRankUseCase
-            div_uc = DividendRankUseCase()
-            raw_rows = div_uc.rank_cache.get("dividend:history_rank")
+
+            raw_rows = DividendRankUseCase().rank_cache.get("dividend:history_rank")
             if raw_rows is None:
-                return items
+                return items, [
+                    {
+                        "layer": "dividend",
+                        "error_code": "PARTIAL_RESULT",
+                        "message": "dividend cache is not warmed; call dividend_rank first",
+                        "retryable": True,
+                    }
+                ], {"cache_hit": False}
             result = []
+            errors: list[dict] = []
             for item in items:
                 dy = None
                 eps = None
                 for row in raw_rows:
                     from cn_stock_mcp.infra.time_utils import normalize_symbol
+
                     raw_code = str(row.get("代码", "")).strip()
                     sym = normalize_symbol(raw_code) if raw_code else ""
                     if sym == item.symbol:
@@ -139,6 +275,16 @@ class StockCompareUseCase:
                                 pass
                         break
                 result.append(merge_dividend(item, dy, eps))
-            return result
-        except Exception:
-            return items
+                if dy is None:
+                    errors.append(
+                        {
+                            "layer": "dividend",
+                            "symbol": item.symbol,
+                            "error_code": "PARTIAL_RESULT",
+                            "message": "symbol missing from dividend cache",
+                            "retryable": True,
+                        }
+                    )
+            return result, errors, {"cache_hit": True, "row_count": len(raw_rows)}
+        except Exception as exc:
+            return items, [{"layer": "dividend", **serialize_exception(exc)}], {"cache_hit": False}

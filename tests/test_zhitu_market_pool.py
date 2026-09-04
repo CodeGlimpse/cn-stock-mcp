@@ -53,3 +53,20 @@ def test_zhitu_market_pool_rejects_invalid_date_without_upstream_call():
     assert exc.value.code == "INVALID_ARGUMENT"
     assert exc.value.retryable is False
     assert provider.calls == []
+
+
+@pytest.mark.parametrize(
+    ("pool_type", "path"),
+    [
+        ("sub_new", "/hs/pool/cxgc/2026-08-13"),
+        ("broken_limit", "/hs/pool/zbgc/2026-08-13"),
+    ],
+)
+def test_zhitu_market_pool_supports_all_documented_pool_types(pool_type, path):
+    provider = _Zhitu()
+
+    items = provider.get_market_pool(pool_type, "20260813")
+
+    assert len(items) == 1
+    assert provider.calls[-1][0] == path
+    assert items[0].extra["pool_type"] == pool_type

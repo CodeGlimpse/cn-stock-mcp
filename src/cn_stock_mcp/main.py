@@ -2,11 +2,24 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+from pathlib import Path
 
 from cn_stock_mcp.app.services.doctor import collect_doctor_report, render_doctor_json, render_doctor_report
 from cn_stock_mcp.infra.config import get_settings, initialize_user_config
 from cn_stock_mcp.infra.logging import setup_logging
 from cn_stock_mcp.server.transport import TransportApp
+from cn_stock_mcp.infra.json_utils import dumps_json
+
+
+def _installed_docs_path() -> Path | None:
+    """Locate customer documentation in a wheel install or source checkout."""
+
+    candidates = [
+        Path(sys.prefix) / "share" / "cn-stock-mcp" / "docs",
+        Path(__file__).resolve().parents[2] / "docs",
+    ]
+    return next((path for path in candidates if (path / "CUSTOMER_DEPLOYMENT.md").is_file()), None)
 
 
 def _doctor(include_network: bool = False, json_output: bool = False) -> int:
@@ -42,6 +55,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--payload", type=str, help="Inline JSON payload for tool invocation")
     parser.add_argument("--stdio", action="store_true", help="Run MCP stdio transport")
     parser.add_argument("--init-config", action="store_true", help="Create the user token configuration template")
+    parser.add_argument("--docs-path", action="store_true", help="Print the installed customer documentation directory")
     args = parser.parse_args(argv)
 
     if args.version:
@@ -53,6 +67,14 @@ def main(argv: list[str] | None = None) -> None:
         state = "created" if created else "already exists"
         print(f"User config {state}: {path}")
         print("Add your Zhitu token to this file manually; it will not be echoed by cn-stock-mcp.")
+        return
+
+    if args.docs_path:
+        docs_path = _installed_docs_path()
+        if docs_path is None:
+            print("Customer documentation directory was not found", file=sys.stderr)
+            raise SystemExit(2)
+        print(docs_path)
         return
 
     if args.doctor_network:
@@ -72,28 +94,34 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.list_tools:
-        print(json.dumps(app.list_tools(detailed=args.json), ensure_ascii=False, indent=2))
+        print(dumps_json(app.list_tools(detailed=args.json), indent=2))
         return
 
     if args.describe_tool:
         description = app.describe_tool(args.describe_tool)
         if description is None:
             print(
-                json.dumps(
+                dumps_json(
                     {
                         "error_code": "TOOL_NOT_FOUND",
                         "message": f"Tool not found: {args.describe_tool}",
                     },
-                    ensure_ascii=False,
                     indent=2,
                 )
             )
             raise SystemExit(2)
-        print(json.dumps(description, ensure_ascii=False, indent=2))
+        print(dumps_json(description, indent=2))
         return
 
     if args.tool:
-        payload = json.loads(args.payload or "{}")
+        try:
+            payload = json.loads(args.payload or "{}")
+        except json.JSONDecodeError:
+            print("Invalid --payload JSON; provide a JSON object", file=sys.stderr)
+            raise SystemExit(2)
+        if not isinstance(payload, dict):
+            print("Invalid --payload JSON; the top-level value must be an object", file=sys.stderr)
+            raise SystemExit(2)
         app.run_stdio_once(args.tool, payload)
         return
 

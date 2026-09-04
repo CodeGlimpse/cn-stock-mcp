@@ -71,3 +71,14 @@ def test_data_quality_detects_empty_named_sections_by_count():
 
     assert quality["factors"]["empty_result"] is True
     assert "empty_result" in quality["flags"]
+
+
+def test_data_quality_downgrades_records_with_only_empty_market_values():
+    quality = build_data_quality(
+        {"items": [{"symbol": "600519.SH", "price": None, "change_percent": ""}], "count": 1},
+        {"status": "realtime", "age_seconds": 1},
+    )
+
+    assert quality["factors"]["empty_record_count"] == 1
+    assert "empty_records" in quality["flags"]
+    assert quality["label"] != "high"
