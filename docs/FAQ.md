@@ -11,7 +11,7 @@
 先重试：
 
 ```bash
-python -m pip install cn-stock-mcp==0.2.0
+python -m pip install cn-stock-mcp==0.2.1
 ```
 
 如果你是源码开发环境，出现下面这种情况并不一定是坏了：
@@ -32,7 +32,7 @@ python -m pip install cn-stock-mcp==0.2.0
 - Python 环境检查
 - 包版本检查
 - 命令是否在 PATH
-- `.env` 是否存在
+- 用户配置文件是否可读取、JSON 是否有效以及（可检查时）权限是否过宽
 - token 是否能解析到
 - tool registry 是否正常
 
@@ -83,7 +83,7 @@ cn-stock-mcp --init-config
 cn-stock-mcp --tool provider_health --payload '{}'
 ```
 
-如果你在公司网络、代理环境或 VPS 上运行，还要检查代理变量是否影响了上游请求。
+如果你在公司网络、代理环境或 VPS 上运行，还要检查代理变量是否影响了上游请求。`provider_health` 在 `retail_v1_preview` 中默认隐藏；优先使用 CLI 的 `--doctor-network`，或显式启用 `tool_profile=full` 后再从 Host 调用。
 
 ---
 

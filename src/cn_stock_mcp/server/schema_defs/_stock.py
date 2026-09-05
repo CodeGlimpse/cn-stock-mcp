@@ -23,6 +23,28 @@ class StockQuoteRequest(BaseModel):
     provider: Literal["akshare", "zhitu"] | None = None
     provider_preference: list[Literal["akshare", "zhitu"]] | None = None
 
+    @model_validator(mode="after")
+    def validate_request(self):
+        self.symbols = dedupe_str_list(self.symbols) or []
+        if not self.symbols:
+            raise ValueError("symbols must contain at least one non-empty symbol")
+        if self.fields is not None:
+            allowed = {
+                "symbol", "name", "market", "exchange", "board", "sec_type",
+                "price", "open", "high", "low", "prev_close", "change",
+                "change_percent", "amplitude", "volume", "turnover",
+                "turnover_rate", "pe", "pb", "market_cap", "float_market_cap",
+                "currency", "trading_status", "timestamp", "source",
+            }
+            normalized = dedupe_str_list(self.fields) or []
+            unknown = sorted(set(normalized) - allowed)
+            if unknown:
+                raise ValueError(f"unknown quote fields: {', '.join(unknown)}")
+            self.fields = normalized or None
+        if self.provider_preference:
+            self.provider_preference = list(dict.fromkeys(self.provider_preference))
+        return self
+
 
 class StockSnapshotRequest(BaseModel):
     """Bounded multi-source snapshot; this tool never performs trading actions."""
@@ -233,6 +255,17 @@ class StockRepurchaseRequest(BaseModel):
 
 class StockCompareRequest(BaseModel):
     symbols: list[str] = Field(..., min_length=2, max_length=10, description="2-10 stock symbols to compare, e.g. ['600519.SH', '000858.SZ']")
-    sec_type: str = "stock"
-    include: list[Literal["quote", "valuation", "financial", "dividend"]] = Field(default=["quote", "valuation"])
-    provider: str | None = None
+    sec_type: Literal["stock"] = "stock"
+    include: list[Literal["quote", "valuation", "financial", "dividend"]] = Field(default_factory=lambda: ["quote", "valuation"])
+    provider: Literal["zhitu", "akshare"] | None = None
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        normalized = dedupe_str_list(self.symbols) or []
+        if len(normalized) < 2:
+            raise ValueError("symbols must contain at least 2 distinct non-empty stock symbols")
+        self.symbols = normalized
+        self.include = list(dict.fromkeys(self.include))
+        if not self.include:
+            raise ValueError("include must contain at least one comparison layer")
+        return self

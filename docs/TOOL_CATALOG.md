@@ -19,48 +19,48 @@
 | `etf_snapshot` | `akshare` | Get ETF market snapshot: real-time quotes with IOPV/discount rate/main net inflow, ETF share/scale, and NAV history. Supports full-market sorting and discount-rate filtering. |
 | `event_calendar` | `zhitu` | Build event timeline (dividend/unlock/profit) for one or more stocks. |
 | `fund_flow` | `akshare` | Get fund flow data (主力资金流向): market-level 120-day trend (主力/超大单/大单/中单/小单), industry 90-sector ranking with net inflow, individual stock 120-day history. Sina source. |
-| `hot_theme_tracker` | `akshare, zhitu` | Track hot themes by combining sector rotation and pool snapshots. |
+| `hot_theme_tracker` | `composite: zhitu, akshare` | Track hot themes by combining sector rotation and pool snapshots. |
 | `index_compose` | `akshare` | Get index constituents and weights for index benchmarking/enhanced strategy construction. |
-| `index_enhance` | `akshare` | Compare an enhanced top-constituent portfolio against its benchmark index: benchmark return, weighted/equal enhanced return, excess return, member contribution and outperform/underperform counts. |
+| `index_enhance` | `composite: akshare, zhitu` | Compare an enhanced top-constituent portfolio against its benchmark index: benchmark return, weighted/equal enhanced return, excess return, member contribution and outperform/underperform counts. |
 | `industry_chain` | `akshare` | Get industry chain data (产业链上下游): THS industry board summary with change/inflow/leaders, concept board summary with driver events/leaders. For understanding sector relationships and theme tracking. |
-| `industry_valuation_rank` | `zhitu, akshare` | Rank primary sectors by valuation percentile using member stock PE/PB aggregation. |
+| `industry_valuation_rank` | `composite: zhitu, akshare` | Rank primary sectors by valuation percentile using member stock PE/PB aggregation. |
 | `insider_trade` | `akshare` | Get insider/shareholder trade data (高管增减持): top 10 free-float shareholders with holding changes, and historical insider trade records (buy/sell by executives/controlling shareholders). Single-stock query. |
 | `institute_hold` | `akshare` | Get institute holding (机构持仓) data: quarterly market-wide summary with institution count and holding ratio changes, and per-stock detail with individual institution breakdown. Supports auto-quarter detection. |
 | `limit_stat` | `akshare` | Get limit statistics for a trading day: seal rate, consecutive board distribution, broken limit count, yesterday-continue rate, sector breakdown. |
 | `limit_up_pool` | `akshare` | Get limit-up/limit-down pool analysis (涨停/跌停股池历史分析): limit-up, limit-down, strong/continuous, previous-day limit performance, sub-new, and broken-limit pools by trade date. EastMoney source. |
 | `macro_indicator` | `akshare` | Get macro economic indicators (CPI/PPI/PMI/GDP/LPR/M2/etc.) for CN/USA/Euro/Global regions. Supports latest value, history, calendar, and overview modes. |
 | `margin_trading` | `akshare` | Get margin trading (融资融券) data: market-level summary with financing/securities balance, and stock-level detail with financing buy/sell and securities volume. Supports SSE/SZSE exchanges. |
-| `market_brief` | `akshare, zhitu` | Generate a compact market brief by combining overview and pool data. |
+| `market_brief` | `composite: zhitu, akshare` | Generate a compact market brief by combining overview and pool data. |
 | `market_overview` | `zhitu, akshare` | Get high-level overview of China market major indices. |
-| `market_pool` | `zhitu` | Get market pools such as limit-up, limit-down, strong, sub-new, and broken-limit stocks. |
+| `market_pool` | `zhitu, akshare` | Get market pools such as limit-up, limit-down, strong, sub-new, and broken-limit stocks. |
 | `money_rate` | `akshare` | Get money market rates (货币市场利率): SHIBOR full-term curve (O/N~1Y), interbank rate by tenor, repo fixing rates (FR/FDR). Supports latest and historical modes. |
-| `multi_timeframe_review` | `akshare, zhitu` | Review a symbol across multiple timeframes and summarize alignment/conflicts. |
+| `multi_timeframe_review` | `composite: zhitu, akshare` | Review a symbol across multiple timeframes and summarize alignment/conflicts. |
 | `northbound` | `akshare` | Get northbound capital data: daily flow summary and historical trend. |
-| `provider_health` | `akshare, zhitu` | Run provider self checks for zhitu and akshare. |
+| `provider_health` | `composite: zhitu, akshare` | Run provider self checks for zhitu and akshare. |
 | `sec_reveal` | `akshare` | Deep dragon-tiger seat reveal (龙虎榜机构席位深度): stock buy/sell seat detail, active broker seats, institution detail, and institution trace/ranking. EastMoney + Sina sources. |
-| `sector_leaders` | `akshare, zhitu` | Get leaders/followers/draggers snapshot for a sector. |
+| `sector_leaders` | `composite: zhitu, akshare` | Get leaders/followers/draggers snapshot for a sector. |
 | `sector_lookup` | `zhitu` | Lookup sector lists and members. |
-| `sector_review` | `akshare, zhitu` | Generate a review summary for a sector by aggregating its member stocks. |
-| `sector_rotation_review` | `akshare, zhitu` | Compare multiple sectors and summarize cross-sector rotation signals. |
+| `sector_review` | `composite: zhitu, akshare` | Generate a review summary for a sector by aggregating its member stocks. |
+| `sector_rotation_review` | `composite: zhitu, akshare` | Compare multiple sectors and summarize cross-sector rotation signals. |
 | `shareholder_change` | `akshare` | Get shareholder change data (股东变动): top 10 shareholders with holding changes per stock, and market-wide shareholder holding change summary (by shareholder type: fund/SSF/QFII/etc). Quarterly data. |
-| `stock_candidate_scan` | `akshare, zhitu` | Scan a stock universe and rank candidate setups. |
-| `stock_compare` | `zhitu, akshare` | Compare multiple stocks side-by-side (多股横向对比): real-time quote, PE/PB/market_cap valuation, financial indicators (ROE/margin/debt), dividend yield. 2-10 symbols, layered data loading minimizes API calls. |
+| `stock_candidate_scan` | `composite: zhitu, akshare` | Scan a stock universe and rank candidate setups. |
+| `stock_compare` | `composite: zhitu, akshare` | Compare multiple stocks side-by-side (多股横向对比): real-time quote, PE/PB/market_cap valuation, financial indicators (ROE/margin/debt), dividend yield. 2-10 symbols, layered data loading minimizes API calls. |
 | `stock_financial` | `akshare` | Get financial statement data for a stock: core metrics snapshot, history trend, and detailed income/balance/cashflow statements. |
-| `stock_history` | `akshare, zhitu` | Get historical price bars for an instrument. |
+| `stock_history` | `zhitu, akshare` | Get historical price bars for an instrument. |
 | `stock_orderbook` | `zhitu` | Get order book data for supported instruments. |
 | `stock_profile` | `zhitu` | Get company profile including basic info, dividends, unlocks, and quarterly profits. |
-| `stock_quote` | `akshare, zhitu` | Get real-time quotes for one or more instruments. |
+| `stock_quote` | `zhitu, akshare` | Get real-time quotes for one or more instruments. |
 | `stock_repurchase` | `akshare` | Get stock repurchase data (回购明细): company buyback plans with price range, quantity, progress, and actual repurchase amount. Filter by progress status (董事会预案/股东大会通过/实施中/完成实施). |
-| `stock_review` | `akshare` | Generate a review summary for a stock on a trade date or over a date range. |
-| `stock_review_batch` | `akshare, zhitu` | Batch review multiple stocks and rank the results for replay workflows. |
+| `stock_review` | `composite: akshare, zhitu` | Generate a review summary for a stock on a trade date or over a date range. |
+| `stock_review_batch` | `composite: akshare, zhitu` | Batch review multiple stocks and rank the results for replay workflows. |
 | `stock_screen` | `akshare` | Screen/filter A-share stocks by market, price range, change percent, volume, turnover, amplitude. Returns sorted results from real-time Sina source. Like a basic stock screener. |
 | `stock_search` | `akshare, zhitu` | Search stocks, indices, funds, or sectors by keyword or code. |
-| `stock_snapshot` | `composite, zhitu, akshare` | Get a bounded multi-source stock snapshot combining quote, recent history, financial summary, valuation, events, and risk tags; no trading actions. |
+| `stock_snapshot` | `composite: zhitu, akshare` | Get a bounded multi-source stock snapshot combining quote, recent history, financial summary, valuation, events, and risk tags; no trading actions. |
 | `stock_warrant` | `akshare` | Get option/warrant data (权证/期权): ETF options (50ETF/300ETF/etc), commodity options (4 exchanges), CFFEX index options. Real-time quotes with price/volume/open_interest/strike. |
-| `technical_indicator` | `akshare, zhitu` | Get technical indicator series such as MACD, MA, BOLL, KDJ. |
+| `technical_indicator` | `zhitu, akshare` | Get technical indicator series such as MACD, MA, BOLL, KDJ. |
 | `trading_calendar` | `akshare` | Query China trading-day calendar for review and backtesting workflows. |
-| `valuation_rank` | `zhitu, akshare` | Rank stock valuation using PE/PB and combine with market valuation temperature (PE/PB quantiles, dividend yield). |
-| `watchlist_review` | `akshare, zhitu` | Review and prioritize a watchlist of symbols. |
+| `valuation_rank` | `composite: akshare, zhitu` | Rank stock valuation using PE/PB and combine with market valuation temperature (PE/PB quantiles, dividend yield). |
+| `watchlist_review` | `composite: akshare, zhitu` | Review and prioritize a watchlist of symbols. |
 
 ## 统一说明
 
@@ -1442,7 +1442,7 @@ Input schema：
 
 Track hot themes by combining sector rotation and pool snapshots.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -1762,7 +1762,7 @@ Input schema：
 
 Compare an enhanced top-constituent portfolio against its benchmark index: benchmark return, weighted/equal enhanced return, excess return, member contribution and outperform/underperform counts.
 
-Provider route: `akshare`; fallback: `none`
+Provider mode: `composite`; providers: `akshare, zhitu`
 
 最小示例：
 
@@ -1944,7 +1944,7 @@ Input schema：
 
 Rank primary sectors by valuation percentile using member stock PE/PB aggregation.
 
-Provider route: `zhitu`; fallback: `akshare`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -2719,7 +2719,7 @@ Input schema：
 
 Generate a compact market brief by combining overview and pool data.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -2869,7 +2869,7 @@ Input schema：
 
 Get market pools such as limit-up, limit-down, strong, sub-new, and broken-limit stocks.
 
-Provider route: `zhitu`; fallback: `none`
+Provider route: `zhitu`; fallback: `akshare`
 
 最小示例：
 
@@ -3061,7 +3061,7 @@ Input schema：
 
 Review a symbol across multiple timeframes and summarize alignment/conflicts.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -3266,7 +3266,7 @@ Input schema：
 
 Run provider self checks for zhitu and akshare.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -3446,7 +3446,7 @@ Input schema：
 
 Get leaders/followers/draggers snapshot for a sector.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -3730,7 +3730,7 @@ Input schema：
 
 Generate a review summary for a sector by aggregating its member stocks.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -3916,7 +3916,7 @@ Input schema：
 
 Compare multiple sectors and summarize cross-sector rotation signals.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -4140,7 +4140,8 @@ Provider route: `akshare`; fallback: `none`
   "quarter": "auto",
   "sort_by": "total_hold",
   "descending": true,
-  "provider": "akshare"
+  "provider": "akshare",
+  "symbol": "600519.SH"
 }
 ```
 
@@ -4267,7 +4268,7 @@ Input schema：
 
 Scan a stock universe and rank candidate setups.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -4279,7 +4280,12 @@ Provider route: `akshare`; fallback: `zhitu`
   "sort_by": "candidate_score",
   "descending": true,
   "top_n": 20,
-  "limit": 20
+  "limit": 20,
+  "return_mode": "full",
+  "symbols": [
+    "600519.SH",
+    "000858.SZ"
+  ]
 }
 ```
 
@@ -4586,6 +4592,16 @@ Input schema：
       ],
       "default": null,
       "title": "Exclude Reason Tags"
+    },
+    "return_mode": {
+      "default": "full",
+      "description": "full returns all filtered items; ranked_only returns only the top_n ranked items",
+      "enum": [
+        "full",
+        "ranked_only"
+      ],
+      "title": "Return Mode",
+      "type": "string"
     }
   },
   "title": "StockCandidateScanRequest",
@@ -4597,14 +4613,15 @@ Input schema：
 
 Compare multiple stocks side-by-side (多股横向对比): real-time quote, PE/PB/market_cap valuation, financial indicators (ROE/margin/debt), dividend yield. 2-10 symbols, layered data loading minimizes API calls.
 
-Provider route: `zhitu`; fallback: `akshare`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
 ```json
 {
   "symbols": [
-    "600519.SH"
+    "600519.SH",
+    "000858.SZ"
   ],
   "sec_type": "stock",
   "include": [
@@ -4630,15 +4647,12 @@ Input schema：
       "type": "array"
     },
     "sec_type": {
+      "const": "stock",
       "default": "stock",
       "title": "Sec Type",
       "type": "string"
     },
     "include": {
-      "default": [
-        "quote",
-        "valuation"
-      ],
       "items": {
         "enum": [
           "quote",
@@ -4654,6 +4668,10 @@ Input schema：
     "provider": {
       "anyOf": [
         {
+          "enum": [
+            "zhitu",
+            "akshare"
+          ],
           "type": "string"
         },
         {
@@ -4774,7 +4792,7 @@ Input schema：
 
 Get historical price bars for an instrument.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider route: `zhitu`; fallback: `akshare`
 
 最小示例：
 
@@ -5029,7 +5047,7 @@ Input schema：
 
 Get real-time quotes for one or more instruments.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider route: `zhitu`; fallback: `akshare`
 
 最小示例：
 
@@ -5237,7 +5255,7 @@ Input schema：
 
 Generate a review summary for a stock on a trade date or over a date range.
 
-Provider route: `akshare`; fallback: `none`
+Provider mode: `composite`; providers: `akshare, zhitu`
 
 最小示例：
 
@@ -5330,7 +5348,7 @@ Input schema：
 
 Batch review multiple stocks and rank the results for replay workflows.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `akshare, zhitu`
 
 最小示例：
 
@@ -5766,7 +5784,7 @@ Input schema：
 
 Get a bounded multi-source stock snapshot combining quote, recent history, financial summary, valuation, events, and risk tags; no trading actions.
 
-Provider route: `composite`; fallback: `zhitu, akshare`
+Provider mode: `composite`; providers: `zhitu, akshare`
 
 最小示例：
 
@@ -5981,7 +5999,7 @@ Input schema：
 
 Get technical indicator series such as MACD, MA, BOLL, KDJ.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider route: `zhitu`; fallback: `akshare`
 
 最小示例：
 
@@ -6173,7 +6191,7 @@ Input schema：
 
 Rank stock valuation using PE/PB and combine with market valuation temperature (PE/PB quantiles, dividend yield).
 
-Provider route: `zhitu`; fallback: `akshare`
+Provider mode: `composite`; providers: `akshare, zhitu`
 
 最小示例：
 
@@ -6267,7 +6285,7 @@ Input schema：
 
 Review and prioritize a watchlist of symbols.
 
-Provider route: `akshare`; fallback: `zhitu`
+Provider mode: `composite`; providers: `akshare, zhitu`
 
 最小示例：
 
@@ -6280,7 +6298,8 @@ Provider route: `akshare`; fallback: `zhitu`
   "provider": "akshare",
   "sort_by": "watchlist_score",
   "descending": true,
-  "top_n": 20
+  "top_n": 20,
+  "return_mode": "full"
 }
 ```
 
@@ -6452,6 +6471,16 @@ Input schema：
       ],
       "default": null,
       "title": "Min Volume Ratio"
+    },
+    "return_mode": {
+      "default": "full",
+      "description": "full returns all filtered items; ranked_only returns only the top_n ranked items",
+      "enum": [
+        "full",
+        "ranked_only"
+      ],
+      "title": "Return Mode",
+      "type": "string"
     }
   },
   "required": [

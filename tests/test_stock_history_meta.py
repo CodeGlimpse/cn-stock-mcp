@@ -70,3 +70,24 @@ def test_stock_history_response_contains_meta_and_source_from_fallback():
     assert result["source"] == "akshare"
     assert result["meta"]["used_fallback"] is True
     assert result["meta"]["final_provider"] == "akshare"
+
+
+def test_stock_history_honors_explicit_provider_preference_order():
+    uc = StockHistoryUseCase()
+    uc.router = _Router()
+    uc.resolver = _Resolver()
+    req = type(
+        "Req",
+        (),
+        {
+            "symbol": "000001.SH", "sec_type": "index", "interval": "1d",
+            "start_date": None, "end_date": None, "limit": 20, "adjust": "none",
+            "provider": None, "provider_preference": ["akshare", "zhitu"],
+        },
+    )()
+    uc.router.filter_selection = lambda selection: selection
+
+    result = uc.execute(req)
+
+    assert result["source"] == "akshare"
+    assert result["meta"]["selected_primary"] == "akshare"

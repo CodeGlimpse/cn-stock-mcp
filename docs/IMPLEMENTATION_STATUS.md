@@ -1,10 +1,10 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-08-18
+Last Updated: 2026-09-05
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
-当前目标公开版本：`0.2.0`。PyPI 与 GitHub Release 由标签工作流发布并在发布后核验；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
+当前目标公开版本：`0.2.1`。PyPI 与 GitHub Release 由标签工作流发布并在发布后核验；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
 
 ---
 
@@ -58,6 +58,7 @@ cn-stock-mcp --init-config
 - console script 写入 `entry_points.txt`
 - `MANIFEST.in` 控制发布内容
 - sdist / wheel 不再携带 `tests/` 与 `.github/`
+- wheel 携带客户部署文档与 bundled OpenClaw Skill，可用 `--docs-path` 定位
 - 默认 token 配置路径为每用户 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json`
 - `retail_v1_preview` 工具档包含 10 个高层工具；`full` 保持全量兼容
 
@@ -79,8 +80,10 @@ cn-stock-mcp --init-config
 
 ## 3) 当前测试与 CI 状态
 
-### 已验证（截至上一轮，历史基线）
-- 非 live 回归：`522 passed, 22 deselected`（本地发布前复核）
+### 当前本地验证
+- 非 live 回归：`575 passed, 76 deselected`（2026-09-05，普通 CPython 3.13 项目虚拟环境）
+- `compileall`、`pip check`、严格 JSON/脱敏、53 个工具最小示例 schema 校验通过
+- 当前源码 wheel 使用 `python -m build --wheel --no-isolation` 构建通过，并确认包含客户文档与 Skill；隔离构建和干净 wheel 安装仍由 tag workflow 再验证
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
 - `market_pool` 显式日期缓存命中不再先访问交易日历上游
 - fallback 不再吞掉未预期的编程异常或结果策略异常
@@ -138,6 +141,18 @@ cn-stock-mcp --init-config
 - doctor 支持机器可读的 `--doctor --json` / `--doctor-network --json`，并区分 token 配置缺失、格式错误、结构错误和不可读状态
 - AKShare 资金流 endpoint 增加进程内熔断、统一 proxy/环境代理配置、空结果失败处理和板块 endpoint fallback
 - `capital_flow` 增加新鲜缓存、显式 `allow_stale` stale-if-error；默认不返回旧缓存，stale 结果带 `stale` 与 `stale_age_seconds`
+
+### v0.2.1 安全与正确性修复
+
+- 校验错误不再回显提交的 `input/ctx`；日志、错误和 stdio 扩大 token/Bearer/JSON key 脱敏并拒绝非标准 `NaN/Infinity` JSON
+- `stock_compare` 适配 Zhitu 列表与 AKShare tuple/snapshot，层级缺失改为显式 `partial_failure`
+- `doctor-network` 能识别成功 envelope 中的 `overall=degraded`
+- 批量行情缺失或超时时会继续尝试配置的跨 Provider fallback
+- `1M`、基金历史、AKShare 派生指标、全部 market pool 类型和指数增强区间收益契约已修复
+- unknown `tool_profile` 改为 fail-closed 到 10 工具 retail 档
+- MCP 同步 Provider 调用移出事件循环，并增加并发上限；共享 Zhitu 状态、AKShare 输出重定向和交易日历缓存增加并发/TTL 保护
+- 板块轮动与热点主题增加单板块和总成员预算；Zhitu 配置日额度在进程内严格执行
+- `stock_snapshot` 增加 section freshness/coverage；空关键值记录会降低 `data_quality`
 
 ### P2 功能添加
 
@@ -279,22 +294,33 @@ cn-stock-mcp --init-config
 - 先用轻工具
 - 先用小参数
 - 只有用户明确要求更大覆盖时再放大
+- 服务端仍对 candidate universe、板块轮动、热点主题和 MCP 并发执行设置硬上限，避免 Host 参数失控
+
+### 尚未消除的运行边界
+
+- `stock_snapshot` 的总预算可以停止等待和取消尚未启动任务，但 Python 无法强制中止已经进入第三方同步调用的线程；已运行调用会在各自 Provider 超时后结束
+- Zhitu 配额、冷却和熔断状态按 MCP 进程保存；重启会清空本地计数，真实额度仍以智兔后台为准
+- 内置观察列表持久化和内置调度尚未实现；`watchlist_review` 每次需要用户或 Host 传入代码
+- 当前真实上游回归仍是手动触发，不是持续发布门禁；v0.2.1 的新 Provider 路径需在有合法客户 token 的环境中完成 live 复核
+- Codex、Claude Code、OpenClaw、Hermes 提供配置模板和共同 stdio 验证，不等于四个 Host 的所有版本都已做真人图形界面认证
+- 第三方数据商业展示、缓存和再分发授权不能由代码修复，必须由经营者按实际用途完成专业条款与合规审查
 
 ---
 
-## 7) 当前仍可继续优化，但不阻塞交付
+## 7) 后续工作
 
 以下事项仍值得继续做，但它们不是“当前不能交付”的阻塞项：
 
-1. 决定 `Live Smoke` 是否长期保留为 schedule，或进一步收缩为 manual only
-2. 对重点宿主做一轮真机 smoke（例如 Claude Desktop / Cursor / Cline / OpenClaw）
-3. 继续保持 `AI_ONBOARDING.md`、`AGENT_MINIMAL.md`、`.agent-hints.json` 的一致性
+1. 使用合法自有 token 执行 v0.2.1 live functional 与 smoke，并记录实际上游覆盖结果
+2. 对 Codex、Claude Code、OpenClaw、Hermes 的明确版本做标准用户真机 smoke
+3. 如面向无本地 Agent 的普通用户，再开发 Windows 安装器、GUI/DPAPI Token 向导、升级/卸载与配置恢复
+4. 如需跨会话观察列表，再增加明确的数据保留、备份、删除和迁移策略
 
 ---
 
 ## 8) 当前状态结论
 
-截至 2026-08-13，本项目已经不再只是“开发中代码仓库”，而是已经具备：
+截至 2026-09-05，本项目已经不再只是“开发中代码仓库”，而是已经具备：
 - 安装
 - 自检
 - 打包

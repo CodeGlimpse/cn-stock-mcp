@@ -4,7 +4,7 @@
 
 ## 目标版本与安全边界
 
-- 首发版本：`cn-stock-mcp==0.2.0`
+- 当前固定版本：`cn-stock-mcp==0.2.1`
 - 运行方式：本机 stdio MCP server
 - 默认配置文件：`%LOCALAPPDATA%\cn-stock-mcp\config.json`
 - 首选工具档：`retail_v1_preview`
@@ -22,12 +22,30 @@
 ### 2. 固定版本安装
 
 ```powershell
-py -3.13 -m venv "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv"
-& "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\python.exe" -m pip install --upgrade pip
-& "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\python.exe" -m pip install cn-stock-mcp==0.2.0
+$root = Join-Path $env:LOCALAPPDATA "cn-stock-mcp"
+$venv = Join-Path $root "runtime\venv"
+$download = Join-Path $root "downloads\0.2.1"
+New-Item -ItemType Directory -Force -Path $download | Out-Null
+
+py -3.13 -m venv $venv
+$python = Join-Path $venv "Scripts\python.exe"
+& $python -m pip install --upgrade pip
+& $python -m pip download --only-binary=:all: --no-deps --dest $download cn-stock-mcp==0.2.1
+
+$wheel = Get-ChildItem -LiteralPath $download -Filter "cn_stock_mcp-0.2.1-*.whl" | Select-Object -First 1
+if (-not $wheel) { throw "v0.2.1 wheel was not found" }
+$checksums = Join-Path $download "sha256sums.txt"
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/CodeGlimpse/cn-stock-mcp/releases/download/v0.2.1/sha256sums.txt" -OutFile $checksums
+$line = Get-Content -LiteralPath $checksums | Where-Object { $_ -match [regex]::Escape($wheel.Name) } | Select-Object -First 1
+if (-not $line) { throw "v0.2.1 checksum entry was not found" }
+$expected = ($line -split '\s+')[0].ToLowerInvariant()
+$actual = (Get-FileHash -LiteralPath $wheel.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw "cn-stock-mcp wheel SHA256 mismatch" }
+
+& $python -m pip install $wheel.FullName
 ```
 
-记录安装版本和解释器路径。不要使用未固定版本的 `pip install cn-stock-mcp` 作为验收证据。
+记录安装版本、解释器路径、wheel 文件名和校验结果，但不要记录 token。不要使用未固定版本的 `pip install cn-stock-mcp` 作为验收证据。如果 PyPI 包、GitHub Release、wheel 或校验项任一不存在，或 SHA256 不匹配，停止部署，不要改装 GitHub `main` 分支。
 
 解析并记录 Host 必须使用的绝对命令路径：
 
@@ -37,6 +55,12 @@ $mcpExe = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv\Scripts\cn-stoc
 ```
 
 不要假设该用户专用虚拟环境已加入 `PATH`。
+
+安装后的客户文档可通过以下命令定位；wheel 已携带部署文档和 Skill：
+
+```powershell
+& $mcpExe --docs-path
+```
 
 ### 3. 创建配置并交给用户填 token
 

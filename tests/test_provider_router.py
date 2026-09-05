@@ -128,3 +128,10 @@ def test_market_overview_runtime_matches_catalog_even_with_default_order():
 
     assert selection.primary == "zhitu"
     assert selection.fallback == ["akshare"]
+
+
+def test_composite_catalog_routes_name_all_actual_providers():
+    route = ProviderRouter.describe_route("market_brief")
+    assert route["mode"] == "composite"
+    assert route["primary"] == "composite"
+    assert route["providers"] == ["zhitu", "akshare"]

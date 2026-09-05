@@ -1,8 +1,10 @@
 # cn-stock-mcp 客户部署与排障说明
 
-适用版本：`cn-stock-mcp==0.2.0`
+适用版本：`cn-stock-mcp==0.2.1`
 
 本文件面向客户、交付人员和负责部署的 AI Agent。Windows 是首发版本的重点部署平台；完整的 Agent 执行合同见 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md)。
+
+客户如需直接把任务交给自己的本地 AI Agent，可复制 [AI_DEPLOY_PROMPT.md](AI_DEPLOY_PROMPT.md)；销售范围与支持期应在成交前按 [COMMERCIAL_DELIVERY_TEMPLATE.md](COMMERCIAL_DELIVERY_TEMPLATE.md) 明确。
 
 ## 1. 先了解产品边界
 
@@ -33,7 +35,7 @@ $venv = Join-Path $root "runtime\venv"
 
 py -3.13 -m venv $venv
 & "$venv\Scripts\python.exe" -m pip install --upgrade pip
-& "$venv\Scripts\python.exe" -m pip install cn-stock-mcp==0.2.0
+& "$venv\Scripts\python.exe" -m pip install cn-stock-mcp==0.2.1
 
 $mcpExe = Join-Path $venv "Scripts\cn-stock-mcp.exe"
 & $mcpExe --version
@@ -42,10 +44,12 @@ $mcpExe = Join-Path $venv "Scripts\cn-stock-mcp.exe"
 预期版本输出：
 
 ```text
-0.2.0
+0.2.1
 ```
 
 不要把 `pip install cn-stock-mcp`（不带版本）作为验收证据，也不要把 token 放在 pip 命令中。
+
+由 AI Agent 执行的正式客户部署应按 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md) 先下载固定 wheel，并与同版本 GitHub Release 的 `sha256sums.txt` 核对后再安装；Release 或校验项缺失时停止部署。
 
 ### 创建配置文件
 
@@ -61,7 +65,7 @@ $mcpExe = Join-Path $venv "Scripts\cn-stock-mcp.exe"
 %LOCALAPPDATA%\cn-stock-mcp\config.json
 ```
 
-程序会创建空 token 模板并尝试收紧 ACL。部署 Agent、MCP Host 和用户编辑配置文件时，最好使用同一个 Windows 账号；如果 Agent 在沙箱或服务账号中运行，不要让它代替用户创建最终凭据文件，见“权限问题”。
+程序会创建空 token 模板并尝试收紧 ACL，保留执行账号、可识别的交互用户账号和 `SYSTEM`。部署 Agent、MCP Host 和用户编辑配置文件时，最好使用同一个 Windows 账号；如果 Agent 在沙箱或服务账号中运行，仍应由最终用户确认自己可打开文件，见“权限问题”。
 
 ## 3. 如何获取智兔（Zhitu）token
 
@@ -161,6 +165,7 @@ args = ["--stdio"]
 
 ```powershell
 & "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --version
+& "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe" --docs-path
 ```
 
 也可以确认安装：
@@ -171,7 +176,7 @@ args = ["--stdio"]
 
 ### 配置文件没有权限打开
 
-`--init-config` 会移除继承 ACL，只授权执行命令的账号和 `SYSTEM`。如果 AI Agent 以沙箱账号创建文件，而用户以另一个 Windows 账号编辑，就可能出现拒绝访问。
+`--init-config` 会移除继承 ACL，并尝试授权执行命令的账号、Windows 环境中可识别的交互用户账号和 `SYSTEM`。如果 AI Agent 使用隔离账号且无法识别最终用户，仍可能出现拒绝访问。
 
 先在用户自己的 PowerShell 中确认身份和路径：
 

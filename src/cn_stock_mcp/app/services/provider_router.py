@@ -69,6 +69,25 @@ _TOOL_ROUTES: dict[str, tuple[str, list[str]]] = {
 _DEFAULT_ROUTE: tuple[str, list[str]] = ("akshare", ["zhitu"])
 _DEFAULT_ORDER_TOOLS = {"stock_search"}
 
+_COMPOSITE_TOOL_PROVIDERS: dict[str, list[str]] = {
+    "hot_theme_tracker": ["zhitu", "akshare"],
+    "index_enhance": ["akshare", "zhitu"],
+    "industry_valuation_rank": ["zhitu", "akshare"],
+    "market_brief": ["zhitu", "akshare"],
+    "multi_timeframe_review": ["zhitu", "akshare"],
+    "provider_health": ["zhitu", "akshare"],
+    "sector_leaders": ["zhitu", "akshare"],
+    "sector_review": ["zhitu", "akshare"],
+    "sector_rotation_review": ["zhitu", "akshare"],
+    "stock_candidate_scan": ["zhitu", "akshare"],
+    "stock_compare": ["zhitu", "akshare"],
+    "stock_review": ["akshare", "zhitu"],
+    "stock_review_batch": ["akshare", "zhitu"],
+    "stock_snapshot": ["zhitu", "akshare"],
+    "valuation_rank": ["akshare", "zhitu"],
+    "watchlist_review": ["akshare", "zhitu"],
+}
+
 
 @lru_cache(maxsize=1)
 def _shared_providers() -> tuple[AKShareProvider, ZhituProvider]:
@@ -94,10 +113,19 @@ class ProviderRouter:
     @classmethod
     def describe_route(cls, tool_name: str) -> dict[str, object]:
         """Return a stable, read-only provider route description for tooling/docs."""
+        composite = _COMPOSITE_TOOL_PROVIDERS.get(tool_name)
+        if composite is not None:
+            return {
+                "primary": "composite",
+                "fallback": [],
+                "providers": list(composite),
+                "mode": "composite",
+            }
         primary, fallback = _TOOL_ROUTES.get(tool_name, _DEFAULT_ROUTE)
         return {
             "primary": primary,
             "fallback": list(fallback),
+            "providers": [primary, *fallback],
             "mode": "composite" if primary == "composite" else "provider",
         }
 

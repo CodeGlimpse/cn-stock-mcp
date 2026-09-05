@@ -191,7 +191,7 @@ Last Updated: 2026-08-18
 - technical_indicator：
   - stock：`zhitu` 主，`akshare` 备
   - index：`zhitu` 主，`akshare` 备
-  - fund：`zhitu`
+  - fund：`akshare` 本地派生（基于基金历史 K 线计算）
 - market_pool / stock_orderbook / stock_profile：`zhitu`
 - capital_flow / stock_financial / limit_stat / northbound / index_compose：`akshare`
 - earnings_quality：`akshare`（复用 `stock_financial` 快照）
@@ -264,7 +264,7 @@ Last Updated: 2026-08-18
 
 ---
 
-## 7. 统一响应契约
+## 6. 统一响应契约
 
 所有 MCP tool 返回值遵循以下共享字段约定：
 
@@ -306,7 +306,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 
 ---
 
-## 8. tool ↔ usecase 文件命名映射
+## 7. tool ↔ usecase 文件命名映射
 
 | MCP tool 名 | usecase 文件 | 备注 |
 |---|---|---|
@@ -315,7 +315,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 | stock_history | stock_history.py | 1:1 |
 | stock_review | stock_review.py | 1:1 |
 | stock_review_batch | stock_review_batch.py | 1:1 |
-| stock_orderbook | orderbook.py | 文件名不一致 |
+| stock_orderbook | stock_orderbook.py | 1:1 |
 | stock_profile | stock_profile.py | 1:1 |
 | stock_financial | stock_financial.py | 1:1 |
 | stock_candidate_scan | stock_candidate_scan.py | 1:1 |
@@ -365,7 +365,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 
 ---
 
-## 6. 上游数据源文档入口
+## 8. 上游数据源文档入口
 
 ### AKShare
 - https://akshare.akfamily.xyz/
@@ -378,7 +378,7 @@ tool-specific 上下文字段按需附加（如 `exchange`, `section`, `interval
 - 基金：https://www.zhituapi.com/fundmarketapi.html
 
 
-## 榜单语义统一（v1）
+## 9. 榜单语义统一（v1）
 适用工具：`stock_candidate_scan`、`watchlist_review`、`sector_leaders`
-- 输入：`sort_by/descending/top_n/return_mode`
+- 输入：`sort_by/descending/top_n/return_mode`（三个工具都支持 `return_mode=full|ranked_only`）
 - 输出 meta：`filtered_from/filtered_count/ranked_count`

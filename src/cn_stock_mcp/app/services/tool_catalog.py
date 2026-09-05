@@ -152,7 +152,10 @@ def render_tool_catalog_markdown(catalog: list[dict[str, Any]]) -> str:
     ]
     for item in catalog:
         route = item["provider_support"]
-        route_text = ", ".join([str(route["primary"]), *[str(value) for value in route["fallback"]]])
+        if route.get("mode") == "composite":
+            route_text = f"composite: {', '.join(str(value) for value in route.get('providers', []))}"
+        else:
+            route_text = ", ".join([str(route["primary"]), *[str(value) for value in route["fallback"]]])
         description = item["description"].replace("|", "\\|")
         lines.append(f"| `{item['name']}` | `{route_text}` | {description} |")
 
@@ -170,13 +173,19 @@ def render_tool_catalog_markdown(catalog: list[dict[str, Any]]) -> str:
         ]
     )
     for item in catalog:
+        route = item["provider_support"]
+        route_detail = (
+            f"Provider mode: `composite`; providers: `{', '.join(route.get('providers', []))}`"
+            if route.get("mode") == "composite"
+            else f"Provider route: `{route['primary']}`; fallback: `{', '.join(route['fallback']) or 'none'}`"
+        )
         lines.extend(
             [
                 f"### `{item['name']}`",
                 "",
                 item["description"],
                 "",
-                f"Provider route: `{item['provider_support']['primary']}`; fallback: `{', '.join(item['provider_support']['fallback']) or 'none'}`",
+                route_detail,
                 "",
                 "最小示例：",
                 "",

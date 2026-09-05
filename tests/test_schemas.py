@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from cn_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest, EventCalendarRequest, SectorLeadersRequest
+from cn_stock_mcp.server.schemas import HotThemeTrackerRequest, MultiTimeframeReviewRequest, WatchlistReviewRequest, StockCandidateScanRequest, SectorRotationReviewRequest, StockHistoryRequest, StockQuoteRequest, TechnicalIndicatorRequest, MarketPoolRequest, StockProfileRequest, EventCalendarRequest, SectorLeadersRequest
 
 
 def test_stock_history_interval_alias_normalization():
@@ -21,6 +21,14 @@ def test_stock_history_rejects_1m_interval():
 def test_monthly_canonical_interval_1M_is_accepted():
     req = StockHistoryRequest(symbol="000001.SH", sec_type="index", interval="1M")
     assert req.interval == "1M"
+
+
+def test_stock_quote_rejects_unknown_fields_and_deduplicates_symbols():
+    request = StockQuoteRequest(symbols=["600519.SH", " 600519.SH "], fields=["price", "price"])
+    assert request.symbols == ["600519.SH"]
+    assert request.fields == ["price"]
+    with pytest.raises(ValidationError, match="unknown quote fields"):
+        StockQuoteRequest(symbols=["600519.SH"], fields=["not_a_field"])
 
 
 def test_technical_indicator_alias_normalization():

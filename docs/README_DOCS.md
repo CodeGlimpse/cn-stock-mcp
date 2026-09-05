@@ -1,10 +1,12 @@
 # Docs Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-08-18
+Last Updated: 2026-09-05
 
 本目录只保留当前有效的运行文档。
 
 Windows + AI 自部署请先阅读 `AI_DEPLOY_WINDOWS.md`；发布边界见 `SECURITY.md`、`PRIVACY.md`、`DATA_SOURCES.md` 和 `SUPPORT.md`。
+
+wheel 安装后可运行 `cn-stock-mcp --docs-path` 定位本目录的已安装副本。
 
 ## 先看哪一页？
 
@@ -23,20 +25,26 @@ Windows + AI 自部署请先阅读 `AI_DEPLOY_WINDOWS.md`；发布边界见 `SEC
 4. `AI_DEPLOY_WINDOWS.md`
    - 固定版本安装、token 交接和首次问答验收合同。
 
-5. `HANDOFF_MINIMAL.md`
+5. `AI_DEPLOY_PROMPT.md`
+   - 客户直接复制给具备本机权限的 AI Agent 的部署提示词。
+
+6. `HANDOFF_MINIMAL.md`
    - 一页安装与接入说明。
 
-6. `HOST_CONFIG_TEMPLATES.md`
+7. `HOST_CONFIG_TEMPLATES.md`
    - 按宿主类型选择模板入口。
 
-7. `AI_ONBOARDING.md`
+8. `AI_ONBOARDING.md`
    - 给 AI 集成人员 / agent 作者的使用说明。
 
-8. `AGENT_AND_SKILL_MAP.md`
+9. `AGENT_AND_SKILL_MAP.md`
    - 解释哪些平台只是接 MCP，哪些才有仓库内 skill，以及 skill 文件在哪。
 
-9. `FAQ.md`
+10. `FAQ.md`
    - 常见错误与排查。
+
+11. `COMMERCIAL_DELIVERY_TEMPLATE.md`
+   - 一次性销售范围、验收、支持、退款字段和 MIT 边界模板。
 
 ---
 
@@ -93,6 +101,9 @@ Windows + AI 自部署请先阅读 `AI_DEPLOY_WINDOWS.md`；发布边界见 `SEC
 
 9. `TOOL_CATALOG.md`
    - 从 MCP registry 自动生成的 53 个工具目录、参数 schema、最小示例和 Provider route。
+
+10. `RELEASE_NOTE_v0.2.1.md`
+   - 当前修复版本的变更、升级方法与已知边界。
 
 ---
 

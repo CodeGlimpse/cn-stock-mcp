@@ -166,7 +166,9 @@ class Settings(BaseSettings):
         return tokens[0] if tokens else ""
 
     def resolve_tool_profile(self) -> str:
-        data = self._load_zhitu_token_config()
+        data, status, _message = self._read_zhitu_token_config()
+        if status not in {"ok", "missing"}:
+            return SAFE_FALLBACK_PROFILE
         configured = data.get("tool_profile") if isinstance(data, dict) else None
         profile = str(self.tool_profile or "full").strip()
         if profile == "full" and isinstance(configured, str) and configured.strip():

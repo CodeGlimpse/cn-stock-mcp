@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+## [0.2.1] - 2026-09-05
+
+### Security
+- Removed submitted input values and error contexts from validation diagnostics, expanded token/Bearer/JSON-key redaction, and made logs/stdio use strict JSON without `NaN` or `Infinity`.
+- Hardened token configuration precedence and permission checks while retaining access for the identifiable interactive Windows user.
+
+### Fixed
+- Repaired `stock_compare` for the current Zhitu list and AKShare tuple contracts and made layer failures explicit.
+- Made `doctor-network` fail when the provider report is degraded, completed cross-provider batch quote fallback, and aligned documented/provider routes.
+- Added canonical `1M`, ETF/LOF history, AKShare-derived MA/MACD/BOLL/KDJ fallback, all documented market-pool types, and true range return calculation for index enhancement.
+- Corrected market-brief missing-value ranking, unavailable pool semantics, and zero-denominator breadth ratios.
+- Made unknown tool profiles fail closed to the bounded retail profile.
+
+### Changed
+- Moved synchronous provider calls off the MCP event loop, bounded concurrent calls and high-cost sector/theme expansion, locked shared provider state, and enforced configured per-process Zhitu quotas.
+- Added per-section snapshot freshness/coverage and stronger empty-record data-quality detection.
+- Packaged customer deployment documentation and the bundled OpenClaw Skill in the wheel and added `--docs-path`.
+- Made the release workflow version-independent and added installed-document validation.
+
 ## [0.2.0] - 2026-08-17
 
 ### Added
@@ -11,8 +32,6 @@ All notable changes to this project will be documented in this file.
 - Updated Codex, Claude Code, OpenClaw, and Hermes Agent templates to avoid embedding tokens.
 - Added security, privacy, support, data-source, Windows deployment, and release documentation.
 - Added release workflow controls for dependency audit, SBOM, checksums, Trusted Publishing, and build provenance.
-
-## [Unreleased] - 2026-08-15
 
 ### Changed
 - Documented the verified Windows development runtime: regular CPython 3.13.2 with the project virtual environment; Python 3.13t is not supported for the Windows/MCP path because `pywin32` has no available `cp313t` wheel.

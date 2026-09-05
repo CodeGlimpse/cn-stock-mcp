@@ -76,3 +76,15 @@ def test_stock_quote_rejects_mismatched_symbol_and_sec_type():
     assert result["partial_failure"] is True
     assert result["items"] == []
     assert result["errors"][0]["error_code"] == "INVALID_ARGUMENT"
+
+
+def test_stock_quote_fields_returns_bounded_shape():
+    uc = StockQuoteUseCase()
+    uc.router = _Router()
+    uc.resolver = _Resolver()
+    req = type("Req", (), {"symbols": ["600519.SH"], "sec_type": "stock", "fields": ["price"], "provider": None, "provider_preference": None})()
+
+    result = uc.execute(req)
+
+    assert set(result["items"][0]) == {"symbol"}
+    assert result["meta"]["requested_fields"] == ["price"]

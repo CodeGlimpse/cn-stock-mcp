@@ -74,7 +74,7 @@
 
 `stock_search`、`market_brief`、`stock_snapshot`、`stock_quote`、`stock_history`、`stock_review`、`watchlist_review`、`trading_calendar`、`sector_review`、`hot_theme_tracker`。
 
-如果用户需要 `technical_indicator`、`market_pool`、`sector_lookup`、`sector_rotation_review` 或其他底层工具，先明确说明需要把 `tool_profile` 改为 `full`，再调用；不要把隐藏工具当作默认可用。
+如果用户需要 `technical_indicator`、`market_pool`、`sector_lookup`、`sector_rotation_review` 或其他底层工具，先明确说明需要把 `tool_profile` 改为 `full`，再调用；不要把隐藏工具当作默认可用。诊断时优先使用 CLI `--doctor-network`，因为 `provider_health` 在 retail 档中隐藏。
 
 所有回答都必须说明数据来源、数据时间/新鲜度和必要的降级或缺失状态。`data_quality` 只是数据可用性提示，不是投资置信度。本项目不提供投资参考、投资建议、收益承诺、个性化风险建议或荐股结论。
 

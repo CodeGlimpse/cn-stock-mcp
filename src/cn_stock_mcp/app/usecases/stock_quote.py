@@ -373,6 +373,16 @@ class StockQuoteUseCase:
         items.sort(key=lambda quote: requested_order.get(_quote_symbol(quote), len(requested_order)))
         meta_items.sort(key=lambda entry: requested_order.get(entry.get("resolved_symbol"), len(requested_order)))
 
+        requested_fields = list(getattr(request, "fields", None) or [])
+        if requested_fields:
+            always = ["symbol", "name", "sec_type", "source", "timestamp"]
+            visible = list(dict.fromkeys([*always, *requested_fields]))
+            selected_items = []
+            for quote in items:
+                data = quote.model_dump() if hasattr(quote, "model_dump") else dict(quote)
+                selected_items.append({key: data.get(key) for key in visible if key in data})
+            items = selected_items
+
         return {
             "items": items,
             "partial_failure": len(errors) > 0,
@@ -388,6 +398,8 @@ class StockQuoteUseCase:
                     "fallback_mode": next((m.get("batch_fallback_mode") for m in meta_items if m.get("batch_fallback_mode")), None),
                     "failed_symbols": [m.get("symbol") for m in meta_items if m.get("batch_failed")],
                 },
+                "requested_fields": requested_fields or None,
+                "always_returned_fields": ["symbol", "name", "sec_type", "source", "timestamp"] if requested_fields else None,
                 "latency_ms": int((time.perf_counter() - started_at) * 1000),
             },
         }

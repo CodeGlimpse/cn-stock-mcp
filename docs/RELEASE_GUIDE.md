@@ -1,27 +1,31 @@
-# v0.2.0 Release Guide
+# Release Guide
 
 ## Release invariants
 
-- `pyproject.toml` 是唯一版本源，源码、MCP server、doctor 和制品均报告 `0.2.0`。
-- 发布切点的 `main`、`v0.2.0` tag、PyPI 文件和 GitHub Release 必须来自同一提交；发布后允许把验收记录等文档提交到 `main`，但不得移动 tag、重建同版本制品或声称它们包含这些后续提交。
-- Release 附件包括 wheel、sdist、SHA256 文件和 SBOM；构建来源证明通过 GitHub Artifact Attestations 查询，不作为普通 Release 附件。
-- 不发布 token、`.env`、`config/zhitu_tokens.json`、诊断包或含凭据的 Host 配置。
-- `constraints-release.txt` 固定直接运行、测试和发布工具版本；pip 仍解析传递依赖，最终解析结果以 `sbom.json` 为准。这是首版的可复现边界，不宣称跨时间字节级完全复现。
+- `pyproject.toml` 是唯一版本源；源码、MCP server、doctor、tag 和制品必须报告同一版本。
+- 发布切点的 `main`、版本 tag、PyPI 文件和 GitHub Release 必须来自同一提交；发布后不得移动已公开 tag 或重建同版本制品。
+- Release 附件包括 wheel、sdist、`sha256sums.txt` 和 `sbom.json`；构建来源证明通过 GitHub Artifact Attestations 查询。
+- wheel 必须携带客户部署文档与 bundled Skill，`cn-stock-mcp --docs-path` 必须能定位它们。
+- 不发布 token、`.env`、用户 `config.json`、诊断包或含凭据的 Host 配置。
+- `constraints-release.txt` 固定直接运行、测试和发布工具版本；传递依赖的最终解析结果以 `sbom.json` 为准，不宣称跨时间字节级完全复现。
 
 ## Verification order
 
-1. `git status --short --branch` 干净，确认当前分支、远端和 HEAD。
-2. 运行受影响测试、完整非 live 回归、`python -m build` 和 wheel 安装 smoke。
-3. 生成 SHA256 和 SBOM，检查内容清单；校验文件使用 Release 附件的平铺文件名。
-4. 在 TestPyPI 或受控预发布环境验证安装，再发布正式 PyPI。
-5. 创建 GitHub Release，上传同一批制品和校验文件。
-6. 用公开 PyPI 元数据、GitHub Release API、下载校验和确认发布成功。
-7. 在干净 Windows 用户环境执行 `docs/AI_DEPLOY_WINDOWS.md`。
+1. `git status --short --branch` 干净，并确认版本只由 `pyproject.toml` 提供。
+2. 运行受影响测试、完整非 live 回归、严格 JSON/脱敏测试、`python -m build` 和 wheel 安装 smoke。
+3. 验证 53 个 full 工具、10 个 retail 工具、MCP initialize / tools/list / tools/call，以及 `--docs-path`。
+4. 生成 SHA256 和 SBOM，检查 wheel/sdist 内容清单；不得包含 token、测试缓存、旧制品或私有配置。
+5. 在 TestPyPI 或受控预发布环境验证安装；为最终发布提交创建新的不可变 tag。
+6. 推送 `main` 和 tag；tag workflow 必须先通过干净 Windows wheel gate，再使用 PyPI Trusted Publishing，并创建同版本 GitHub Release。
+7. 用公开 PyPI 元数据、GitHub Release API、附件 SHA256 和 provenance 核验发布成功。
+8. 在干净 Windows 标准用户环境按 `AI_DEPLOY_WINDOWS.md` 完成从安装到首次 MCP 问答的验收。
 
-PyPI 发布使用 Trusted Publishing，不在仓库 secrets 或工作流中保存长期 PyPI API token。GitHub Actions Artifact Attestations 用于记录构建来源；它们不能替代 SHA256 或第三方数据授权审查。
+PyPI 发布使用 Trusted Publishing，不在仓库 secrets 或工作流中保存长期 PyPI API token。GitHub Artifact Attestations 不能替代 SHA256、消费者自行验证或第三方数据授权审查。
 
-## v0.2.0 发布切点
+## Historical release evidence
 
-`v0.2.0` 的发布切点是提交 `1651a510b03edd49852e04139b3ce98ed1a244fc`。
-发布后的 Windows 验收补充记录位于 `docs/WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md`，
-属于后续文档提交，不改变已经公开的 `v0.2.0` tag、PyPI 文件或 GitHub Release。
+- `v0.2.0` 的发布切点：`1651a510b03edd49852e04139b3ce98ed1a244fc`
+- `v0.2.0` Windows 验收：`WINDOWS_ACCEPTANCE_v0.2.0.md`
+- `v0.2.0` 公开安装补充验收：`WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md`
+
+历史记录只证明对应 tag，不自动证明后续提交或新版本。

@@ -2,7 +2,7 @@
 
 当前代码通过 AKShare、Zhitu 及其下游公开接口取得市场数据。代码依赖和数据内容是两个不同的许可问题：AKShare 的代码许可证不自动授予所有下游数据的商用、缓存或再分发权。
 
-## v0.2.0 distribution conclusion
+## 0.2.x distribution conclusion
 
 The PyPI and GitHub artifacts distribute source code, documentation, and package metadata only. They do not bundle or redistribute a third-party market dataset. AKShare's code license does not automatically grant rights in the data returned by its adapters, and this project has not recorded evidence that Zhitu or every downstream source grants commercial display, caching, or redistribution rights.
 

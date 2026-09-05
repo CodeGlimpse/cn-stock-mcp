@@ -2,6 +2,7 @@ import time
 
 from cn_stock_mcp.app.services.fallback import run_with_fallback_meta
 from cn_stock_mcp.app.services.provider_router import ProviderRouter
+from cn_stock_mcp.app.services.provider_types import ProviderSelection
 from cn_stock_mcp.app.services.symbol_resolver import SymbolResolver
 
 
@@ -13,12 +14,19 @@ class StockHistoryUseCase:
     def execute(self, request):
         started_at = time.perf_counter()
         resolved = self.resolver.resolve(request.symbol, request.sec_type)
-        selection = self.router.choose_provider(
-            tool_name="stock_history",
-            symbol=resolved.symbol,
-            sec_type=resolved.sec_type,
-            preferred=getattr(request, "provider", None),
-        )
+        preference = list(getattr(request, "provider_preference", None) or [])
+        if preference:
+            ordered = list(dict.fromkeys(preference))
+            selection = self.router.filter_selection(
+                ProviderSelection(primary=ordered[0], fallback=ordered[1:])
+            )
+        else:
+            selection = self.router.choose_provider(
+                tool_name="stock_history",
+                symbol=resolved.symbol,
+                sec_type=resolved.sec_type,
+                preferred=getattr(request, "provider", None),
+            )
         items, fallback_meta = run_with_fallback_meta(
             self.router,
             selection,

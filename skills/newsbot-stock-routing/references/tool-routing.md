@@ -12,7 +12,7 @@
 
 ## 1. 意图 → tool（高频 / 常规）
 
-- 板块指数行情 / 快速榜单（涨跌幅/成交额）→ `sector_quote`（支持 min_turnover/min_change_percent/exclude_null_fields/return_mode）
+- 单板块行情 / 成员强弱 / 快速榜单（涨跌幅/成交额）→ `sector_review`；先用 `sector_lookup` 获取板块名称，必要时再用 `sector_leaders`。本仓库没有 `sector_quote` 工具，不要调用该名称。
 - 系统异常 / 上游挂了 → `provider_health`
 - 是否交易日 / 上下个交易日 → `trading_calendar`
 - 市场简报 / 收盘复盘 → `market_brief`
@@ -158,7 +158,7 @@
 - `fund_flow`：`akshare`
 - `limit_up_pool`：`akshare`
 - `sec_reveal`：`akshare`
-- `sector_quote`：板块指数行情走 `zhitu`
+- `sector_review` / `sector_leaders`：板块成员行情走 `zhitu`（按请求需要使用 `sector_type=primary|concept`）
 - `stock_candidate_scan`：universe 扩展走 `zhitu`，成员复盘当前复用 `akshare`
 - `stock_profile`：公司基本面走 `zhitu`（profile/dividends/unlocks/profits/valuation）
 - `sector_review`：成员股获取走 `zhitu`，支持 `sector_type=primary`（一级行业）和 `sector_type=concept`（概念题材），成员复盘复用 `akshare`

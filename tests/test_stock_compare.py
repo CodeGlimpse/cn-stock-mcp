@@ -1,6 +1,8 @@
 """Tests for stock_compare usecase with mocked providers."""
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from cn_stock_mcp.app.usecases.stock_compare import StockCompareUseCase
 from cn_stock_mcp.server.schemas import StockCompareRequest
 
@@ -128,6 +130,15 @@ def test_stock_compare_max_10_symbols():
         assert "at most 10" in str(e) or "max_length" in str(e)
 
 
+def test_stock_compare_requires_two_distinct_symbols_and_nonempty_layers():
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="2 distinct"):
+        StockCompareRequest(symbols=["600519.SH", " 600519.SH "])
+    with pytest.raises(ValidationError, match="comparison layer"):
+        StockCompareRequest(symbols=["600519.SH", "000858.SZ"], include=[])
+
+
 def test_stock_compare_summary():
     uc = StockCompareUseCase()
     mock_zhitu = MagicMock()
@@ -235,3 +246,17 @@ def test_stock_compare_quote_cache_miss_is_reported_instead_of_silent_success():
 
     assert result["partial_failure"] is True
     assert len(result["errors"]) == 2
+
+
+def test_stock_compare_quote_honors_requested_provider():
+    uc = StockCompareUseCase()
+    with patch.object(uc.router, "choose_provider", side_effect=RuntimeError("offline")) as choose:
+        request = StockCompareRequest(
+            symbols=["600519.SH", "000858.SZ"],
+            include=["quote"],
+            provider="akshare",
+        )
+        uc.execute(request)
+
+    assert choose.call_count == 2
+    assert all(call.kwargs["preferred"] == "akshare" for call in choose.call_args_list)

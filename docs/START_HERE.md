@@ -88,7 +88,7 @@
 ### 第 1 步：安装
 
 ```bash
-python -m pip install cn-stock-mcp==0.2.0
+python -m pip install cn-stock-mcp==0.2.1
 ```
 
 随后运行 `cn-stock-mcp --init-config`，由用户在 `%LOCALAPPDATA%\cn-stock-mcp\config.json` 手动填写 token。不要把 token 放进 Host 配置。

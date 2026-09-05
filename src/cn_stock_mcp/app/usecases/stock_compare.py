@@ -39,7 +39,12 @@ class StockCompareUseCase:
         layer_meta: dict = {}
 
         if "quote" in include:
-            items, layer_errors, layer_info = self._merge_quote_layer(items, resolved_map, sec_type)
+            items, layer_errors, layer_info = self._merge_quote_layer(
+                items,
+                resolved_map,
+                sec_type,
+                getattr(request, "provider", None),
+            )
             errors.extend(layer_errors)
             layer_meta["quote"] = layer_info
 
@@ -76,6 +81,7 @@ class StockCompareUseCase:
         items: list[StockCompareItem],
         resolved_map: dict,
         sec_type: str,
+        preferred: str | None = None,
     ) -> tuple[list[StockCompareItem], list[dict], dict]:
         """Use the shared Sina cache, then fetch symbols missing from it."""
 
@@ -110,7 +116,10 @@ class StockCompareUseCase:
                 resolved = resolved_map.get(item.symbol)
                 symbol_sec_type = getattr(resolved, "sec_type", sec_type)
                 selection = self.router.choose_provider(
-                    "stock_quote", symbol=item.symbol, sec_type=symbol_sec_type
+                    "stock_quote",
+                    symbol=item.symbol,
+                    sec_type=symbol_sec_type,
+                    preferred=preferred,
                 )
                 quote, _meta = run_with_fallback_meta(
                     self.router,

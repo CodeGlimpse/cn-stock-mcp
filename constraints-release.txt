@@ -1,4 +1,4 @@
-# Direct dependency constraints used by the v0.2.0 release workflow.
+# Direct dependency constraints used by the release workflow.
 # Transitive dependencies remain resolved by pip and are recorded in sbom.json.
 pydantic==2.13.4
 pydantic-settings==2.15.0

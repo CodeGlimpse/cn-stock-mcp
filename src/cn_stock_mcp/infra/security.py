@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
+from urllib.parse import quote
 
 
 _SECRET_KEY = re.compile(
@@ -48,6 +49,11 @@ def redact_sensitive_text(value: object, secrets: Iterable[str] | None = None) -
         candidate = str(secret or "").strip()
         if candidate:
             text = text.replace(candidate, "<redacted>")
+            # httpx and proxies may percent-encode credentials when they are
+            # embedded in a diagnostic URL. Redact that representation too.
+            encoded = quote(candidate, safe="")
+            if encoded != candidate:
+                text = text.replace(encoded, "<redacted>")
     text = _URL_SECRET.sub(r"\1<redacted>", text)
     text = _SECRET_ASSIGNMENT_QUOTED.sub(r"\1\2<redacted>\4", text)
     text = _SECRET_ASSIGNMENT.sub(r"\1<redacted>", text)

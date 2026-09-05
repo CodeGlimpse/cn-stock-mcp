@@ -134,3 +134,12 @@ def test_non_string_token_values_are_ignored(tmp_path: Path):
     settings = Settings(zhitu_token_config_path=str(config_path))
 
     assert settings.resolve_zhitu_tokens() == ["TOKEN"]
+
+
+def test_invalid_config_fails_closed_to_retail_profile(tmp_path: Path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text('{"tool_profile":', encoding="utf-8")
+
+    settings = Settings(zhitu_token_config_path=str(config_path), tool_profile="full")
+
+    assert settings.resolve_tool_profile() == "retail_v1_preview"

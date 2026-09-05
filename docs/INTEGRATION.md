@@ -1,12 +1,12 @@
 # Integration Guide (`cn-stock-mcp`)
 
-Last Updated: 2026-08-17
+Last Updated: 2026-09-05
 
 ## 1) 本地运行与自检
 
 > Windows 客户端的 AI 自部署以 `docs/AI_DEPLOY_WINDOWS.md` 为准。开发联调时，AI agent 建议先读 `docs/AGENT_MINIMAL.md` 与 `docs/EXAMPLES_MINIMAL.md`。
 
-以下源码命令假定当前目录已是仓库根目录。公开安装用户应运行固定版本的 `cn-stock-mcp==0.2.0`，不需要源码目录或 `PYTHONPATH`。
+以下源码命令假定当前目录已是仓库根目录。公开安装用户应运行固定版本的 `cn-stock-mcp==0.2.1`，不需要源码目录或 `PYTHONPATH`。
 
 ### 列出 tools
 ```bash
@@ -123,7 +123,7 @@ Windows 源码目录方式对应配置（将路径替换为实际项目目录）
 
 目标：确认宿主能拉起服务、识别 tools、完成核心调用。
 
-### Step 1 - 识别工具
+### Step 1 - 识别工具（full 档联调）
 至少应看到：
 - stock_search
 - stock_quote
@@ -144,10 +144,10 @@ Windows 源码目录方式对应配置（将路径替换为实际项目目录）
 - sector_rotation_review
 - provider_health
 
-完整 `full` 档当前注册 53 个工具；`retail_v1_preview` 只暴露 10 个高层工具。Host 看到的数量必须与用户配置中的 `tool_profile` 一致。
+完整 `full` 档当前注册 53 个工具；`retail_v1_preview` 只暴露 10 个高层工具。上面的清单是 full 档联调清单；如果客户使用 retail 档，Host 只应看到该 10 个工具，不能把隐藏工具当成故障。
 
 ### Step 2 - 调用回归（建议顺序）
-1. `provider_health`
+1. `provider_health`（full 档；retail 档请使用 CLI `--doctor-network`）
 2. `stock_quote`（stock-main / index / BJ）
 3. `stock_history`（stock）
 4. `market_overview`
@@ -170,7 +170,7 @@ Windows 源码目录方式对应配置（将路径替换为实际项目目录）
 
 满足以下条件即可判定挂载可用：
 1. `--list-tools` 与宿主看到的工具集一致。
-2. `provider_health` 成功。
+2. full 档的 `provider_health` 成功；retail 档由 `--doctor-network` 完成同等上游诊断。
 3. `live smoke` 命令（`bash scripts/smoke_live.sh`）至少能稳定跑通核心链路。
 4. 更重的 live extended 用例可单独执行，不与默认 smoke 混跑。
 5. stdio 模式下协议输出正常，无 stdout 杂日志干扰。
