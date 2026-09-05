@@ -1,6 +1,6 @@
 # Interface Schema (`cn-stock-mcp`)
 
-Last Updated: 2026-08-18
+Last Updated: 2026-09-05
 
 > 本文是当前对外契约（输入/输出与关键约束）。
 > 若与历史文档冲突，以本文与代码实现为准。
@@ -160,6 +160,7 @@ Last Updated: 2026-08-18
 | `basis` | `provider_timestamp \| source_date \| unknown` | `as_of` 的来源口径 |
 | `status` | `realtime \| dated \| unknown` | 有时间级源字段、只有日期级源字段、或无法识别；`realtime` 不等同于交易所当前正在交易 |
 | `age_seconds` | int，可为 `null` | `observed_at - as_of` 的非负秒数；未知时为 `null` |
+| `warnings` | list[str] | 时间字段被识别为异常时的提示；例如 `source_time_in_future` |
 
 该字段只追加到统一响应 envelope 的 `meta`，不会删除或改写业务 `data` 字段。缓存命中时，`observed_at` 是本次返回时间；如果缓存数据没有可识别的源时间，`status` 会保持为 `unknown`。
 
@@ -213,7 +214,7 @@ Last Updated: 2026-08-18
     - `turnover`：成交额，单位为 **元**。
     - `pe`：Zhitu 股票实时行情口径为 **动态市盈率**。
     - `market_cap` / `float_market_cap`：Zhitu 股票实时行情口径为 **百元**（即 `元口径市值 / 100`）；例如返回 `16692135830.84` 表示约 `1,669,213,583,084` 元，即约 `1.67` 万亿元。
-- `stock_snapshot`：受控综合快照；默认最多 5 个股票标的、历史最多 60 根日线、总超时预算 30 秒。可组合行情、最近历史、财务摘要、估值、事件和风险标签；逐标的/逐 section 失败写入 `errors`，不执行交易。
+- `stock_snapshot`：受控综合快照；默认最多 5 个股票标的、历史最多 60 根日线、总超时预算 30 秒。可组合行情、最近历史、财务摘要、估值、事件和风险标签；逐标的/逐 section 失败写入 `errors`，不执行交易。超时取消是 best-effort；已经进入第三方同步调用的线程可能继续运行到 Provider 自身超时，响应会在 `meta.background_requests_may_continue` 标明这一点。
 - `trading_calendar`：除交易日与最近交易日外，点查询返回 `session_context`，包括 `session_status`、`is_market_open`、`latest_valid_market_date` 和 `data_may_be_close_data`。上下文按 `Asia/Shanghai` 和 A 股 09:30–11:30、13:00–15:00 计算；显式历史日期标记为 `historical`。
 - hot_theme_tracker：当前通过上层聚合复用 `sector_rotation_review + market_pool`
 

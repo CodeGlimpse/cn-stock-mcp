@@ -82,3 +82,14 @@ def test_data_quality_downgrades_records_with_only_empty_market_values():
     assert quality["factors"]["empty_record_count"] == 1
     assert "empty_records" in quality["flags"]
     assert quality["label"] != "high"
+
+
+def test_data_quality_flags_impossible_market_values():
+    quality = build_data_quality(
+        {"items": [{"symbol": "600519.SH", "price": -1, "low": 12, "high": 10}]},
+        {"status": "realtime", "age_seconds": 1},
+    )
+
+    assert "semantic_anomalies" in quality["flags"]
+    assert quality["factors"]["semantic_anomaly_count"] >= 2
+    assert quality["label"] != "high"

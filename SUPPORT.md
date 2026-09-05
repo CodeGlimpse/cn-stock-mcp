@@ -1,6 +1,6 @@
 # Support Policy
 
-The first public release was `0.2.0`; the current supported patch release is `0.2.1`. Its release gate targets Windows 11 x64 with regular CPython 3.13 and the shared local stdio MCP contract. Codex, Claude Code, OpenClaw, and Hermes Agent have versioned configuration templates; graphical Host behavior must be verified in the user's own environment.
+The first public release was `0.2.0`; the current supported patch release is `0.2.2`. Its release gate targets Windows 11 x64 with regular CPython 3.13 and the shared local stdio MCP contract. Codex, Claude Code, OpenClaw, and Hermes Agent have versioned configuration templates; graphical Host behavior must be verified in the user's own environment.
 
 Support covers installation, self-checks, MCP connectivity, tool schemas, source/freshness metadata, and redacted diagnostics. It does not guarantee third-party upstream availability, field stability, data timeliness, licensing rights, investment outcomes, or suitability for a particular decision.
 

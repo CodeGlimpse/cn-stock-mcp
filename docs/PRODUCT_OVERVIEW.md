@@ -30,9 +30,9 @@
 
 AI 负责选择工具、组合数据和解释结果；用户不需要记忆几十个接口名称。
 
-### 2. 机会线索发现，而不是简单报价
+### 2. 研究线索整理，而不是简单报价
 
-除了实时行情，系统还能把市场简报、热点主题、板块复盘、股池、估值和观察列表放进同一个分析流程，帮助 AI 发现：
+除了实时行情，系统还能把市场简报、热点主题、板块复盘、股池、估值和观察列表放进同一个分析流程，帮助 AI 整理并提示需要人工核验的线索：
 
 - 市场情绪和主要指数的变化
 - 相对强弱、成交和趋势的异常组合
@@ -146,16 +146,17 @@ hot_theme_tracker
 
 ## 发行与部署
 
-当前发布目标版本为 `0.2.1`：
+当前发布目标版本为 `0.2.2`：
 
-- [PyPI 安装包](https://pypi.org/project/cn-stock-mcp/0.2.1/)
-- [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.1)
+- [PyPI 安装包](https://pypi.org/project/cn-stock-mcp/0.2.2/)
+- [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.2)
 - [客户部署文档](CUSTOMER_DEPLOYMENT.md)
 - [Windows AI 自部署合同](AI_DEPLOY_WINDOWS.md)
 - [客户复制给 AI 的部署提示词](AI_DEPLOY_PROMPT.md)
 - [一次性销售与交付条款模板](COMMERCIAL_DELIVERY_TEMPLATE.md)
+- [对外销售准备清单](SALE_READINESS.md)
 
-当前推荐形态是“固定 PyPI 版本 + AI 指导的 Windows 用户级部署”。Windows 安装器和便携版属于后续规划，不是 `0.2.1` 的交付内容。
+当前推荐形态是“固定 PyPI 版本 + AI 指导的 Windows 用户级部署”。Windows 安装器和便携版属于后续规划，不是 `0.2.2` 的交付内容。
 
 ## 给销售或交付人员的一句话
 

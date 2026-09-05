@@ -312,6 +312,12 @@ class StockSnapshotUseCase:
                 "section_freshness": section_freshness,
                 "section_coverage": section_coverage,
                 "latency_ms": int((time.perf_counter() - started_at) * 1000),
+                # Python cannot force-stop a synchronous third-party call
+                # that is already running in a worker thread.  Make this
+                # explicit so a timed-out response is not mistaken for proof
+                # that every upstream request has stopped.
+                "cancellation": "best_effort",
+                "background_requests_may_continue": timed_out,
                 "transaction_support": False,
             },
         }

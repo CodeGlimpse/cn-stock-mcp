@@ -143,3 +143,17 @@ def test_invalid_config_fails_closed_to_retail_profile(tmp_path: Path):
     settings = Settings(zhitu_token_config_path=str(config_path), tool_profile="full")
 
     assert settings.resolve_tool_profile() == "retail_v1_preview"
+
+
+def test_token_source_status_reports_environment_conflict_without_values(tmp_path: Path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text('{"zhitu":{"token":"FILE_TOKEN"}}', encoding="utf-8")
+
+    settings = Settings(zhitu_token_config_path=str(config_path), zhitu_token="ENV_TOKEN")
+    status = settings.zhitu_token_source_status()
+
+    assert status["source"] == "config_file"
+    assert status["file_token_count"] == 1
+    assert status["environment_token_present"] is True
+    assert status["environment_conflict"] is True
+    assert "TOKEN" not in str(status)

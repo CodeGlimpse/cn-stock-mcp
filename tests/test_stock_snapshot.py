@@ -54,6 +54,8 @@ def test_stock_snapshot_composes_bounded_sections():
     assert result["items"][0]["valuation"]["pe"] == 12.0
     assert result["items"][0]["events"]["quarter_profits"]
     assert result["items"][0]["risk"]["risk_tags"] == []
+    assert result["meta"]["cancellation"] == "best_effort"
+    assert result["meta"]["background_requests_may_continue"] is False
     assert result["meta"]["transaction_support"] is False
 
 

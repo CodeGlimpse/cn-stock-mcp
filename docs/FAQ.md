@@ -11,7 +11,7 @@
 先重试：
 
 ```bash
-python -m pip install cn-stock-mcp==0.2.1
+python -m pip install cn-stock-mcp==0.2.2
 ```
 
 如果你是源码开发环境，出现下面这种情况并不一定是坏了：

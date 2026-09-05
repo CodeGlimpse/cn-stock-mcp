@@ -10,6 +10,8 @@ Use this checklist before cutting a release.
 - [ ] `cn-stock-mcp --doctor` behaves as expected
 - [ ] token config init creates a user-only configuration and no command output contains token content
 - [ ] validation/log/stdio redaction tests pass and strict JSON contains no NaN/Infinity
+- [ ] `python scripts/verify_runtime_constraints.py` passes for the supported Windows CPython 3.13 runtime
+- [ ] secret scan and dependency review workflows are green for the release commit
 - [ ] `retail_v1_preview` exposes exactly 10 tools; `full` preserves all tools
 - [ ] `--json` envelopes include the non-advisory disclaimer and source/freshness metadata
 

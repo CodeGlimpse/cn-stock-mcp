@@ -46,6 +46,9 @@ wheel 安装后可运行 `cn-stock-mcp --docs-path` 定位本目录的已安装�
 11. `COMMERCIAL_DELIVERY_TEMPLATE.md`
    - 一次性销售范围、验收、支持、退款字段和 MIT 边界模板。
 
+12. `SALE_READINESS.md`
+   - 对外一次性销售前必须逐项确认的内部闸门；未填写业务、法律和支持字段前不要直接交付。
+
 ---
 
 ## 给最终用户 / 本地 AI agent 的阅读顺序
@@ -102,7 +105,7 @@ wheel 安装后可运行 `cn-stock-mcp --docs-path` 定位本目录的已安装�
 9. `TOOL_CATALOG.md`
    - 从 MCP registry 自动生成的 53 个工具目录、参数 schema、最小示例和 Provider route。
 
-10. `RELEASE_NOTE_v0.2.1.md`
+10. `RELEASE_NOTE_v0.2.2.md`
    - 当前修复版本的变更、升级方法与已知边界。
 
 ---

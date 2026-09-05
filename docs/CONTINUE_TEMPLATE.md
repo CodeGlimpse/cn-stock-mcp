@@ -49,7 +49,7 @@
 
 ```yaml
 name: cn-stock-mcp
-version: 0.2.1
+version: 0.2.2
 schema: v1
 mcpServers:
   - name: cn-stock-mcp

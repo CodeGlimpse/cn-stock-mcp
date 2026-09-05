@@ -6,7 +6,7 @@ Last Updated: 2026-09-05
 
 > Windows 客户端的 AI 自部署以 `docs/AI_DEPLOY_WINDOWS.md` 为准。开发联调时，AI agent 建议先读 `docs/AGENT_MINIMAL.md` 与 `docs/EXAMPLES_MINIMAL.md`。
 
-以下源码命令假定当前目录已是仓库根目录。公开安装用户应运行固定版本的 `cn-stock-mcp==0.2.1`，不需要源码目录或 `PYTHONPATH`。
+以下源码命令假定当前目录已是仓库根目录。公开安装用户应运行固定版本的 `cn-stock-mcp==0.2.2`，不需要源码目录或 `PYTHONPATH`。
 
 ### 列出 tools
 ```bash

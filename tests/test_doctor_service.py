@@ -136,3 +136,17 @@ def test_collect_doctor_report_fails_on_successful_but_degraded_health_report():
     assert report.has_fail is True
     assert any(check.name == "provider_health" and check.status == "FAIL" for check in report.checks)
     assert "degraded" in render_doctor_report(report)
+
+
+def test_collect_doctor_report_warns_on_legacy_environment_token():
+    settings = _Settings(tokens=["abc"])
+    settings.zhitu_token_source_status = lambda: {
+        "source": "environment_compatibility_fallback",
+        "environment_conflict": False,
+    }
+
+    report = collect_doctor_report(settings=settings, app=_AppOK(), include_network=False)
+
+    assert any(check.name == "zhitu_token_source" and check.status == "WARN" for check in report.checks)
+    text = render_doctor_report(report)
+    assert "legacy environment token fallback" in text

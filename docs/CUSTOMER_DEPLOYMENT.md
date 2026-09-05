@@ -1,6 +1,6 @@
 # cn-stock-mcp 客户部署与排障说明
 
-适用版本：`cn-stock-mcp==0.2.1`
+适用版本：`cn-stock-mcp==0.2.2`
 
 本文件面向客户、交付人员和负责部署的 AI Agent。Windows 是首发版本的重点部署平台；完整的 Agent 执行合同见 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md)。
 
@@ -32,10 +32,14 @@
 ```powershell
 $root = Join-Path $env:LOCALAPPDATA "cn-stock-mcp"
 $venv = Join-Path $root "runtime\venv"
+$download = Join-Path $root "downloads\0.2.2"
+New-Item -ItemType Directory -Force -Path $download | Out-Null
 
 py -3.13 -m venv $venv
 & "$venv\Scripts\python.exe" -m pip install --upgrade pip
-& "$venv\Scripts\python.exe" -m pip install cn-stock-mcp==0.2.1
+$constraints = Join-Path $download "constraints-windows-py313.txt"
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/CodeGlimpse/cn-stock-mcp/releases/download/v0.2.2/constraints-windows-py313.txt" -OutFile $constraints
+& "$venv\Scripts\python.exe" -m pip install -c $constraints cn-stock-mcp==0.2.2
 
 $mcpExe = Join-Path $venv "Scripts\cn-stock-mcp.exe"
 & $mcpExe --version
@@ -44,10 +48,10 @@ $mcpExe = Join-Path $venv "Scripts\cn-stock-mcp.exe"
 预期版本输出：
 
 ```text
-0.2.1
+0.2.2
 ```
 
-不要把 `pip install cn-stock-mcp`（不带版本）作为验收证据，也不要把 token 放在 pip 命令中。
+不要把 `pip install cn-stock-mcp`（不带版本）作为验收证据，也不要把 token 放在 pip 命令中。上面的约束文件只适用于 Windows CPython 3.13；其他 Python/平台请按项目兼容性文档执行，并接受依赖解析可能不同。
 
 由 AI Agent 执行的正式客户部署应按 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md) 先下载固定 wheel，并与同版本 GitHub Release 的 `sha256sums.txt` 核对后再安装；Release 或校验项缺失时停止部署。
 

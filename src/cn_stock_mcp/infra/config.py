@@ -165,6 +165,50 @@ class Settings(BaseSettings):
         tokens = self.resolve_zhitu_tokens()
         return tokens[0] if tokens else ""
 
+    def zhitu_token_source_status(self) -> dict[str, object]:
+        """Describe credential sources without exposing credential values.
+
+        The user-owned config file is the documented source of truth.  The
+        legacy environment field remains a compatibility fallback, so doctor
+        needs to make a stale environment value visible without ever printing
+        either token.
+        """
+        data, file_status, _message = self._read_zhitu_token_config()
+        file_tokens: list[str] = []
+
+        def collect(value: object) -> None:
+            if isinstance(value, str) and value.strip() and value.strip() not in file_tokens:
+                file_tokens.append(value.strip())
+
+        source = data.get("zhitu", data) if isinstance(data, dict) else {}
+        if isinstance(source, dict):
+            tokens = source.get("tokens", {})
+            if isinstance(tokens, dict):
+                default_name = source.get("default")
+                if isinstance(default_name, str):
+                    collect(tokens.get(default_name))
+                for value in tokens.values():
+                    collect(value)
+            collect(source.get("token"))
+
+        env_token = self.zhitu_token.strip() if isinstance(self.zhitu_token, str) else ""
+        env_present = bool(env_token)
+        file_present = file_status == "ok" and bool(file_tokens)
+        conflict = file_present and env_present and env_token not in file_tokens
+        if file_present:
+            source_name = "config_file"
+        elif env_present:
+            source_name = "environment_compatibility_fallback"
+        else:
+            source_name = "none"
+        return {
+            "source": source_name,
+            "file_status": file_status,
+            "file_token_count": len(file_tokens),
+            "environment_token_present": env_present,
+            "environment_conflict": conflict,
+        }
+
     def resolve_tool_profile(self) -> str:
         data, status, _message = self._read_zhitu_token_config()
         if status not in {"ok", "missing"}:

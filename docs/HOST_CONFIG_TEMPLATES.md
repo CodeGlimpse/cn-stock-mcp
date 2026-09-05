@@ -64,7 +64,7 @@
 
 适用：
 - 你的宿主支持 MCP
-- 你已经执行过 `python -m pip install cn-stock-mcp==0.2.1`
+- 你已经执行过 `python -m pip install cn-stock-mcp==0.2.2`
 - 你已经运行 `cn-stock-mcp --init-config`，并由用户手动填写 token
 - 宿主配置里可以填写 `command / args / env`
 

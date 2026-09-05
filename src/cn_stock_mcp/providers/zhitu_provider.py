@@ -242,6 +242,12 @@ class ZhituProvider:
             except httpx.TimeoutException as exc:
                 self._record_token_failure(token)
                 last_error = ProviderTimeoutError("PROVIDER_TIMEOUT", f"Zhitu request timed out: {path}", retryable=True)
+                # A timeout can be specific to one token/route (for example a
+                # transient upstream gateway).  Try the next configured token
+                # before returning the final timeout, just as we do for
+                # authentication and rate-limit failures.
+                if idx < len(tokens) - 1:
+                    continue
                 break
             except httpx.HTTPStatusError as exc:
                 status_code = exc.response.status_code

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-05
+
+### Security
+- Added token-source diagnostics that report configuration/environment conflicts without exposing credential values.
+- Added future-source-time rejection and semantic data-quality anomaly flags for impossible market values.
+
+### Fixed
+- Zhitu request timeouts now continue to configured backup tokens.
+- Snapshot timeout responses now explicitly describe best-effort cancellation and possible background requests.
+
+### Changed
+- Added a pinned Windows CPython 3.13 runtime constraints file, CI validation, release audit, SHA256 asset, and customer install verification.
+- Added a sale-readiness gate documenting support, refund, host-compatibility, data-source, and disclaimer requirements before external one-time sales.
+- Added repository-history secret scanning, pull-request dependency review, and Dependabot update schedules.
+
 ## [0.2.1] - 2026-09-05
 
 ### Security

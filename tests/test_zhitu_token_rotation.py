@@ -40,6 +40,18 @@ class _RateLimitedClient:
         return _Response(429)
 
 
+class _TimeoutThenSuccessClient:
+    def __init__(self):
+        self.calls = []
+
+    def get(self, url, params=None):
+        token = (params or {}).get('token')
+        self.calls.append({'url': url, 'token': token})
+        if token == 'TOKEN_A':
+            raise httpx.TimeoutException('timeout')
+        return _Response(200, payload=[{'ok': True, 'token': token}])
+
+
 class _Zhitu(ZhituProvider):
     def __init__(self):
         self.settings = type('S', (), {'zhitu_base_url': 'https://api.zhituapi.com', 'zhitu_timeout_seconds': 15, 'zhitu_token_cooldown_seconds': 60, 'zhitu_daily_quota_per_token': 500})()
@@ -97,6 +109,16 @@ def test_zhitu_provider_switches_token_on_429():
     assert [call['token'] for call in provider.client.calls] == ['TOKEN_A', 'TOKEN_B']
     assert provider.token == 'TOKEN_B'
     assert 'TOKEN_A' in provider._token_cooldowns
+
+
+def test_zhitu_provider_switches_token_on_timeout():
+    provider = _Zhitu()
+    provider.client = _TimeoutThenSuccessClient()
+
+    result = provider._get_json('/hz/list/hszs')
+
+    assert result == [{'ok': True, 'token': 'TOKEN_B'}]
+    assert [call['token'] for call in provider.client.calls] == ['TOKEN_A', 'TOKEN_B']
 
 
 

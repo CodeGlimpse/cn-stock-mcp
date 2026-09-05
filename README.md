@@ -21,6 +21,7 @@
 - `docs/CUSTOMER_DEPLOYMENT.md`：客户安装、智兔 token、Host 接入与排障
 - `docs/AI_DEPLOY_PROMPT.md`：客户复制给本地 AI Agent 的固定版本部署提示词
 - `docs/COMMERCIAL_DELIVERY_TEMPLATE.md`：一次性销售范围、验收、支持和开源边界模板
+- `docs/SALE_READINESS.md`：一次性销售前的必须完成清单
 - `docs/START_HERE.md`：最友好的仓库入口
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
 - `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
@@ -63,8 +64,10 @@
 ### 安装
 
 ```bash
-python -m pip install cn-stock-mcp==0.2.1
+python -m pip install cn-stock-mcp==0.2.2
 ```
+
+Windows 客户交付不要只执行上面的简化命令；请使用 `docs/AI_DEPLOY_WINDOWS.md`，它会核验固定 wheel 和 `constraints-windows-py313.txt`，再完成 Token 由客户本人填写、Host 配置备份和首次 MCP 验收。
 
 ### 本地自检
 
@@ -136,6 +139,7 @@ cn-stock-mcp --doctor-network
 - `docs/AI_DEPLOY_WINDOWS.md`：交给 Windows AI agent 的自部署与验收流程
 - `docs/AI_DEPLOY_PROMPT.md`：客户可直接复制的部署提示词
 - `docs/COMMERCIAL_DELIVERY_TEMPLATE.md`：一次性销售与交付条款模板（非法律意见）
+- `docs/SALE_READINESS.md`：一次性销售准备闸门（非法律意见）
 - `docs/WINDOWS_ACCEPTANCE_v0.2.0.md`：首发 wheel 的 Windows 验收记录与干净 runner 门禁
 - `docs/WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md`：公开 PyPI 安装与真实 MCP stdio 验收补充记录
 - `docs/SECURITY.md`、`docs/PRIVACY.md`、`docs/DATA_SOURCES.md`：安全、隐私和数据来源边界

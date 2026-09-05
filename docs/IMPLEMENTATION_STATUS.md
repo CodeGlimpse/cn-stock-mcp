@@ -4,7 +4,7 @@ Last Updated: 2026-09-05
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
-当前目标公开版本：`0.2.1`。PyPI 与 GitHub Release 由标签工作流发布并在发布后核验；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
+当前目标公开版本：`0.2.2`。PyPI 与 GitHub Release 由标签工作流发布并在发布后核验；Windows AI 自部署流程见 `AI_DEPLOY_WINDOWS.md`。
 
 ---
 
@@ -81,7 +81,7 @@ cn-stock-mcp --init-config
 ## 3) 当前测试与 CI 状态
 
 ### 当前本地验证
-- 非 live 回归：`575 passed, 76 deselected`（2026-09-05，普通 CPython 3.13 项目虚拟环境）
+- 非 live 回归：`582 passed, 76 deselected`（2026-09-05，普通 CPython 3.13 项目虚拟环境）
 - `compileall`、`pip check`、严格 JSON/脱敏、53 个工具最小示例 schema 校验通过
 - 当前源码 wheel 使用 `python -m build --wheel --no-isolation` 构建通过，并确认包含客户文档与 Skill；隔离构建和干净 wheel 安装仍由 tag workflow 再验证
 - CLI 相关轻量测试已降耦，不再依赖真实网络 `doctor-network` 子进程
@@ -153,6 +153,16 @@ cn-stock-mcp --init-config
 - MCP 同步 Provider 调用移出事件循环，并增加并发上限；共享 Zhitu 状态、AKShare 输出重定向和交易日历缓存增加并发/TTL 保护
 - 板块轮动与热点主题增加单板块和总成员预算；Zhitu 配置日额度在进程内严格执行
 - `stock_snapshot` 增加 section freshness/coverage；空关键值记录会降低 `data_quality`
+
+### v0.2.2 安全与交付修复
+
+- doctor 增加 Token 配置文件与旧版环境变量来源冲突提示，但不输出任何凭据内容
+- Zhitu 单个 Token 网络超时时继续尝试备用 Token
+- freshness 拒绝明显晚于服务端观察时间的未来源时间，并返回 `source_time_in_future` 警告
+- data_quality 增加价格、成交量、金额和 high/low 顺序等明确语义异常检测
+- stock_snapshot 明确返回 best-effort 取消语义和 `background_requests_may_continue`
+- 增加锁定 Windows CPython 3.13 运行时传递依赖的 `constraints-windows-py313.txt`，并接入 Release 校验、审计和 SHA256 附件
+- 增加一次性销售前置闸门 `docs/SALE_READINESS.md`
 
 ### P2 功能添加
 
@@ -301,7 +311,7 @@ cn-stock-mcp --init-config
 - `stock_snapshot` 的总预算可以停止等待和取消尚未启动任务，但 Python 无法强制中止已经进入第三方同步调用的线程；已运行调用会在各自 Provider 超时后结束
 - Zhitu 配额、冷却和熔断状态按 MCP 进程保存；重启会清空本地计数，真实额度仍以智兔后台为准
 - 内置观察列表持久化和内置调度尚未实现；`watchlist_review` 每次需要用户或 Host 传入代码
-- 当前真实上游回归仍是手动触发，不是持续发布门禁；v0.2.1 的新 Provider 路径需在有合法客户 token 的环境中完成 live 复核
+- 当前真实上游回归仍是手动触发，不是持续发布门禁；v0.2.2 的新 Provider 路径需在有合法客户 token 的环境中完成 live 复核
 - Codex、Claude Code、OpenClaw、Hermes 提供配置模板和共同 stdio 验证，不等于四个 Host 的所有版本都已做真人图形界面认证
 - 第三方数据商业展示、缓存和再分发授权不能由代码修复，必须由经营者按实际用途完成专业条款与合规审查
 
@@ -311,7 +321,7 @@ cn-stock-mcp --init-config
 
 以下事项仍值得继续做，但它们不是“当前不能交付”的阻塞项：
 
-1. 使用合法自有 token 执行 v0.2.1 live functional 与 smoke，并记录实际上游覆盖结果
+1. 使用合法自有 token 执行 v0.2.2 live functional 与 smoke，并记录实际上游覆盖结果
 2. 对 Codex、Claude Code、OpenClaw、Hermes 的明确版本做标准用户真机 smoke
 3. 如面向无本地 Agent 的普通用户，再开发 Windows 安装器、GUI/DPAPI Token 向导、升级/卸载与配置恢复
 4. 如需跨会话观察列表，再增加明确的数据保留、备份、删除和迁移策略

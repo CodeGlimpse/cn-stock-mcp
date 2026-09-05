@@ -5,7 +5,7 @@
 ## 第 1 步：安装
 
 ```bash
-python -m pip install cn-stock-mcp==0.2.1
+python -m pip install cn-stock-mcp==0.2.2
 ```
 
 收费交付或由 AI Agent 自动部署时，请改按 `AI_DEPLOY_WINDOWS.md` 下载 wheel 并核对 GitHub Release 的 SHA256，不要安装 GitHub `main`。

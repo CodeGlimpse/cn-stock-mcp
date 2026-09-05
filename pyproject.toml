@@ -1,6 +1,6 @@
 [project]
 name = "cn-stock-mcp"
-version = "0.2.1"
+version = "0.2.2"
 description = "MCP server for Chinese market data via AKShare and Zhitu"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -55,6 +55,7 @@ build-backend = "setuptools.build_meta"
 "share/cn-stock-mcp/skills" = ["skills/*.md"]
 "share/cn-stock-mcp/skills/newsbot-stock-routing" = ["skills/newsbot-stock-routing/*.md"]
 "share/cn-stock-mcp/skills/newsbot-stock-routing/references" = ["skills/newsbot-stock-routing/references/*.md"]
+"share/cn-stock-mcp" = ["constraints-windows-py313.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

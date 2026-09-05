@@ -3,6 +3,7 @@ include LICENSE
 include SECURITY.md
 include SUPPORT.md
 include constraints-release.txt
+include constraints-windows-py313.txt
 include .env.example
 include .mcp.sample.json
 recursive-include src/cn_stock_mcp *.py

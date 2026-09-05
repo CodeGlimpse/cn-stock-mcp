@@ -27,6 +27,8 @@ _SERIES_CONTAINERS = {
 _EVENT_CONTAINERS = {"dividends", "unlocks"}
 _EXPLICIT_SOURCE_FIELDS = ("source_as_of", "source_timestamp", "source_date")
 _SHANGHAI = ZoneInfo("Asia/Shanghai")
+_MAX_FUTURE_SKEW_SECONDS = 300
+_MAX_FUTURE_DATE_SKEW_SECONDS = 86400
 
 
 @dataclass(frozen=True)
@@ -157,6 +159,16 @@ def build_data_freshness(data: Any, observed_at: datetime | None = None) -> dict
     observed = observed.astimezone(timezone.utc)
 
     candidates = _collect_explicit_candidates(data) or _collect_candidates(data)
+    future_count = 0
+    valid_candidates: list[_FreshnessCandidate] = []
+    for candidate in candidates:
+        max_skew = _MAX_FUTURE_DATE_SKEW_SECONDS if candidate.kind == "date" else _MAX_FUTURE_SKEW_SECONDS
+        if (candidate.parsed - observed).total_seconds() > max_skew:
+            future_count += 1
+            continue
+        valid_candidates.append(candidate)
+    candidates = valid_candidates
+    warnings = ["source_time_in_future"] if future_count else []
     realtime = [candidate for candidate in candidates if candidate.kind == "timestamp"]
     dated = [candidate for candidate in candidates if candidate.kind == "date"]
     selected = max(realtime or dated, key=lambda candidate: candidate.parsed, default=None)
@@ -167,6 +179,7 @@ def build_data_freshness(data: Any, observed_at: datetime | None = None) -> dict
             "basis": "unknown",
             "status": "unknown",
             "age_seconds": None,
+            "warnings": warnings,
         }
 
     age_seconds = max(0, int((observed - selected.parsed).total_seconds()))
@@ -180,4 +193,5 @@ def build_data_freshness(data: Any, observed_at: datetime | None = None) -> dict
         "basis": "provider_timestamp" if selected.kind == "timestamp" else "source_date",
         "status": "realtime" if selected.kind == "timestamp" else "dated",
         "age_seconds": age_seconds,
+        "warnings": warnings,
     }

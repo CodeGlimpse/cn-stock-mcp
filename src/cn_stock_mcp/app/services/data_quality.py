@@ -144,6 +144,44 @@ def _collect_anomalies(value: Any, path: tuple[str, ...] = (), found: list[str] 
     return found
 
 
+_POSITIVE_VALUE_KEYS = {"price", "latest_price", "close", "open", "high", "low"}
+_NON_NEGATIVE_VALUE_KEYS = {"volume", "turnover", "market_cap", "float_market_cap"}
+
+
+def _collect_semantic_anomalies(value: Any, path: tuple[str, ...] = (), found: list[str] | None = None) -> list[str]:
+    """Find a small set of unambiguous market-data contract violations.
+
+    This intentionally avoids judging legitimate negative values such as PE
+    or daily price change.  It only flags impossible price/size values and
+    high/low inversions so malformed upstream payloads cannot receive a high
+    quality label merely because they are non-empty.
+    """
+    found = found if found is not None else []
+    if len(found) >= 20:
+        return found
+    mapping = _as_mapping(value)
+    if mapping is not None:
+        numeric_values: dict[str, float] = {}
+        for key, child in mapping.items():
+            key_text = str(key).lower()
+            if isinstance(child, (int, float)) and not isinstance(child, bool) and math.isfinite(float(child)):
+                numeric_values[key_text] = float(child)
+                if key_text in _POSITIVE_VALUE_KEYS and child <= 0:
+                    found.append(".".join((*path, str(key))))
+                elif key_text in _NON_NEGATIVE_VALUE_KEYS and child < 0:
+                    found.append(".".join((*path, str(key))))
+            _collect_semantic_anomalies(child, (*path, str(key)), found)
+        low = numeric_values.get("low")
+        high = numeric_values.get("high")
+        if low is not None and high is not None and low > high and len(found) < 20:
+            found.append(".".join((*path, "high_low_order")))
+        return found
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        for index, child in enumerate(value):
+            _collect_semantic_anomalies(child, (*path, str(index)), found)
+    return found
+
+
 def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Build explainable data quality metadata, never an investment judgment."""
     mapping = _as_mapping(data) or {}
@@ -162,6 +200,7 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
     if not isinstance(missing_fields, list):
         missing_fields = []
     anomalies = _collect_anomalies(data)
+    semantic_anomalies = _collect_semantic_anomalies(data)
     empty_record_count = _count_empty_records(data)
 
     status = freshness.get("status", "unknown")
@@ -194,6 +233,7 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
         "empty_records": min(40, empty_record_count * 25),
         "missing_fields": min(25, len(missing_fields) * 5),
         "anomalies": min(20, len(anomalies) * 10),
+        "semantic_anomalies": min(30, len(semantic_anomalies) * 15),
         "age": age_penalty,
         "freshness_unknown": 5 if freshness_unknown else 0,
     }
@@ -215,6 +255,8 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
         flags.append("missing_fields")
     if anomalies:
         flags.append("anomalous_values")
+    if semantic_anomalies:
+        flags.append("semantic_anomalies")
     if aged_data:
         flags.append("aged_data")
     if freshness_unknown:
@@ -235,6 +277,8 @@ def build_data_quality(data: Any, freshness: Mapping[str, Any] | None = None) ->
             "empty_record_count": empty_record_count,
             "anomaly_count": len(anomalies),
             "anomaly_fields": anomalies,
+            "semantic_anomaly_count": len(semantic_anomalies),
+            "semantic_anomaly_fields": semantic_anomalies,
             "freshness_status": status,
             "age_seconds": age_seconds,
             "age_penalty": age_penalty,

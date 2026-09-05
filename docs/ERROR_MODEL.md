@@ -75,6 +75,7 @@
 - `basis`: `provider_timestamp`、`source_date` 或 `unknown`
 - `status`: `realtime`（源提供时间级字段）、`dated`（仅有日期级字段）或 `unknown`
 - `age_seconds`: 观察时间与 `as_of` 的非负秒差；`as_of` 不可识别时为 `null`
+- `warnings`: 时间字段异常时的提示，例如源时间明显晚于服务端观察时间的 `source_time_in_future`
 
 `status=realtime` 表示源数据带有时间级字段，不承诺数据一定处于交易时段；调用方仍应结合 `as_of`、交易日历和业务字段判断是否适合当前决策。
 
@@ -119,7 +120,7 @@
 - `retryable`: `false`
 - 调用方建议：
   - 提示配置错误
-  - 检查 `.env` / token 文件
+  - 检查用户配置文件 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json`；环境变量仅是旧版兼容回退
   - 不要自动重试，除非配置已更新
 
 ### PROVIDER_TIMEOUT

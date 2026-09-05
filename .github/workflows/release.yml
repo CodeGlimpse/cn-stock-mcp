@@ -28,8 +28,10 @@ jobs:
       - name: Build wheel
         shell: pwsh
         run: |
+          python scripts/verify_runtime_constraints.py
           python -m pip install --upgrade pip
-          python -m pip install build
+          python -m pip install build pip-audit
+          python -m pip_audit --strict -r constraints-windows-py313.txt
           python -m build --wheel --outdir dist
 
       - name: Install wheel in a clean venv and smoke MCP
@@ -39,7 +41,7 @@ jobs:
           $config = Join-Path $env:RUNNER_TEMP "cn-stock-mcp-release-config.json"
           $wheel = Get-ChildItem -LiteralPath dist -Filter *.whl | Select-Object -First 1
           python -m venv $venv
-          & "$venv\Scripts\python.exe" -m pip install $wheel.FullName
+          & "$venv\Scripts\python.exe" -m pip install -c constraints-windows-py313.txt $wheel.FullName
           $env:CN_STOCK_MCP_CONFIG = $config
           & "$venv\Scripts\cn-stock-mcp.exe" --init-config
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -99,6 +101,7 @@ jobs:
         run: |
           cyclonedx-py environment --pyproject pyproject.toml --output-reproducible --output-format JSON --output-file sbom.json
           (cd dist && sha256sum *) > sha256sums.txt
+          sha256sum constraints-windows-py313.txt >> sha256sums.txt
           sha256sum sbom.json >> sha256sums.txt
 
       - name: Attest build provenance
@@ -116,14 +119,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/* sha256sums.txt sbom.json --clobber
+            gh release upload "$GITHUB_REF_NAME" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json --clobber
           else
             notes_file="docs/RELEASE_NOTE_${GITHUB_REF_NAME}.md"
             if [ -f "$notes_file" ]; then
-              gh release create "$GITHUB_REF_NAME" dist/* sha256sums.txt sbom.json \
+              gh release create "$GITHUB_REF_NAME" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json \
                 --verify-tag --title "cn-stock-mcp $GITHUB_REF_NAME" --notes-file "$notes_file"
             else
-              gh release create "$GITHUB_REF_NAME" dist/* sha256sums.txt sbom.json \
+              gh release create "$GITHUB_REF_NAME" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json \
                 --verify-tag --title "cn-stock-mcp $GITHUB_REF_NAME" --generate-notes
             fi
           fi

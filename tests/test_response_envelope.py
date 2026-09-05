@@ -160,6 +160,26 @@ def test_freshness_prefers_explicit_source_as_of_hint():
     assert freshness["status"] == "realtime"
 
 
+def test_freshness_does_not_accept_a_far_future_provider_timestamp():
+    class FreshRequest(BaseModel):
+        pass
+
+    server = MCPServerStub(name="test-server", version="1")
+    server.register_tool(
+        MCPTool(
+            name="future-freshness",
+            description="",
+            input_model=FreshRequest,
+            handler=lambda request: {"items": [{"timestamp": "2099-01-01T00:00:00Z"}]},
+        )
+    )
+
+    freshness = server.call_tool("future-freshness", {})["meta"]["freshness"]
+
+    assert freshness["status"] == "unknown"
+    assert "source_time_in_future" in freshness["warnings"]
+
+
 def test_call_tool_validation_error_in_envelope():
     s = MCPServerStub(name="x", version="1")
     s.register_tool(MCPTool(name="ok", description="", input_model=_Req, handler=lambda r: {"v": r.value}))

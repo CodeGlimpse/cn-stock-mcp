@@ -89,6 +89,25 @@ def collect_doctor_report(
                     f"{token_status.get('path')}: {token_status.get('message')}",
                 )
             )
+    token_source_fn = getattr(settings, "zhitu_token_source_status", None)
+    if callable(token_source_fn):
+        token_source = token_source_fn()
+        if token_source.get("environment_conflict"):
+            checks.append(
+                DoctorCheck(
+                    "WARN",
+                    "zhitu_token_source",
+                    "config file token takes precedence over a different legacy environment token; remove the stale environment value",
+                )
+            )
+        elif token_source.get("source") == "environment_compatibility_fallback":
+            checks.append(
+                DoctorCheck(
+                    "WARN",
+                    "zhitu_token_source",
+                    "using the legacy environment token fallback; place the token in the user config file instead",
+                )
+            )
     checks.append(
         DoctorCheck(
             "OK" if token_count > 0 else "WARN",
