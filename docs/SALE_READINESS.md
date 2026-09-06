@@ -15,7 +15,7 @@
 
 | 项目 | 当前状态 | 完成依据 |
 | --- | --- | --- |
-| 运行时依赖闭包 | 已补充 cffi pin 和已安装依赖图检查 | 固定 wheel 安装后 `pip check` 与 `verify_runtime_constraints.py --installed` |
+| 运行时依赖闭包 | 已补充 cffi pin、packaging 依赖声明和已安装依赖图检查 | 固定 wheel 安装后 `pip check` 与 `verify_runtime_constraints.py --installed` |
 | 发布文件一致性 | 已实现本地/远端哈希冲突检查和一次构建复用 | 新 tag 的 Windows gate、PyPI/GitHub 完整哈希核验；CI 尚待实际执行 |
 | retail 验收工具 | 已实现计划、限量样本、失败停止、脱敏报告；离线测试通过 | [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) |
 | 真实上游验收 | 待获准使用自有 Token 与网络后执行 | 10 工具逐项报告；PARTIAL、BLOCKED 和未执行项需闭环 |

@@ -75,8 +75,8 @@ def verify_installed_runtime(
     distribution: Callable = metadata.distribution,
     environment: dict[str, str] | None = None,
 ) -> list[str]:
-    # packaging is installed by the supported runtime. Keep it optional for
-    # the pre-install syntax check rather than adding another product dependency.
+    # packaging is a declared runtime dependency. Import it here so the
+    # pre-install syntax check still requires only the standard library.
     from packaging.markers import default_environment
     from packaging.requirements import Requirement
     from packaging.specifiers import SpecifierSet
