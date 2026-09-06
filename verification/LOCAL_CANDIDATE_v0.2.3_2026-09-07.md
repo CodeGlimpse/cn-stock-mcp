@@ -39,6 +39,7 @@ pip 安装报告显示 packaging 26.3 随产品自动安装，`requested=false`�
 | 包内 stdio 检查 | initialize、tools/list 和 INVALID_ARGUMENT 错误响应通过；服务端版本 0.2.3，协议 2025-11-25 |
 | 实际导入路径 | 位于 wheel-runtime-v2/Lib/site-packages/cn_stock_mcp，未导入工作区源码 |
 | SBOM | 针对新 venv 生成 CycloneDX 1.6 JSON，70 个 components，包含 packaging 26.3 |
+| 依赖许可元数据 | 已从 SBOM 整理 70 项固定版本的许可声明；原始许可与分发义务仍为 NOT_REVIEWED，不据此判定数据商业使用权限 |
 | 本地制品一致性 | `verify_release_artifacts.py --version 0.2.3 --local-only` 通过 |
 
 stdio 的成功数据响应由此前固定样本子进程测试验证；本次已安装包的 stdio 检查只发送无效参数，不构成有效行情或真实 Codex 验收。
@@ -61,6 +62,7 @@ stdio 的成功数据响应由此前固定样本子进程测试验证；本次�
 - `wheel-install-v2.log`、`wheel-install-v2-report.json`：实际安装结果及包元数据。
 - `verify_installed_candidate_v2.ps1`：本地安装后检查命令。
 - `installed-candidate-v2.json`：安装后各项检查、实际导入路径和 NOT_RUN 标记。
+- `dependency-licenses-v2.json`：70 项组件的原样许可声明类型与待审核状态，不合并或推断多许可关系。
 - `release/candidate-inspection.json`：源码/打包内容计数与制品哈希。
 - `release/release-integrity-local.json`：完整本地文件集与哈希校验结果。
 - `release/before-packaging-fix/`：缺依赖版本的候选包及其检查记录。
@@ -86,9 +88,15 @@ $candidatePython = Join-Path $run 'wheel-runtime-v2\Scripts\python.exe'
 
 以上为本轮执行命令的定位参考，重跑构建或 SBOM 会改变候选制品，应先选择新输出目录并生成新的完整校验清单。
 
+## 获授权后的真实验收预检
+
+2026-09-07 01:45:58（Asia/Shanghai）按用户授权执行真实验收命令。结果为 BLOCKED，原因 `EXECUTABLE_OR_CONFIG_MISSING`；随后以同一 Windows 用户仅检查指定文件的存在性：候选 cn-stock-mcp.exe 存在，`C:\Users\Lenovo\AppData\Local\cn-stock-mcp\config.json` 不存在或不可访问。
+
+MCP 子进程没有启动，实际工具调用为 0，10 个 retail 工具均未执行。没有读取配置内容或发出行情请求。脱敏报告位于 `F:\agents\code\temp\cn-stock-sale-offline-run-20260906\live-retail-0.2.3-20260907.json`。待用户提供实际配置路径或决定创建空模板后，使用新的报告文件重试。
+
 ## 正式售卖前仍需完成
 
-1. 获准让候选 MCP 进程使用用户自有 Token 配置与网络，执行最多 10 次顺序工具调用；任何非 PASS 结果停止，保留未执行项。当前状态为 NOT_RUN。
+1. 真实查询计划已获授权，但指定配置路径阻塞预检；先确认实际配置位置，再执行最多 10 次顺序工具调用。任何非 PASS 结果停止，保留未执行项。当前 10 工具仍为 NOT_RUN。
 2. 在约定的实际 Codex 客户端中完成连接、工具调用、问答和配置恢复，记录客户端类型/版本及标准用户环境。当前状态为 NOT_RUN。
 3. 完成实际数据用途、上游权限与依赖许可证据审核。SBOM 只提供清单，不代表审核通过。
 4. 对最终提交执行远端 CI、依赖审计、secret scan 和 CodeQL；获准后创建新 tag 并发布，核验两平台哈希、构建证明及公开下载后的标准用户安装。
