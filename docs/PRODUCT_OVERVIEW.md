@@ -1,5 +1,7 @@
 # cn-stock-mcp 产品介绍
 
+> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+
 ## 一句话说明
 
 `cn-stock-mcp` 是一个面向 AI Agent 的中国证券市场数据与分析 MCP 工具。它让 Codex、Claude Code、OpenClaw、Hermes Agent 等 AI Host 能够通过自然语言调用行情、历史、财务、板块、资金流、事件和复盘能力。
@@ -82,7 +84,7 @@ AI 负责选择工具、组合数据和解释结果；用户不需要记忆几�
 
 ### 6. 为 AI Host 设计的统一接口
 
-项目通过标准 MCP stdio 接入：
+首发通过标准 MCP stdio 接入并验收 Codex，记录实际客户端与版本。以下 Host 有配置参考，除 Codex 外不纳入首发兼容承诺：
 
 - Codex
 - Claude Code
@@ -146,17 +148,17 @@ hot_theme_tracker
 
 ## 发行与部署
 
-当前发布目标版本为 `0.2.2`：
+当前发布准备目标为 `0.2.3`，以下版本链接在发布成功后才可用于交付：
 
-- [PyPI 安装包](https://pypi.org/project/cn-stock-mcp/0.2.2/)
-- [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.2)
+- [PyPI 安装包](https://pypi.org/project/cn-stock-mcp/0.2.3/)
+- [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.3)
 - [客户部署文档](CUSTOMER_DEPLOYMENT.md)
 - [Windows AI 自部署合同](AI_DEPLOY_WINDOWS.md)
 - [客户复制给 AI 的部署提示词](AI_DEPLOY_PROMPT.md)
 - [一次性销售与交付条款模板](COMMERCIAL_DELIVERY_TEMPLATE.md)
 - [对外销售准备清单](SALE_READINESS.md)
 
-当前推荐形态是“固定 PyPI 版本 + AI 指导的 Windows 用户级部署”。Windows 安装器和便携版属于后续规划，不是 `0.2.2` 的交付内容。
+当前推荐形态是“固定 PyPI 版本 + AI 指导的 Windows 用户级部署”。Windows 安装器和便携版属于后续规划，不是 `0.2.3` 的交付内容。
 
 ## 给销售或交付人员的一句话
 

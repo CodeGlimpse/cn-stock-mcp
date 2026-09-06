@@ -1,5 +1,7 @@
 # Start Here (`cn-stock-mcp`)
 
+> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+
 如果你是第一次打开这个仓库，先看这页。
 
 这不是一个“只有开发者能看懂”的代码仓库；它现在更接近一个 **可安装、可自检、可接入多种 AI agent / MCP host 的工具项目**。
@@ -32,7 +34,9 @@
 ### 对外介绍与客户部署
 
 - `PRODUCT_OVERVIEW.md`：产品定位、AI 分析亮点和典型使用场景
-- `CUSTOMER_DEPLOYMENT.md`：固定版本安装、智兔 token 获取、Host 接入、排障和免责声明
+- `CUSTOMER_DEPLOYMENT.md`：固定版本安装、智兔 token 获取、Codex 接入与排障
+- [首发验收](RETAIL_ACCEPTANCE.md)：限定样本与实际 Codex 记录
+- [首发状态](SALE_READINESS.md)：发布、数据权限与交付完成条件
 
 ### 1) 你是普通用户，只想先装起来
 按这个顺序看：
@@ -88,7 +92,7 @@
 ### 第 1 步：安装
 
 ```bash
-python -m pip install cn-stock-mcp==0.2.2
+python -m pip install cn-stock-mcp==0.2.3
 ```
 
 Windows 客户应优先把 `docs/AI_DEPLOY_PROMPT.md` 交给具备本机权限的 AI Agent；该流程会使用固定 wheel 与 Windows CPython 3.13 依赖约束文件。

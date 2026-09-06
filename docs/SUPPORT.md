@@ -1,15 +1,11 @@
-# Support Policy
+# 支持范围
 
-## Supported release
+最近已发布修复版本为 `0.2.2`；`0.2.3` 正在准备发布，不能把本地改动或历史验证视为新版本已发布。
 
-首个公开版本为 `0.2.0`，当前支持的修复版本为 `0.2.2`。正式发布门禁验证 Windows 11 x64、普通 CPython 3.13 和共同的本地 stdio MCP 合同；Codex、Claude Code、OpenClaw、Hermes Agent 提供版本化配置文档，Host 图形界面需由用户在自己的环境完成验收。
+首发销售范围固定为 **Windows 11 x64、普通 CPython 3.13、Codex、本地 stdio、retail 10 工具**。每笔交付记录实际 Codex 客户端类型和版本。Claude Code、OpenClaw、Hermes 等模板保留供集成参考，不列入首发验收承诺。
 
-本版本不承诺四个 Host 的图形界面行为、第三方上游可用性或数据授权状态。
+验收后提供 **7 天安装配置支持**，**2 个工作日内响应**。首次验收期 **3 天**；安装失败最多补救 **2 次**，累计不超过 **7 天**；在约定环境仍不能验收时按成交平台规则退款。具体交付时点、联系入口和处理记录见 [COMMERCIAL_DELIVERY_TEMPLATE.md](COMMERCIAL_DELIVERY_TEMPLATE.md)。
 
-## Support boundary
+支持覆盖安装、自检、MCP 连接、工具 schema、来源/新鲜度元数据和脱敏诊断。响应时限不等于修复时限；不承诺第三方上游 SLA、数据时效、字段稳定、数据许可或投资结果。新功能、系统迁移和约定范围外的适配需另行约定。
 
-支持范围是安装、自检、MCP 连接、工具 schema、数据来源/新鲜度元数据和错误诊断。不承诺第三方上游的 SLA、字段稳定性、实时性、投资结果或数据授权。
-
-## Report a problem
-
-提交问题时请提供版本、操作系统、Host 名称、脱敏的 `--doctor --json` 输出和复现步骤。请先删除 token、完整 URL、用户目录和个人数据。不要提交 token 配置文件。
+报告问题时提供软件版本、Windows/Python/Codex 版本、复现步骤和脱敏验收报告。可提供 `--doctor --json` 的状态与错误类别，但先移除 Token、带凭据 URL、个人目录等信息。不要提交 Token 文件或完整 Host 配置。验收未通过时列明未完成项，不重复高频调用上游。

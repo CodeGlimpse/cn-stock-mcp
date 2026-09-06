@@ -1,6 +1,8 @@
 # Compatibility (`cn-stock-mcp`)
 
-本项目的核心交付物是 **MCP server**。只要宿主支持 MCP（stdio transport），就可以接入。
+首发销售只验收 Codex（Windows 11 x64、普通 CPython 3.13、具体客户端版本）。其他模板是接入参考，不等于已验证兼容。见 [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) 与 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md)。
+
+本项目的核心交付物是 **MCP server**。Host 支持 MCP stdio 是接入前提，实际兼容仍需验证。
 
 如果你只想找可复制配置，优先看：
 - `docs/HOST_CONFIG_TEMPLATES.md`

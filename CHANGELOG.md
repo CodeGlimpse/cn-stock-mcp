@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### 0.2.3 release preparation
+- Added bounded retail stdio acceptance with plan-only default, allowlisted evidence, explicit non-pass states, and stop-on-failure behavior; packaged the acceptance tools with the wheel.
+- Added a successful real-stdio fixture test alongside the invalid-request protocol test, with isolated working directories.
+- Completed installed-runtime dependency graph verification and added the missing cffi constraint.
+- Changed releases to build once, test the exact artifact on Windows, and verify published hashes before/after uploading without replacing existing assets.
+- Scoped initial commercial acceptance to Codex and documented 7-day support, acceptance/remediation terms, and outstanding data-rights evidence.
+- Fixed the Windows deployment example's PowerShell syntax when matching the runtime-constraints checksum.
+
 ## [0.2.2] - 2026-09-05
 
 ### Security

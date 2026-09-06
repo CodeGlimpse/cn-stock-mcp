@@ -4,71 +4,25 @@ on:
   push:
     tags: ["v*.*.*"]
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  windows-wheel-smoke:
-    runs-on: windows-latest
-    env:
-      PIP_CONSTRAINT: ${{ github.workspace }}/constraints-release.txt
-      PYTHONIOENCODING: utf-8
-      PYTHONUTF8: "1"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Build wheel
-        shell: pwsh
-        run: |
-          python scripts/verify_runtime_constraints.py
-          python -m pip install --upgrade pip
-          python -m pip install build pip-audit
-          python -m pip_audit --strict -r constraints-windows-py313.txt
-          python -m build --wheel --outdir dist
-
-      - name: Install wheel in a clean venv and smoke MCP
-        shell: pwsh
-        run: |
-          $venv = Join-Path $env:RUNNER_TEMP "cn-stock-mcp-release"
-          $config = Join-Path $env:RUNNER_TEMP "cn-stock-mcp-release-config.json"
-          $wheel = Get-ChildItem -LiteralPath dist -Filter *.whl | Select-Object -First 1
-          python -m venv $venv
-          & "$venv\Scripts\python.exe" -m pip install -c constraints-windows-py313.txt $wheel.FullName
-          $env:CN_STOCK_MCP_CONFIG = $config
-          & "$venv\Scripts\cn-stock-mcp.exe" --init-config
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $version = (& "$venv\Scripts\cn-stock-mcp.exe" --version).Trim()
-          $expectedVersion = "${{ github.ref_name }}".Substring(1)
-          $doctor = (& "$venv\Scripts\cn-stock-mcp.exe" --doctor --json) -join "`n" | ConvertFrom-Json
-          $tools = (& "$venv\Scripts\cn-stock-mcp.exe" --list-tools --json) -join "`n" | ConvertFrom-Json
-          $docsPath = (& "$venv\Scripts\cn-stock-mcp.exe" --docs-path).Trim()
-          $expectedTools = @("stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker")
-          $actualTools = @($tools | ForEach-Object { $_.name })
-          if ($version -ne $expectedVersion -or $doctor.exit_code -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $docsPath "CUSTOMER_DEPLOYMENT.md")) -or @($actualTools).Count -ne 10 -or (@($actualTools | Where-Object { $_ -notin $expectedTools }).Count -ne 0) -or (@($expectedTools | Where-Object { $_ -notin $actualTools }).Count -ne 0)) { exit 1 }
-          & "$venv\Scripts\python.exe" scripts/verify_mcp_stdio.py --command "$venv\Scripts\cn-stock-mcp.exe" --expected-tools 10 --expected-version $expectedVersion
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          icacls $config
-
-  build-audit-publish:
-    needs: windows-wheel-smoke
+  build-and-audit:
     runs-on: ubuntu-latest
-    environment: pypi
     env:
       PIP_CONSTRAINT: ${{ github.workspace }}/constraints-release.txt
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
@@ -76,35 +30,134 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install build pip-audit cyclonedx-bom
+          python -m pip install -e ".[dev]"
 
-      - name: Install package and test dependencies
-        run: python -m pip install -e ".[dev]"
-
-      - name: Verify tag and package versions
+      - name: Verify version and non-live behavior
         env:
           TAG_VERSION: ${{ github.ref_name }}
         run: |
           test "$TAG_VERSION" = "v$(python -c 'import importlib.metadata; print(importlib.metadata.version("cn-stock-mcp"))')"
+          python scripts/verify_runtime_constraints.py
+          python -m pytest -q -m "not live"
 
-      - name: Run non-live tests
-        run: python -m pytest -q -m "not live"
-
-      - name: Audit project and release tool dependencies
+      - name: Audit dependencies
         run: |
           python -m pip_audit --strict .
           python -m pip_audit --strict -r constraints-release.txt
 
-      - name: Build distributions
-        run: python -m build
-
-      - name: Generate checksums and SBOM
+      - name: Build the release once
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
         run: |
+          python -m build
           cyclonedx-py environment --pyproject pyproject.toml --output-reproducible --output-format JSON --output-file sbom.json
           (cd dist && sha256sum *) > sha256sums.txt
           sha256sum constraints-windows-py313.txt >> sha256sums.txt
           sha256sum sbom.json >> sha256sums.txt
+          python scripts/verify_release_artifacts.py --version "$(python -c 'import os; print(os.environ["TAG_VERSION"][1:])')" --local-only
 
-      - name: Attest build provenance
+      - name: Preserve the exact release files
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            dist/*
+            constraints-windows-py313.txt
+            sha256sums.txt
+            sbom.json
+          if-no-files-found: error
+          retention-days: 90
+
+  windows-wheel-smoke:
+    needs: build-and-audit
+    runs-on: windows-latest
+    env:
+      PIP_CONSTRAINT: ${{ github.workspace }}/constraints-release.txt
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+
+      - name: Verify and audit the Windows runtime
+        shell: pwsh
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          python scripts/verify_release_artifacts.py --version ($env:TAG_VERSION.Substring(1)) --local-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pip-audit
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip_audit --strict -r constraints-windows-py313.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install the release wheel in a clean venv and smoke MCP
+        shell: pwsh
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          $venv = Join-Path $env:RUNNER_TEMP "cn-stock-mcp-release"
+          $config = Join-Path $env:RUNNER_TEMP "cn-stock-mcp-release-config.json"
+          $wheel = Get-ChildItem -LiteralPath dist -Filter *.whl | Select-Object -First 1
+          python -m venv $venv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$venv\Scripts\python.exe" -m pip install -c constraints-windows-py313.txt $wheel.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$venv\Scripts\python.exe" -m pip check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$venv\Scripts\python.exe" scripts/verify_runtime_constraints.py --installed
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:CN_STOCK_MCP_CONFIG = $config
+          & "$venv\Scripts\cn-stock-mcp.exe" --init-config
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $version = (& "$venv\Scripts\cn-stock-mcp.exe" --version).Trim()
+          $expectedVersion = $env:TAG_VERSION.Substring(1)
+          $doctor = (& "$venv\Scripts\cn-stock-mcp.exe" --doctor --json) -join [Environment]::NewLine | ConvertFrom-Json
+          $tools = (& "$venv\Scripts\cn-stock-mcp.exe" --list-tools --json) -join [Environment]::NewLine | ConvertFrom-Json
+          $docsPath = (& "$venv\Scripts\cn-stock-mcp.exe" --docs-path).Trim()
+          $installedRoot = Split-Path $docsPath -Parent
+          $installedTools = Join-Path $installedRoot "tools"
+          $expectedTools = @("stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker")
+          $actualTools = @($tools | ForEach-Object { $_.name })
+          if ($version -ne $expectedVersion -or $doctor.exit_code -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $docsPath "CUSTOMER_DEPLOYMENT.md")) -or @($actualTools).Count -ne 10 -or (@($actualTools | Where-Object { $_ -notin $expectedTools }).Count -ne 0) -or (@($expectedTools | Where-Object { $_ -notin $actualTools }).Count -ne 0)) { exit 1 }
+          & "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_runtime_constraints.py") (Join-Path $installedRoot "constraints-windows-py313.txt") --installed
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $plan = (& "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_retail_acceptance.py") --command "$venv\Scripts\cn-stock-mcp.exe" --config $config --expected-version $expectedVersion) -join [Environment]::NewLine | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $plan.mode -ne "plan_only" -or @($plan.plan).Count -ne 10) { exit 1 }
+          & "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_mcp_stdio.py") --command "$venv\Scripts\cn-stock-mcp.exe" --expected-tools 10 --expected-version $expectedVersion
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  publish:
+    needs: [build-and-audit, windows-wheel-smoke]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      TAG_VERSION: ${{ github.ref_name }}
+      RELEASE_REPOSITORY: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+
+      - name: Refuse any conflicting published bytes
+        run: |
+          python scripts/verify_release_artifacts.py --version "$(python -c 'import os; print(os.environ["TAG_VERSION"][1:])')" --repository "$RELEASE_REPOSITORY" > release-integrity.json
+
+      - name: Attest the verified release files
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: "dist/*"
@@ -112,21 +165,39 @@ jobs:
       - name: Publish to PyPI with Trusted Publishing
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          # The preceding hash check permits only identical existing files.
           skip-existing: true
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Create the release or add only missing matching assets
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json --clobber
+          if python -c 'import json,sys; sys.exit(0 if json.load(open("release-integrity.json"))["github_release_exists"] else 1)'; then
+            python -c 'import json; print("\n".join(json.load(open("release-integrity.json"))["github_missing_files"]))' | while IFS= read -r asset; do
+              if [ -z "$asset" ]; then continue; fi
+              case "$asset" in
+                *.whl|*.tar.gz) file="dist/$asset" ;;
+                *) file="$asset" ;;
+              esac
+              gh release upload "$TAG_VERSION" "$file"
+            done
           else
-            notes_file="docs/RELEASE_NOTE_${GITHUB_REF_NAME}.md"
-            if [ -f "$notes_file" ]; then
-              gh release create "$GITHUB_REF_NAME" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json \
-                --verify-tag --title "cn-stock-mcp $GITHUB_REF_NAME" --notes-file "$notes_file"
-            else
-              gh release create "$GITHUB_REF_NAME" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json \
-                --verify-tag --title "cn-stock-mcp $GITHUB_REF_NAME" --generate-notes
-            fi
+            notes_file="docs/RELEASE_NOTE_$TAG_VERSION.md"
+            gh release create "$TAG_VERSION" dist/* constraints-windows-py313.txt sha256sums.txt sbom.json \
+              --verify-tag --title "cn-stock-mcp $TAG_VERSION" --notes-file "$notes_file"
           fi
+
+      - name: Verify PyPI and GitHub have the same complete release
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if python scripts/verify_release_artifacts.py --version "$(python -c 'import os; print(os.environ["TAG_VERSION"][1:])')" --repository "$RELEASE_REPOSITORY" --require-complete > release-verification.json; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 6 ]; then exit 1; fi
+            sleep 5
+          done
+
+      - name: Keep publication verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-verification-${{ github.sha }}
+          path: release-verification.json
+          if-no-files-found: error

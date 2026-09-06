@@ -9,6 +9,9 @@ include .mcp.sample.json
 recursive-include src/cn_stock_mcp *.py
 recursive-include skills *.md
 recursive-include docs *.md
+include scripts/verify_mcp_stdio.py
+include scripts/verify_runtime_constraints.py
+include scripts/verify_retail_acceptance.py
 prune tests
 prune .github
 prune .venv

@@ -1,137 +1,65 @@
-# Codex Template (`cn-stock-mcp`)
+# Codex 接入模板
 
-这页提供 **OpenAI Codex** 的单独配置模板。
+首发只验收 **Codex + Windows 11 x64 + 普通 CPython 3.13 + 本地 stdio**。需要记录实际使用的 Codex 客户端类型和版本；这份模板本身不代表客户端已经验收。其他 Host 的模板继续保留，首发不作兼容承诺。
 
-适用：
-- 你使用 Codex CLI 或 Codex IDE extension
-- 你希望把 `cn-stock-mcp` 作为 MCP server 接进去
+依据：[Codex 官方 MCP 文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)，核对日期 2026-09-06。Codex 支持用户级 `~/.codex/config.toml` 和受信任项目中的 `.codex/config.toml`；同一 Host 的本地客户端共用 MCP 配置。配置以实际 Codex 版本支持的字段为准。
 
-根据 Codex 官方 MCP 文档：
-- MCP 配置写在 `config.toml`
-- 全局位置：`~/.codex/config.toml`
-- 项目级位置：`.codex/config.toml`（仅 trusted projects）
-- CLI 和 IDE extension 共用这份配置
-- 也支持直接用 `codex mcp add ...` 管理
+## 1. 先完成本地安装
 
----
+按 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md) 核对固定版本、wheel 与依赖约束文件的 SHA256。由最终用户执行 `--init-config`，手动填写 `%LOCALAPPDATA%\cn-stock-mcp\config.json`。Token 不进入 Codex 配置、环境变量、命令行或聊天。
 
-## 安全前置条件
+记录实际路径，避免依赖系统 PATH：
 
-先运行 `cn-stock-mcp --init-config`，由用户只在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 的 `zhitu.tokens` 中填写 token。不要把 token 放进 Codex `env`、命令行参数、项目配置、聊天记录或诊断输出；Windows 专用 venv 未加入 PATH 时，把 `command` 替换为绝对 `cn-stock-mcp.exe` 路径。
-
-## 1) 最简单：用 CLI 直接添加
-
-```bash
-codex mcp add cn-stock-mcp -- cn-stock-mcp --stdio
+```powershell
+$runtime = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv"
+$mcpExe = Join-Path $runtime "Scripts\cn-stock-mcp.exe"
+& $mcpExe --version
+& $mcpExe --doctor --json
+& $mcpExe --list-tools --json
 ```
 
-说明：
-- 这是最适合已安装包方式的配置。
-- 配置写入后，CLI 和 IDE extension 都会共用。
+## 2. 添加 Codex 配置
 
-你还可以查看：
+先确认要修改的配置文件，备份原文件，并保留其他 MCP server 与原有字段。以下两种方式任选一种，使用相同 server 名 `cn_stock_mcp`，避免重复注册。
 
-```bash
-codex mcp --help
+CLI 方式（在已有 Codex CLI 的终端中运行）：
+
+```powershell
+codex mcp add cn_stock_mcp -- $mcpExe --stdio
 ```
 
-在 Codex TUI 里也可以用：
-
-```text
-/mcp
-```
-
-查看当前活动 MCP server。
-
----
-
-## 2) 直接编辑 `~/.codex/config.toml`
-
-写入：
+需要工作目录、超时和工具白名单时，在已确认的配置中合并下面的 TOML。将两个路径替换为本机实际绝对路径；TOML 不会展开环境变量。
 
 ```toml
 [mcp_servers.cn_stock_mcp]
-command = "cn-stock-mcp"
+command = 'C:\Users\YOUR_NAME\AppData\Local\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe'
 args = ["--stdio"]
+cwd = 'C:\Users\YOUR_NAME\AppData\Local\cn-stock-mcp\runtime'
+startup_timeout_sec = 30
+tool_timeout_sec = 60
 enabled_tools = ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
 ```
 
-说明：
-- `mcp_servers.<server-name>` 是 Codex 文档定义的配置表结构。
-- `cn_stock_mcp` 是 Codex 内部使用的 server 名。
+工作目录应是部署创建的运行目录，避免从含有其他项目 .env 的目录启动。服务器配置应使用 retail_v1_preview；Codex 白名单是额外限制，不能代替服务器端工具档。若改用项目级配置，必须是客户明确授权的受信任项目。
 
----
+## 3. 在真实 Codex 客户端验收
 
-## 3) 项目级 `.codex/config.toml`
+重载连接；CLI 可用 `codex mcp list`，TUI 可用 `/mcp` 检查连接。仅显示“已配置”不足以证明工具调用成功。
 
-如果你只想让某个项目使用这个 MCP server，可在项目根目录创建：
+在客户实际使用的 Codex 客户端发送：
 
-```text
-.codex/config.toml
-```
+> 先查询中国市场最近交易日和当前交易时段，再查询 000001.SZ 的最新行情。说明实际调用的工具、数据来源、数据时间、fallback、partial failure 和 data_quality；数据未知时明确写 unknown，不提供投资建议。
 
-写入同样的块：
+核对工具调用记录与最终回答。若上游失败，保留脱敏错误类别和未完成项，不记录为通过。随后按 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) 保存客户端类型、版本、连接结果、实际调用和人工核对记录。
 
-```toml
-[mcp_servers.cn_stock_mcp]
-command = "cn-stock-mcp"
-args = ["--stdio"]
-enabled_tools = ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
-```
+脚本执行的 MCP stdio 验收不代替这一步；CLI、桌面和 IDE 扩展也不能相互代替具体客户端的验收记录。
 
-适用：
-- 团队项目
-- 只想在当前仓库启用
-- trusted project 场景
+## 4. 常见问题
 
----
+- 找不到程序：核对 command 的绝对路径及运行账号。
+- 出现 JSON-RPC 解析错误：必须带 --stdio；直接运行可执行文件会输出普通就绪文字。
+- 工具数量错误：先核对服务端 retail_v1_preview，再检查重复注册、白名单和客户端重载状态。
+- 启动超时：检查本地 --doctor；不要以无限增大超时掩盖安装或网络问题。
+- 配置读取失败：按备份恢复本次修改的条目，再定位 TOML 语法、权限和受信任项目设置。
 
-## 4) 源码目录 / 虚拟环境方式
-
-如果你拿到的是源码仓库，而不是已安装包：
-
-```toml
-[mcp_servers.cn_stock_mcp]
-command = "/path/to/cn-stock-mcp/.venv/bin/python"
-args = ["-m", "cn_stock_mcp.main", "--stdio"]
-cwd = "/path/to/cn-stock-mcp"
-env = { PYTHONPATH = "src" }
-```
-
-Codex 官方文档还提到 stdio server 可用这些字段：
-- `command`
-- `args`
-- `env`
-- `env_vars`
-- `cwd`
-- `experimental_environment`
-
-但对本项目来说，默认只需要 `command` / `args` / `env`，源码方式再加 `cwd` 就够了。
-
----
-
-## 5) 推荐先做的本地自检
-
-```bash
-cn-stock-mcp --init-config
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
-```
-
-如果本地 doctor 都过不去，就先别怪 Codex。
-
----
-
-## 6) Codex 接入后看不到 tools
-
-优先排查：
-1. `~/.codex/config.toml` 或 `.codex/config.toml` 是否写对
-2. 表名是否写成 `[mcp_servers.cn_stock_mcp]`
-3. `command` / `args` / `env` / `cwd` 是否填错
-4. 是否在 trusted project 外误用了项目级 `.codex/config.toml`
-5. `cn-stock-mcp --doctor` 是否本地已失败
-
-更多排查见：
-- `docs/FAQ.md`
-- `docs/HOST_CONFIG_TEMPLATES.md`
+排障时不发送 Token 文件、完整 Codex 配置或未脱敏日志。更多说明见 [CUSTOMER_DEPLOYMENT.md](CUSTOMER_DEPLOYMENT.md)。

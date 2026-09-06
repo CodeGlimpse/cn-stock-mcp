@@ -32,6 +32,7 @@ async def verify_stdio(
     expected_version: str,
     cwd: str | Path | None = None,
     env: dict[str, str] | None = None,
+    success_call: tuple[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Launch a real MCP subprocess and verify handshake/list/call."""
 
@@ -47,6 +48,7 @@ async def verify_stdio(
             initialized = await session.initialize()
             tools = await session.list_tools()
             invalid = await session.call_tool("stock_quote", {"symbols": []})
+            successful = await session.call_tool(*success_call) if success_call else None
 
     server_version = initialized.server_info.version
     if server_version != expected_version:
@@ -59,12 +61,24 @@ async def verify_stdio(
     if "INVALID_ARGUMENT" not in text:
         raise AssertionError("invalid tools/call did not preserve INVALID_ARGUMENT")
 
+    if successful is not None:
+        if successful.is_error:
+            raise AssertionError("valid tools/call returned an MCP error")
+        structured = successful.structured_content
+        content = json.loads("\n".join(getattr(item, "text", "") for item in successful.content))
+        if not isinstance(structured, dict) or structured.get("success") is not True or structured != content:
+            raise AssertionError("valid tools/call text and structured envelopes differ")
+        meta = structured.get("meta", {})
+        if not structured.get("data") or not all(key in meta for key in ("freshness", "data_quality", "disclaimer")):
+            raise AssertionError("valid tools/call omitted data or required metadata")
+
     return {
         "server": initialized.server_info.name,
         "version": server_version,
         "protocol_version": initialized.protocol_version,
         "tool_count": len(tools.tools),
         "invalid_call_error": "INVALID_ARGUMENT",
+        "successful_call": success_call[0] if successful is not None else None,
     }
 
 

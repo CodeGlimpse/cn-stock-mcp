@@ -1,31 +1,46 @@
 # Release Guide
 
-## Release invariants
+## 发布不变量
 
-- `pyproject.toml` 是唯一版本源；源码、MCP server、doctor、tag 和制品必须报告同一版本。
-- 发布切点的 `main`、版本 tag、PyPI 文件和 GitHub Release 必须来自同一提交；发布后不得移动已公开 tag 或重建同版本制品。
-- Release 附件包括 wheel、sdist、Windows CPython 3.13 运行时约束文件、`sha256sums.txt` 和 `sbom.json`；构建来源证明通过 GitHub Artifact Attestations 查询。
-- wheel 必须携带客户部署文档与 bundled Skill，`cn-stock-mcp --docs-path` 必须能定位它们。
-- 不发布 token、`.env`、用户 `config.json`、诊断包或含凭据的 Host 配置。
-- `constraints-release.txt` 固定直接运行、测试和发布工具版本；`constraints-windows-py313.txt` 固定首发 Windows 客户路径的运行时依赖闭包。其他平台和 Python 版本仍以兼容性文档为准，不宣称跨平台字节级完全复现。
+- `pyproject.toml` 是唯一版本源；源码、MCP server、doctor、tag 和制品必须报告相同版本。
+- 最终提交创建新的不可变 tag；公开后不移动 tag，不重建或覆盖同版本文件。
+- Release 包含 wheel、sdist、Windows 运行时约束、SHA256 清单和 SBOM；wheel/sdist 的构建证明通过 GitHub Artifact Attestations 查询。
+- wheel 必须携带部署文档、Skill 和验收工具，`--docs-path` 可定位文档及相邻 tools 目录。
+- 不发布 Token、真实 .env、用户配置、诊断包或含凭据的 Host 配置。
+- Windows CPython 3.13 使用完整运行时约束；其他平台不能据此声称相同依赖解析。
 
-## Verification order
+## 本地准备
 
-1. `git status --short --branch` 干净，并确认版本只由 `pyproject.toml` 提供。
-2. 运行受影响测试、完整非 live 回归、严格 JSON/脱敏测试、`python -m build` 和 wheel 安装 smoke。
-3. 验证 53 个 full 工具、10 个 retail 工具、MCP initialize / tools/list / tools/call，以及 `--docs-path`。
-4. 生成 SHA256 和 SBOM，检查 wheel/sdist/运行时约束内容清单；不得包含 token、测试缓存、旧制品或私有配置。
-5. 在 TestPyPI 或受控预发布环境验证安装；使用 `constraints-windows-py313.txt` 验证 Windows 运行时解析；为最终发布提交创建新的不可变 tag。
-6. 推送 `main` 和 tag；tag workflow 必须先通过干净 Windows wheel gate，再使用 PyPI Trusted Publishing，并创建同版本 GitHub Release。
-7. 用公开 PyPI 元数据、GitHub Release API、附件 SHA256 和 provenance 核验发布成功。
-8. 在干净 Windows 标准用户环境按 `AI_DEPLOY_WINDOWS.md` 完成从安装到首次 MCP 问答的验收。
+1. 检查 Git 状态和实际 diff，保留所有无关改动。新版本更新 pyproject、当前部署文档、变更记录与 release note；不改写历史发布证据。
+2. 在没有真实 .env、配置或 Token 环境变量的隔离目录运行受影响测试，再完成非 live 回归。测试不使用客户凭据。
+3. 用新输出目录构建 wheel/sdist，保留旧制品。检查文档、tools、Skill、许可证及文件内容；校验版本和无秘密文件。
+4. 隔离安装最终 wheel，执行 pip check、依赖闭包检查、doctor、retail 10 工具和 MCP stdio。依赖复用安装只证明本机隔离安装；干净机器依赖下载由 Windows gate 和客户标准用户验收补足。
+5. 经授权完成真实 retail 与 Codex 验收，以及数据许可审查。按 [SALE_READINESS.md](SALE_READINESS.md) 记录未完成项。
+6. 完成审核和本地提交；获准后才推送提交、创建/推送新 tag 并发布。不得因本地验证通过而自动推送。
 
-PyPI 发布使用 Trusted Publishing，不在仓库 secrets 或工作流中保存长期 PyPI API token。GitHub Artifact Attestations 不能替代 SHA256、消费者自行验证或第三方数据授权审查。
+## 标签工作流
 
-## Historical release evidence
+`build-and-audit` 在 Linux 校验版本、非 live 测试与依赖审计，构建一次，生成校验文件/SBOM，通过本地制品检查，然后保存名为 `release-<commit-sha>` 的 GitHub Actions artifact，保留 90 天。
 
-- `v0.2.0` 的发布切点：`1651a510b03edd49852e04139b3ce98ed1a244fc`
-- `v0.2.0` Windows 验收：`WINDOWS_ACCEPTANCE_v0.2.0.md`
-- `v0.2.0` 公开安装补充验收：`WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md`
+`windows-wheel-smoke` 下载同一份 artifact，验证 SHA256、审计 Windows 约束，在新 venv 安装该 wheel，执行 pip check、完整依赖闭包检查、doctor、文档/tools 与 stdio 检查。它不访问真实行情，不代替 Codex 客户端验收。
 
-历史记录只证明对应 tag，不自动证明后续提交或新版本。
+`publish` 继续下载相同 artifact。先比较 PyPI 和 GitHub 上同版本的文件哈希，确认没有冲突后生成构建证明、使用 PyPI Trusted Publishing，并创建 Release 或补传缺少的附件。附件上传没有覆盖选项；最后检查两个平台的完整文件集与哈希，保存验证报告。
+
+只有目标版本的 wheel 和 sdist 可存在于 dist。校验清单必须覆盖两份包、Windows 约束和 SBOM。元数据 API 的认证错误、限流、网络故障不能当成“尚未发布”。
+
+## 中断与恢复
+
+- 发布阶段失败时，检查失败原因并重跑失败作业，复用同一份 artifact。PyPI 已存在文件只有在哈希完全相同时才能跳过。
+- GitHub 已存在附件只核对，不覆盖；缺少附件才上传。
+- 不要对已有 artifact 的同次运行直接重跑构建并覆盖。重新构建可能改变压缩包时间戳、SBOM 或哈希，脚本会拒绝与已发布字节冲突。
+- 若原 artifact 已丢失，先寻找原始制品和校验依据；不能确认原始字节时应发布新版本。不得移动旧 tag、删除旧包或使用 clobber。
+- 发布后检查 wheel/sdist 在 PyPI 与 GitHub 的 SHA256、约束、SBOM、来源证明，并完成公开下载的标准用户安装。
+- Actions 成功不自动证明数据许可或某个 Codex 客户端的实际运行。
+
+## 历史证据
+
+- v0.2.0 发布切点：`1651a510b03edd49852e04139b3ce98ed1a244fc`。
+- [v0.2.0 Windows 验收](WINDOWS_ACCEPTANCE_v0.2.0.md)。
+- [v0.2.0 公开安装补充验收](WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md)。
+
+历史记录只证明对应版本，不能替代新版本验证。

@@ -1,6 +1,8 @@
 # cn-stock-mcp 客户部署与排障说明
 
-适用版本：`cn-stock-mcp==0.2.2`
+> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+
+适用版本：`cn-stock-mcp==0.2.3`
 
 本文件面向客户、交付人员和负责部署的 AI Agent。Windows 是首发版本的重点部署平台；完整的 Agent 执行合同见 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md)。
 
@@ -29,31 +31,17 @@
 
 ### 安装固定版本
 
+正式交付统一按 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md) 的固定版本安装步骤执行：下载同版本 wheel、约束与校验清单，分别验证 SHA256，再安装并检查依赖。公开 Release 或校验项缺失时停止，不使用无版本安装或 GitHub main。
+
+完成安装后记录路径：
+
 ```powershell
-$root = Join-Path $env:LOCALAPPDATA "cn-stock-mcp"
-$venv = Join-Path $root "runtime\venv"
-$download = Join-Path $root "downloads\0.2.2"
-New-Item -ItemType Directory -Force -Path $download | Out-Null
-
-py -3.13 -m venv $venv
-& "$venv\Scripts\python.exe" -m pip install --upgrade pip
-$constraints = Join-Path $download "constraints-windows-py313.txt"
-Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/CodeGlimpse/cn-stock-mcp/releases/download/v0.2.2/constraints-windows-py313.txt" -OutFile $constraints
-& "$venv\Scripts\python.exe" -m pip install -c $constraints cn-stock-mcp==0.2.2
-
+$venv = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv"
 $mcpExe = Join-Path $venv "Scripts\cn-stock-mcp.exe"
 & $mcpExe --version
 ```
 
-预期版本输出：
-
-```text
-0.2.2
-```
-
-不要把 `pip install cn-stock-mcp`（不带版本）作为验收证据，也不要把 token 放在 pip 命令中。上面的约束文件只适用于 Windows CPython 3.13；其他 Python/平台请按项目兼容性文档执行，并接受依赖解析可能不同。
-
-由 AI Agent 执行的正式客户部署应按 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md) 先下载固定 wheel，并与同版本 GitHub Release 的 `sha256sums.txt` 核对后再安装；Release 或校验项缺失时停止部署。
+预期软件版本为 0.2.3。Windows 约束只适用于普通 CPython 3.13；其他平台或 Python 版本需另行约定和验收。
 
 ### 创建配置文件
 
@@ -142,9 +130,9 @@ notepad "$env:LOCALAPPDATA\cn-stock-mcp\config.json"
 
 验收应能看到代码、来源、`freshness/as_of`、交易时段或 `session_context`、`data_quality`，且没有 token、下单指令、收益承诺或荐股结论。
 
-## 5. 接入常用 AI Host
+## 5. 首发接入 Codex
 
-所有 Host 都使用本地 stdio：
+首发只验收 Codex 的约定客户端类型与版本。按 [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) 配置，按 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) 留存真实问答与 10 工具样本结果。使用本地 stdio：
 
 ```text
 command = cn-stock-mcp.exe 的绝对路径
@@ -154,6 +142,8 @@ args = ["--stdio"]
 配置前先备份原文件，并保留原有字段和其他 MCP server。不要添加 `ZHITU_TOKEN` 环境变量。
 
 - [Codex](CODEX_TEMPLATE.md)
+其他 Host 仅保留集成参考，不纳入首发验收承诺：
+
 - [Claude Code](CLAUDE_CODE_TEMPLATE.md)
 - [OpenClaw](OPENCLAW_HOST_TEMPLATE.md)
 - [Hermes Agent](HERMES_TEMPLATE.md)
@@ -269,6 +259,7 @@ Remove-Item -LiteralPath "$env:LOCALAPPDATA\cn-stock-mcp\runtime\venv" -Recurse
 AKShare、智兔及其下游数据的授权、缓存、展示、商业使用和再分发限制由相应权利方和服务条款决定。本项目不向客户转让第三方数据授权，也不保证任何数据可自由商用或再分发。请阅读：
 
 - [项目数据来源声明](DATA_SOURCES.md)
+- [数据权限证据登记](DATA_RIGHTS_REGISTER.md)
 - [项目隐私说明](PRIVACY.md)
 - [项目安全策略](SECURITY.md)
 - [项目支持范围](SUPPORT.md)

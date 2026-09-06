@@ -1,5 +1,7 @@
 # Host Config Templates (`cn-stock-mcp`)
 
+首发销售只验收 Codex（Windows 11 x64、普通 CPython 3.13、具体客户端版本）。其他模板是接入参考，不等于已验证兼容。见 [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) 与 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md)。
+
 这页提供可直接复制的 **host-specific / host-oriented 配置模板**。模板描述的是配置形状，不等同于每个 Host 的真人安装认证。
 
 如果你只想先装起来，优先看：
