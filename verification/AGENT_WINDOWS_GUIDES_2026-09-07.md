@@ -59,4 +59,4 @@ Roo Code 官方首页出现扩展关闭公告后，已询问用户并获确认�
 | cn_stock_mcp-0.2.3-py3-none-any.whl | 459908 | e4d55b626e998b88748de8b829f446668bfabdbc22d2de8f60640e673ac14f2b |
 | cn_stock_mcp-0.2.3.tar.gz | 333372 | 6aa16aaeb478978cec5faafbc6d968d52abc7e54c0f9b4d11b40bf5df568b4ea |
 
-本次新目录保留了前一阶段的候选制品和证据。这里的 package-sha256sums.txt 只覆盖上述两个文档候选包，不是正式发布所需的完整 Release 清单；没有生成发布 tag、推送或公开发布 0.2.3。
+本轮使用新的输出目录，前一阶段的候选制品和证据仍保留在原目录。这里的 package-sha256sums.txt 只覆盖上述两个文档候选包，不是正式发布所需的完整 Release 清单；没有生成发布 tag、推送或公开发布 0.2.3。
