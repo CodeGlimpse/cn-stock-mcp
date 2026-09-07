@@ -200,7 +200,7 @@ jobs:
           python scripts/verify_release_artifacts.py --version "$(python -c 'import os; print(os.environ["TAG_VERSION"][1:])')" --repository "$RELEASE_REPOSITORY" > release-integrity.json
 
       - name: Attest the verified release files
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*"
 
