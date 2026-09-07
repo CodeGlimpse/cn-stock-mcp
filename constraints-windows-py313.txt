@@ -7,7 +7,7 @@
 # the supported runtime dependency set changes.  The file is deliberately
 # versioned and attached to each release so a customer install does not drift
 # as PyPI publishes newer transitive dependencies.
-akshare==1.18.84
+akshare==1.18.94
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
