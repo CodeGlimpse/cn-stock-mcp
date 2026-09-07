@@ -1,53 +1,19 @@
-# Handoff Minimal (`cn-stock-mcp`)
+# Windows 最短接入流程
 
-> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+目标为 `cn-stock-mcp==0.2.3`（发布准备），本机 stdio、普通 CPython 3.13、retail 10 工具。公开发布和校验文件就绪后才能按发布地址安装。
 
-如果你是第一次接触这类工具，只做下面 3 步：
+## 1. 安装与本地配置
 
-## 第 1 步：安装
+按 [Windows 部署说明](AI_DEPLOY_WINDOWS.md) 安装固定 wheel 并核对 SHA256、依赖约束。由客户本人运行 `--init-config` 并在其配置文件中填写 Token。
 
-```bash
-python -m pip install cn-stock-mcp==0.2.3
-```
+## 2. 取得本机路径
 
-收费交付或由 AI Agent 自动部署时，请改按 `AI_DEPLOY_WINDOWS.md` 下载 wheel 并核对 GitHub Release 的 SHA256，不要安装 GitHub `main`。
+按 [Windows 共同准备](WINDOWS_AGENT_SETUP.md) 取得程序、配置文件路径并备份所选 Host 配置。Token 留在 MCP 配置文件；Host 只记录路径和运行选项。
 
-## 第 2 步：先确认程序装好了
+## 3. 选择软件并合并配置
 
-```bash
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-```
+打开 [13 款软件配置总表](HOST_CONFIG_TEMPLATES.md)，按自己的客户端专页填写配置、重载与查看工具。包含 Codex、Claude Code、Claude Desktop、Cursor、VS Code/GitHub Copilot、Cline、Windsurf、Continue、OpenClaw、Hermes、OpenCode、Gemini CLI、Cherry Studio。
 
-初始化本机配置文件，然后由用户手动填入 token：
+本轮交付是配置文档及离线核对，按用户决定不执行真实测试。客户需要进一步查询时，先查看 [retail 样本计划](RETAIL_ACCEPTANCE.md)，再决定是否执行。
 
-```bash
-cn-stock-mcp --init-config
-```
-
-默认路径是 Windows 的 `%LOCALAPPDATA%\cn-stock-mcp\config.json`。不要把 token 写入 Host 配置。
-
-填好 token 后再继续：
-
-```bash
-cn-stock-mcp --doctor-network
-```
-
-- `--doctor`：只检查本地安装是否正常
-- `--doctor-network`：额外检查 token 和上游连通性
-
-## 第 3 步：接入并验收 Codex
-
-首发仅验收 Codex。按 [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) 使用实际可执行文件绝对路径与 --stdio，备份并合并 TOML 配置，记录实际客户端类型/版本。
-
-按 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) 先展示样本查询计划，获准后执行真实 MCP 验收，并在 Codex 完成实际问答。其他 Host 模板继续保留，不代表首发已通过。
-
----
-
-## 接下来只在需要时再看
-
-- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的复制即用模板
-- `docs/FAQ.md`：常见错误与排查
-- `docs/EXAMPLES_MINIMAL.md`：最小调用示例
-- `docs/COMPATIBILITY.md`：不同 host / skill host 的兼容说明
-- `docs/INTEGRATION.md`：更完整的挂载与联调说明
+配置与运行故障见 [共同排错](WINDOWS_AGENT_SETUP.md#5-常见问题) 和 [FAQ](FAQ.md)。首发交付及售后范围以 [交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md) 为准。

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### 0.2.3 release preparation
+- Completed Windows-only configuration guides for 13 agent clients, adding OpenCode, Gemini CLI and Cherry Studio; synchronized native config formats, scopes, reload/recovery steps and official sources without running live acceptance.
 - Added bounded retail stdio acceptance with plan-only default, allowlisted evidence, explicit non-pass states, and stop-on-failure behavior; packaged the acceptance tools with the wheel.
 - Added a successful real-stdio fixture test alongside the invalid-request protocol test, with isolated working directories.
 - Completed installed-runtime dependency graph verification, added the missing cffi constraint, and declared packaging so the installed checker works in a clean environment.

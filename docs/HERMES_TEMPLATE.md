@@ -1,109 +1,54 @@
-# Hermes Template (`cn-stock-mcp`)
+# Hermes Agent：Windows 配置指南
 
-这页提供 **Hermes Agent** 的单独配置模板。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-适用：
-- 你使用 Hermes Agent
-- 你希望把 `cn-stock-mcp` 作为 MCP server 配进 Hermes
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-根据 Hermes 官方文档：
-- Hermes 从 `~/.hermes/config.yaml` 读取 MCP 配置
-- MCP server 定义写在 `mcp_servers:` 下
-- 本地 stdio server 用 `command` / `args` / `env`
-- 远程 server 用 `url` / `headers`
 
----
 
-## 安全前置条件
+## 1. 配置入口与作用范围
 
-先运行 `cn-stock-mcp --init-config`，由用户只在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 的 `zhitu.tokens` 中填写 token。不要把 token 放进 Hermes `env`、命令行参数、`config.yaml`、聊天记录或诊断输出；Windows 专用 venv 未加入 PATH 时，把 `command` 替换为绝对 `cn-stock-mcp.exe` 路径。
+默认用户配置：`%USERPROFILE%\.hermes\config.yaml`，顶层为 `mcp_servers`。使用 `HERMES_HOME` 或 Profile 时，打开活动环境实际使用的配置。
 
-## 1) 最推荐：在 `~/.hermes/config.yaml` 里添加一个 stdio server
+官方目前提供 Windows 原生安装。确认 Hermes 运行于 Windows 本机后，把下面的服务器条目合并进 YAML；已存在 `mcp_servers` 时在其下新增子项，不重复顶层键。
+
+## 2. 可复制配置
 
 ```yaml
 mcp_servers:
   cn_stock_mcp:
-    command: "cn-stock-mcp"
-    args: ["--stdio"]
-    tools:
-      include: [stock_search, market_brief, stock_snapshot, stock_quote, stock_history, stock_review, watchlist_review, trading_calendar, sector_review, hot_theme_tracker]
-```
-
-说明：
-- `cn_stock_mcp` 是 Hermes 内部使用的 server 名。
-- Hermes 会自动发现并注册对应工具。
-
----
-
-## 2) 源码目录 / 虚拟环境方式
-
-```yaml
-mcp_servers:
-  cn_stock_mcp:
-    command: "/path/to/cn-stock-mcp/.venv/bin/python"
-    args: ["-m", "cn_stock_mcp.main", "--stdio"]
+    command: 'C:\Users\YOUR_NAME\AppData\Local\cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe'
+    args: ['--stdio']
     env:
-      PYTHONPATH: "src"
-```
-
----
-
-## 3) Hermes 的 MCP 特性说明
-
-Hermes 官方文档里还明确支持：
-- `enabled: false`
-- `tools.include`
-- `tools.exclude`
-- `tools.prompts`
-- `tools.resources`
-- `supports_parallel_tool_calls`
-- `sampling` 配置
-
-所以如果你后面想对 `cn-stock-mcp` 做更严格的工具白名单，也可以这样写：
-
-```yaml
-mcp_servers:
-  cn_stock_mcp:
-    command: "cn-stock-mcp"
-    args: ["--stdio"]
+      CN_STOCK_MCP_CONFIG: 'C:\Users\YOUR_NAME\AppData\Local\cn-stock-mcp\config.json'
+      TOOL_PROFILE: retail_v1_preview
+      PYTHONUTF8: '1'
     tools:
-      include: [stock_search, market_brief, stock_snapshot, stock_quote, stock_history, stock_review, watchlist_review, trading_calendar, sector_review, hot_theme_tracker]
-      prompts: false
-      resources: false
+      include: ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
 ```
 
-不过对最终用户来说，**第一版不建议先加太多过滤条件**。
 
----
 
-## 4) 修改后如何生效
+## 3. 使配置生效与查看工具
 
-Hermes 官方文档建议：
-- 启动 Hermes：`hermes chat`
-- 修改 MCP 配置后执行：`/reload-mcp`
+启动 `hermes chat`；正在运行的会话中使用 `/reload-mcp` 重载配置和工具目录。桌面版应在对应 Agent 的 MCP/工具管理入口查看状态，必要时重新打开会话。
 
----
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
 
-## 5) 推荐先做的本地自检
+## 4. 常见问题
 
-```bash
-cn-stock-mcp --init-config
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
-```
+- 同时装有 WSL 与原生版：确认编辑的配置和实际运行的 Hermes 属于同一环境。
+- YAML 解析失败：检查缩进、重复的 `mcp_servers` 键；Windows 路径使用单引号。
+- 工具不全：检查 `tools.include` / `tools.exclude` 以及服务器是否被设为 `enabled: false`。
+- 配置更新未生效：执行 `/reload-mcp` 或重开会话；无需把 MCP 依赖安装到 Hermes 自身环境。
 
----
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
 
-## 6) Hermes 接入后看不到 tools
+## 5. 停用与恢复
 
-优先排查：
-1. `~/.hermes/config.yaml` 是否写在 `mcp_servers:` 下
-2. `enabled: false` 是否误开
-3. `tools.include` 是否把大部分工具过滤没了
-4. `command` / `args` / `env` 是否写错
-5. 修改后是否执行了 `/reload-mcp`
+在 `mcp_servers.cn_stock_mcp` 下添加 `enabled: false` 停用，或删除该子项。重载后生效；恢复时合并本次备份，保留其他服务器。
 
-更多排查见：
-- `docs/FAQ.md`
-- `docs/HOST_CONFIG_TEMPLATES.md`
+## 官方依据
+
+- [Hermes：MCP integration](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp/)
+- [Hermes：Installation（含原生 Windows）](https://hermes-agent.nousresearch.com/docs/getting-started/installation)

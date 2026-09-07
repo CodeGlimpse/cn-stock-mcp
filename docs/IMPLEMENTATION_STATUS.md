@@ -1,6 +1,6 @@
 # Implementation Status (`cn-stock-mcp`)
 
-Last Updated: 2026-09-06
+Last Updated: 2026-09-07
 
 这页是当前项目状态的**事实源**。如果 README、handoff、历史讨论与本页不一致，以本页为准。
 
@@ -68,7 +68,8 @@ cn-stock-mcp --init-config
 - 一页接入：`docs/HANDOFF_MINIMAL.md`
 - FAQ：`docs/FAQ.md`
 - host 模板总入口：`docs/HOST_CONFIG_TEMPLATES.md`
-- host-specific 模板：OpenClaw / Claude Desktop / Claude Code / Continue / VS Code / Cursor / Cline / Windsurf / Hermes / Codex
+- Windows 配置指南：OpenClaw / Claude Desktop / Claude Code / Continue / VS Code / Cursor / Cline / Windsurf / Hermes / Codex / OpenCode / Gemini CLI / Cherry Studio，共 13 款
+- [共同准备](WINDOWS_AGENT_SETUP.md) 与 [官方来源](HOST_CONFIGURATION_SOURCES.md) 已同步；本轮按用户决定不执行真实测试
 - Windows AI 部署与首次问答验收合同：`docs/AI_DEPLOY_WINDOWS.md`
 - 对外边界：`docs/SECURITY.md` / `docs/PRIVACY.md` / `docs/DATA_SOURCES.md` / `docs/SUPPORT.md`
 - AI 集成说明：`docs/AI_ONBOARDING.md`
@@ -256,6 +257,9 @@ cn-stock-mcp --init-config
 - Windsurf
 - Hermes
 - Codex
+- OpenCode
+- Gemini CLI
+- Cherry Studio
 
 ### 当前仓库内真正附带的 skill
 主要是：
@@ -319,6 +323,8 @@ cn-stock-mcp --init-config
 
 ## 7) 后续工作
 
+2026-09-07 用户将本轮目标确定为 13 款 Agent 的 Windows 配置指南，并明确不需要真实测试。相关未实测项保留证据状态，不作为本轮文档工作的继续前提。
+
 正式售卖前必须完成以下证据；详细状态以 [SALE_READINESS.md](SALE_READINESS.md) 为准：
 
 1. 经授权使用自有 Token 执行 0.2.3 retail 限定样本，闭环 PARTIAL / BLOCKED 和未执行项。
@@ -332,7 +338,7 @@ Windows GUI/DPAPI 向导、多 Host、观察列表持久化和内置调度属于
 
 ## 8) 当前状态结论
 
-截至 2026-09-06，本项目已经不再只是“开发中代码仓库”，而是已经具备：
+截至 2026-09-07，本项目已经不再只是“开发中代码仓库”，而是已经具备：
 - 安装
 - 自检
 - 打包

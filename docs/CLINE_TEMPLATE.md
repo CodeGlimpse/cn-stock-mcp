@@ -1,78 +1,33 @@
-# Cline Template (`cn-stock-mcp`)
+# Cline：Windows 配置指南
 
-这页提供 **Cline** 的单独配置模板。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-适用：
-- 你使用 Cline
-- 你希望把 `cn-stock-mcp` 接到 Cline 的 MCP servers
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-根据 Cline 官方文档：
-- CLI 配置文件是 `~/.cline/mcp.json`
-- IDE 扩展可以从 MCP 配置面板打开对应 JSON
-- 顶层字段使用 `mcpServers`
-- 本地 server 用 `command + args`
-- 远程 server 用 `url`
 
----
 
-## 1) CLI 方式：编辑 `~/.cline/mcp.json`
+## 1. 配置入口与作用范围
 
-写入：
+- IDE 扩展：Cline 面板顶部 `MCP Servers → Configure → Configure MCP Servers`，打开扩展实际使用的 JSON。
+- Cline CLI：`%USERPROFILE%\.cline\mcp.json`；也可以运行 `cline mcp` 向导。
+- IDE 与 CLI 分别配置；不要根据另一种客户端的目录推定当前文件。
+
+在实际使用的客户端中打开配置，合并以下 `mcpServers` 对象。`autoApprove: []` 保留工具调用确认。
+
+## 2. 可复制配置
 
 ```json
 {
   "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
-
-说明：
-- `autoApprove` 建议默认留空，不要直接放开。
-- 这样更适合面向真实用户的安全默认值。
-
----
-
-## 2) IDE 扩展方式
-
-在 Cline 面板里：
-1. 打开 **MCP Servers**
-2. 进入 **Configure**
-3. 点击 **Configure MCP Servers**
-4. 在打开的 JSON 里添加同样的 `mcpServers` 块
-
-可直接使用：
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"],
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
-
----
-
-## 3) 源码目录 / 虚拟环境方式
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "/path/to/cn-stock-mcp/.venv/bin/python",
-      "args": ["-m", "cn_stock_mcp.main", "--stdio"],
+    "cn_stock_mcp": {
+      "command": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime\\venv\\Scripts\\cn-stock-mcp.exe",
+      "args": [
+        "--stdio"
+      ],
       "env": {
-        "PYTHONPATH": "src"
+        "CN_STOCK_MCP_CONFIG": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\config.json",
+        "TOOL_PROFILE": "retail_v1_preview",
+        "PYTHONUTF8": "1"
       },
       "disabled": false,
       "autoApprove": []
@@ -81,45 +36,28 @@
 }
 ```
 
----
 
-## 4) Cline CLI 向导方式
 
-Cline 官方文档还支持：
+## 3. 使配置生效与查看工具
 
-```bash
-cline mcp
-```
+保存后在 MCP Servers 面板启用并重启服务器，查看工具列表。CLI 用户可用 `cline mcp` 向导查看状态、管理和启停服务器，再重新进入会话。
 
-它会交互式引导你：
-- 添加 server
-- 修改 server
-- 启停 server
-- 删除 server
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
 
-如果你不想手改 JSON，可以先走向导，再对照本页修正。
+## 4. 常见问题
 
----
+- IDE 没变化：确认编辑的是扩展入口打开的文件，而非 CLI 的 `.cline\mcp.json`。
+- 显示已禁用：检查 `disabled` 与面板开关。
+- stdio 无法启动：检查 command、args 和 Windows 账号对运行目录的访问权限。
+- 工具调用等待：检查是否有待处理的调用确认。
 
-## 5) 推荐先做的本地自检
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
 
-```bash
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
-```
+## 5. 停用与恢复
 
----
+在管理界面禁用或设 `disabled: true`。需要删除时仅移除 `mcpServers.cn_stock_mcp`；CLI 向导也提供 Delete server。之后重载，必要时恢复备份。
 
-## 6) Cline 接入后看不到 tools
+## 官方依据
 
-优先排查：
-1. 是否写到了正确的 MCP config JSON
-2. `mcpServers` 顶层字段是否正确
-3. server 是否被 `disabled: true`
-4. `autoApprove` 是否误配置成不合理值
-5. `cn-stock-mcp --doctor` 是否本地就已失败
-
-更多排查见：
-- `docs/FAQ.md`
-- `docs/HOST_CONFIG_TEMPLATES.md`
+- [Cline：MCP](https://docs.cline.bot/mcp/mcp-overview)
+- [Cline：Config](https://docs.cline.bot/getting-started/config)

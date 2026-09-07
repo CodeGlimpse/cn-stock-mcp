@@ -1,34 +1,21 @@
-# Codex 接入模板
+# Codex：Windows 配置指南
 
-首发只验收 **Codex + Windows 11 x64 + 普通 CPython 3.13 + 本地 stdio**。需要记录实际使用的 Codex 客户端类型和版本；这份模板本身不代表客户端已经验收。其他 Host 的模板继续保留，首发不作兼容承诺。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-依据：[Codex 官方 MCP 文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)，核对日期 2026-09-06。Codex 支持用户级 `~/.codex/config.toml` 和受信任项目中的 `.codex/config.toml`；同一 Host 的本地客户端共用 MCP 配置。配置以实际 Codex 版本支持的字段为准。
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-## 1. 先完成本地安装
 
-按 [AI_DEPLOY_WINDOWS.md](AI_DEPLOY_WINDOWS.md) 核对固定版本、wheel 与依赖约束文件的 SHA256。由最终用户执行 `--init-config`，手动填写 `%LOCALAPPDATA%\cn-stock-mcp\config.json`。Token 不进入 Codex 配置、环境变量、命令行或聊天。
 
-记录实际路径，避免依赖系统 PATH：
+## 1. 配置入口与作用范围
 
-```powershell
-$runtime = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv"
-$mcpExe = Join-Path $runtime "Scripts\cn-stock-mcp.exe"
-& $mcpExe --version
-& $mcpExe --doctor --json
-& $mcpExe --list-tools --json
-```
+- 用户级：`%USERPROFILE%\.codex\config.toml`。
+- 项目级：项目目录下的 `.codex\config.toml`，只对受信任的项目生效。
+- 桌面客户端可在 `Settings → MCP servers` 添加；IDE 扩展可从 MCP 设置入口编辑。官方文档说明同一 Codex Host 的本地客户端共用配置。
+- 使用自定义配置目录时，编辑该 Host 实际采用的文件。
 
-## 2. 添加 Codex 配置
+本页推荐用户级配置。将下面的两个 TOML 表合并进现有文件；如果已有同名表，更新它，避免重复声明。
 
-先确认要修改的配置文件，备份原文件，并保留其他 MCP server 与原有字段。以下两种方式任选一种，使用相同 server 名 `cn_stock_mcp`，避免重复注册。
-
-CLI 方式（在已有 Codex CLI 的终端中运行）：
-
-```powershell
-codex mcp add cn_stock_mcp -- $mcpExe --stdio
-```
-
-需要工作目录、超时和工具白名单时，在已确认的配置中合并下面的 TOML。将两个路径替换为本机实际绝对路径；TOML 不会展开环境变量。
+## 2. 可复制配置
 
 ```toml
 [mcp_servers.cn_stock_mcp]
@@ -38,28 +25,42 @@ cwd = 'C:\Users\YOUR_NAME\AppData\Local\cn-stock-mcp\runtime'
 startup_timeout_sec = 30
 tool_timeout_sec = 60
 enabled_tools = ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
+
+[mcp_servers.cn_stock_mcp.env]
+CN_STOCK_MCP_CONFIG = 'C:\Users\YOUR_NAME\AppData\Local\cn-stock-mcp\config.json'
+TOOL_PROFILE = "retail_v1_preview"
+PYTHONUTF8 = "1"
 ```
 
-工作目录应是部署创建的运行目录，避免从含有其他项目 .env 的目录启动。服务器配置应使用 retail_v1_preview；Codex 白名单是额外限制，不能代替服务器端工具档。若改用项目级配置，必须是客户明确授权的受信任项目。
+也可用 CLI 添加基础配置，随后按上面的 TOML 设置工作目录、超时和白名单：
 
-## 3. 在真实 Codex 客户端验收
+```powershell
+$mcpExe = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe'
+$configPath = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\config.json'
+codex mcp add cn_stock_mcp --env "CN_STOCK_MCP_CONFIG=$configPath" --env TOOL_PROFILE=retail_v1_preview --env PYTHONUTF8=1 -- $mcpExe --stdio
+```
 
-重载连接；CLI 可用 `codex mcp list`，TUI 可用 `/mcp` 检查连接。仅显示“已配置”不足以证明工具调用成功。
+CLI 和手动配置任选一种作为初次添加方式。
 
-在客户实际使用的 Codex 客户端发送：
+## 3. 使配置生效与查看工具
 
-> 先查询中国市场最近交易日和当前交易时段，再查询 000001.SZ 的最新行情。说明实际调用的工具、数据来源、数据时间、fallback、partial failure 和 data_quality；数据未知时明确写 unknown，不提供投资建议。
+保存后在桌面 MCP 设置中选择 `Restart`；IDE 扩展使用其重启入口；CLI 重新启动会话。CLI 可用 `codex mcp list` 查看配置，在交互界面用 `/mcp` 查看连接和工具。
 
-核对工具调用记录与最终回答。若上游失败，保留脱敏错误类别和未完成项，不记录为通过。随后按 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) 保存客户端类型、版本、连接结果、实际调用和人工核对记录。
-
-脚本执行的 MCP stdio 验收不代替这一步；CLI、桌面和 IDE 扩展也不能相互代替具体客户端的验收记录。
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
 
 ## 4. 常见问题
 
-- 找不到程序：核对 command 的绝对路径及运行账号。
-- 出现 JSON-RPC 解析错误：必须带 --stdio；直接运行可执行文件会输出普通就绪文字。
-- 工具数量错误：先核对服务端 retail_v1_preview，再检查重复注册、白名单和客户端重载状态。
-- 启动超时：检查本地 --doctor；不要以无限增大超时掩盖安装或网络问题。
-- 配置读取失败：按备份恢复本次修改的条目，再定位 TOML 语法、权限和受信任项目设置。
+- 找不到程序：核对绝对路径以及运行 Codex 的 Windows 账号。
+- 项目级配置未加载：核对项目是否受信任、同名配置是否在其他层覆盖。
+- 工具不全：检查 `enabled_tools` / `disabled_tools` 和服务器工具档；本模板的白名单是额外限制。
+- 启动失败：先做共同准备中的本地自检，再查看该服务器的脱敏错误。
 
-排障时不发送 Token 文件、完整 Codex 配置或未脱敏日志。更多说明见 [CUSTOMER_DEPLOYMENT.md](CUSTOMER_DEPLOYMENT.md)。
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
+
+## 5. 停用与恢复
+
+可在 MCP 设置中禁用服务器，或在 `[mcp_servers.cn_stock_mcp]` 中设 `enabled = false`。移除时只删除本服务器及其 env 表，保存后重载；需要回退时恢复本次备份。
+
+## 官方依据
+
+- [OpenAI：Model Context Protocol](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)

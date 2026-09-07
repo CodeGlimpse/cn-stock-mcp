@@ -1,134 +1,73 @@
-# Claude Code Template (`cn-stock-mcp`)
+# Claude Code：Windows 配置指南
 
-这页提供 **Claude Code** 的单独接入模板。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-适用：
-- 你使用 Claude Code
-- 你希望通过 MCP 给 Claude Code 接入 `cn-stock-mcp`
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-根据 Claude Code 文档，MCP server 可以通过：
-- `claude mcp add ...`
-- 项目根目录 `.mcp.json`
-- `~/.claude.json`
 
-进行配置。
 
----
+## 1. 配置入口与作用范围
 
-## 安全前置条件
+- 用户级：使用 `claude mcp add --scope user`；Claude Code 把此配置保存到用户配置中（默认 `%USERPROFILE%\.claude.json`）。
+- 项目级：项目根目录的 `.mcp.json`。
+- `local` 是默认的当前项目个人作用域，与 `user` 的所有项目作用域不同。
 
-先运行 `cn-stock-mcp --init-config`，由用户只在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 的 `zhitu.tokens` 中填写 token。不要把 token 放进 Claude Code 的 `env`、命令行参数、`.mcp.json`、聊天记录或诊断输出；Windows 专用 venv 未加入 PATH 时，把 `command` 替换为绝对 `cn-stock-mcp.exe` 路径。
+项目共享方式可把下面的 JSON 合并到 `.mcp.json`；首次在该项目运行 Claude Code 时按提示确认项目和 MCP 服务器。用户级添加见后面的 PowerShell 命令。
 
-## 1) 最简单：用命令直接添加本地 stdio server
-
-```bash
-claude mcp add --transport stdio --scope user cn-stock-mcp -- cn-stock-mcp --stdio
-```
-
-说明：
-- 这是最适合已安装包方式的配置。
-- 你可以随后运行：
-
-```bash
-claude mcp list
-claude mcp get cn-stock-mcp
-```
-
-检查是否已接入。
-
----
-
-## 2) 项目级 `.mcp.json` 方式
-
-在项目根目录创建或更新：
-
-```text
-.mcp.json
-```
-
-写入：
+## 2. 可复制配置
 
 ```json
 {
   "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
-说明：
-- Claude Code 文档明确支持 `.mcp.json`。
-- 这适合项目内共享给团队。
-
----
-
-## 3) 源码目录 / 虚拟环境方式
-
-如果你还没有把 `cn-stock-mcp` 命令装进 PATH，可写成：
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "/path/to/cn-stock-mcp/.venv/bin/python",
-      "args": ["-m", "cn_stock_mcp.main", "--stdio"],
+    "cn_stock_mcp": {
+      "command": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime\\venv\\Scripts\\cn-stock-mcp.exe",
+      "args": [
+        "--stdio"
+      ],
       "env": {
-        "PYTHONPATH": "src"
-      }
+        "CN_STOCK_MCP_CONFIG": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\config.json",
+        "TOOL_PROFILE": "retail_v1_preview",
+        "PYTHONUTF8": "1"
+      },
+      "type": "stdio"
     }
   }
 }
 ```
 
-如果你需要项目相对路径，Claude Code 文档还支持：
-- `${CLAUDE_PROJECT_DIR}`
-- `${VAR}`
-- `${VAR:-default}`
+个人跨项目使用时，可改用用户级 CLI 添加：
 
----
-
-## 4) 推荐先做的本地自检
-
-```bash
-cn-stock-mcp --init-config
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
+```powershell
+$mcpExe = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe'
+$configPath = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\config.json'
+claude mcp add --transport stdio --scope user cn_stock_mcp --env "CN_STOCK_MCP_CONFIG=$configPath" --env TOOL_PROFILE=retail_v1_preview --env PYTHONUTF8=1 -- $mcpExe --stdio
 ```
 
-如果本地 doctor 都过不去，就先别怪 Claude Code。
+两种作用域任选其一；命令中的 `--` 之后是 MCP 程序及其参数。
 
----
+## 3. 使配置生效与查看工具
 
-## 5) Claude Code 验证方式
+重新启动 Claude Code 会话。运行 `claude mcp list` 或 `claude mcp get cn_stock_mcp`，在交互会话中用 `/mcp` 查看状态。项目级服务器显示 Pending approval 时，在受信任项目中完成确认。
 
-```bash
-claude mcp list
-claude mcp get cn-stock-mcp
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
+
+## 4. 常见问题
+
+- 配置只在某个项目出现：核对 `--scope`，个人跨项目使用应选 `user`。
+- 项目配置不生效：检查 `.mcp.json`、工作区信任及该服务器的审批状态。
+- Windows 启动失败：此服务直接启动 `.exe`，命令字段与 `--stdio` 参数分别填写。
+- 同名服务器被覆盖：检查用户、项目和 local 配置层，保留一个预期定义。
+
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
+
+## 5. 停用与恢复
+
+在 `/mcp` 中可暂时禁用该服务器。用户级定义用下面的命令移除；项目级定义只从 `.mcp.json` 删除对应条目并重开会话。
+
+```powershell
+claude mcp remove cn_stock_mcp --scope user
 ```
 
-进入 Claude Code 后，还可以查看：
+## 官方依据
 
-```text
-/mcp
-```
-
----
-
-## 6) 常见问题
-
-### 项目共享配置
-适合用：
-- 项目根目录 `.mcp.json`
-
-### 仅自己本机使用
-适合用：
-- `claude mcp add ...`
-- 或写入 `~/.claude.json` 对应 scope
-
-更多排查见：
-- `docs/FAQ.md`
-- `docs/HOST_CONFIG_TEMPLATES.md`
+- [Claude Code：Connect Claude Code to tools via MCP](https://code.claude.com/docs/en/mcp)

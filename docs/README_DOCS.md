@@ -1,126 +1,38 @@
-# Docs Guide (`cn-stock-mcp`)
+# 文档导航
 
-Last Updated: 2026-09-05
+更新日期：2026-09-07。当前目标 `0.2.3` 仍处于发布准备，历史记录保留其原始版本与日期。wheel 安装后使用 `cn-stock-mcp --docs-path` 定位已安装文档。
 
-本目录只保留当前有效的运行文档。
+## 安装与接入
 
-Windows + AI 自部署请先阅读 `AI_DEPLOY_WINDOWS.md`；发布边界见 `SECURITY.md`、`PRIVACY.md`、`DATA_SOURCES.md` 和 `SUPPORT.md`。
+1. [客户部署](CUSTOMER_DEPLOYMENT.md)：固定版本、客户 Token、本地检查与排障。
+2. [Windows 部署步骤](AI_DEPLOY_WINDOWS.md)：wheel、约束文件和 SHA256。
+3. [Windows 共同准备](WINDOWS_AGENT_SETUP.md)：本机路径、备份与配置规则。
+4. [13 款 Agent 配置总表](HOST_CONFIG_TEMPLATES.md)：逐客户端配置、自查和恢复。
+5. [官方来源](HOST_CONFIGURATION_SOURCES.md)：核对日期、格式差异和地址变化。
+6. [AI 部署提示词](AI_DEPLOY_PROMPT.md)：客户交给本地 Agent 的部署要求。
+7. [最短交接](HANDOFF_MINIMAL.md)、[FAQ](FAQ.md)：客户快速入口。
 
-wheel 安装后可运行 `cn-stock-mcp --docs-path` 定位本目录的已安装副本。
+本轮按用户决定不执行真实 Host 或行情测试；配置方法的完成状态与真实运行证据分别记录。
 
-## 先看哪一页？
+## Agent 与接口
 
-### 如果你是人类用户 / 项目接收方
-先看：
+- [Agent 与 Skill 对照](AGENT_AND_SKILL_MAP.md)、[OpenClaw 可选 Skill](OPENCLAW_INTEGRATION.md)。
+- [AI 集成说明](AI_ONBOARDING.md)、[最小规则](AGENT_MINIMAL.md)、[最小示例](EXAMPLES_MINIMAL.md)。
+- [工具目录](TOOL_CATALOG.md)、[接口说明](INTERFACE_SCHEMA.md)、[错误模型](ERROR_MODEL.md)。
+- [兼容范围](COMPATIBILITY.md)、[联调说明](INTEGRATION.md)、[实现状态](IMPLEMENTATION_STATUS.md)。
 
-1. `PRODUCT_OVERVIEW.md`
-   - 对外产品定位、功能亮点和适用场景。
+## 发布与交付
 
-2. `CUSTOMER_DEPLOYMENT.md`
-   - 客户安装、智兔 token 获取、Host 接入、排障和免责声明。
+- [产品介绍](PRODUCT_OVERVIEW.md)、[交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md)、[销售准备状态](SALE_READINESS.md)。
+- [retail 验收方法](RETAIL_ACCEPTANCE.md)：供客户需要实际验证时使用。
+- [数据权限登记](DATA_RIGHTS_REGISTER.md)、[数据来源](DATA_SOURCES.md)、[隐私](PRIVACY.md)、[安全](SECURITY.md)、[支持](SUPPORT.md)。
+- [发布指南](RELEASE_GUIDE.md)、[0.2.3 发布说明](RELEASE_NOTE_v0.2.3.md)。
 
-3. `START_HERE.md`
-   - 整个仓库的最友好入口。
+## 历史记录
 
-4. `AI_DEPLOY_WINDOWS.md`
-   - 固定版本安装、token 交接和首次问答验收合同。
+- [0.2.2 发布说明](RELEASE_NOTE_v0.2.2.md)。
+- [0.2.0 Windows 验收](WINDOWS_ACCEPTANCE_v0.2.0.md)。
+- [2026-08-20 公开安装记录](WINDOWS_ACCEPTANCE_POST_RELEASE_2026-08-20.md)。
+- [2026-08-13 交付记录](P2_DELIVERY_RECORD_2026-08-13.md)、[2026-08-14 交付记录](P2_DELIVERY_RECORD_2026-08-14.md)。
 
-5. `AI_DEPLOY_PROMPT.md`
-   - 客户直接复制给具备本机权限的 AI Agent 的部署提示词。
-
-6. `HANDOFF_MINIMAL.md`
-   - 一页安装与接入说明。
-
-7. `HOST_CONFIG_TEMPLATES.md`
-   - 按宿主类型选择模板入口。
-
-8. `AI_ONBOARDING.md`
-   - 给 AI 集成人员 / agent 作者的使用说明。
-
-9. `AGENT_AND_SKILL_MAP.md`
-   - 解释哪些平台只是接 MCP，哪些才有仓库内 skill，以及 skill 文件在哪。
-
-10. `FAQ.md`
-   - 常见错误与排查。
-
-11. `COMMERCIAL_DELIVERY_TEMPLATE.md`
-   - 一次性销售范围、验收、支持、退款字段和 MIT 边界模板。
-
-12. `SALE_READINESS.md`
-   - 对外一次性销售前必须逐项确认的内部闸门；未填写业务、法律和支持字段前不要直接交付。
-
----
-
-## 给最终用户 / 本地 AI agent 的阅读顺序
-
-1. `HANDOFF_MINIMAL.md`
-2. `HOST_CONFIG_TEMPLATES.md`
-3. `OPENCLAW_HOST_TEMPLATE.md` / `CLAUDE_DESKTOP_TEMPLATE.md` / `CLAUDE_CODE_TEMPLATE.md` / `CONTINUE_TEMPLATE.md` / `VSCODE_TEMPLATE.md` / `CURSOR_TEMPLATE.md` / `CLINE_TEMPLATE.md` / `WINDSURF_TEMPLATE.md` / `HERMES_TEMPLATE.md` / `CODEX_TEMPLATE.md`
-4. `FAQ.md`
-
----
-
-## 给 AI agent / AI 集成人员的阅读顺序
-
-1. `AI_ONBOARDING.md`
-   - 人类可读的 AI 集成说明。
-
-2. `AGENT_MINIMAL.md`
-   - 最小路由、最小 payload、最容易踩坑的契约。
-
-3. `EXAMPLES_MINIMAL.md`
-   - 最小可工作的调用示例。
-
-4. `INTERFACE_SCHEMA.md`
-   - 需要详细输入输出契约、枚举、symbol/interval 约束时再看。
-
----
-
-## 给集成 / 联调人员的阅读顺序
-
-1. `INTEGRATION.md`
-   - 本地启动 stdio、通用挂载、自检与联调清单。
-
-2. `COMPATIBILITY.md`
-   - MCP-only / rules-based / skill-based host 的适配边界。
-
-3. `HOST_CONFIG_TEMPLATES.md`
-   - 已核实宿主模板总入口。
-
-4. `IMPLEMENTATION_STATUS.md`
-   - 当前实现状态、验证范围、限制。
-
-5. `ERROR_MODEL.md`
-   - 统一错误码、retry/fallback 语义。
-
-6. `OPENCLAW_INTEGRATION.md`
-   - 仅在你使用 OpenClaw 时再看。
-
-7. `P2_DELIVERY_RECORD_2026-08-13.md`
-   - 本次实时数据、日期兼容、stdio 和 Python 运行时验证记录。
-
-8. `P2_DELIVERY_RECORD_2026-08-14.md`
-   - 接口文档同步与统一数据新鲜度元数据交付记录。
-
-9. `TOOL_CATALOG.md`
-   - 从 MCP registry 自动生成的 53 个工具目录、参数 schema、最小示例和 Provider route。
-
-10. `RELEASE_NOTE_v0.2.2.md`
-   - 当前修复版本的变更、升级方法与已知边界。
-
----
-
-## 文档定位约定（避免重复/过时）
-
-- 仓库人类入口：只在 `START_HERE.md` 维护。
-- AI 集成说明：只在 `AI_ONBOARDING.md` 维护。
-- 功能事实：只在 `IMPLEMENTATION_STATUS.md` 维护。
-- 协议契约：只在 `INTERFACE_SCHEMA.md` 维护。
-- 错误语义：只在 `ERROR_MODEL.md` 维护。
-- 部署联调：只在 `INTEGRATION.md` 维护。
-- 最终用户快速入口：只在 `HANDOFF_MINIMAL.md` / `HOST_CONFIG_TEMPLATES.md` / `FAQ.md` 维护。
-- agent / skill 对照关系：只在 `AGENT_AND_SKILL_MAP.md` 维护。
-- 宿主专属最终配置：只在各自的 `*_TEMPLATE.md` 维护。
-- 阶段性交付证据：以带日期的 `P2_DELIVERY_RECORD_*.md` 为准，不改写历史验证记录。
-
-如果某条信息出现在多个文件，以以上“单一事实源”优先。
+历史验证只证明对应版本。配置专页维护该软件的最终模板；共同步骤维护在 WINDOWS_AGENT_SETUP，软件索引维护在 HOST_CONFIG_TEMPLATES。

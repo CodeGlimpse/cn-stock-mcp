@@ -1,93 +1,58 @@
-# Claude Desktop Template (`cn-stock-mcp`)
+# Claude Desktop：Windows 配置指南
 
-这页提供 **Claude Desktop 的单独配置模板**。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-适用：
-- 你使用 Claude Desktop
-- Claude Desktop 支持本地 MCP server
-- 你想直接把 `cn-stock-mcp` 接进去
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-Claude Desktop 的 MCP 配置文件通常是：
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%\\Claude\\claude_desktop_config.json`
 
----
 
-## 1) 最推荐：已安装包方式
+## 1. 配置入口与作用范围
 
-先安装：
+用户级文件：`%APPDATA%\Claude\claude_desktop_config.json`。这是 Windows 桌面客户端的本地 MCP 配置。
 
-```bash
-python -m pip install cn-stock-mcp==0.2.2
-```
+打开 Claude Desktop 的 `Settings → Developer → Edit Config`。入口名称可能随版本显示为本地语言；由该入口打开实际配置文件，然后合并以下对象。
 
-再把下面内容写进 Claude Desktop 配置文件：
+## 2. 可复制配置
 
 ```json
 {
   "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
-保存后，**完全退出并重启 Claude Desktop**。
-
----
-
-## 2) 源码目录 / 虚拟环境方式
-
-适用：
-- 你拿到的是源码仓库
-- 你没有把包安装进全局 / 当前 PATH
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "/path/to/cn-stock-mcp/.venv/bin/python",
-      "args": ["-m", "cn_stock_mcp.main", "--stdio"],
-      "cwd": "/path/to/cn-stock-mcp",
+    "cn_stock_mcp": {
+      "command": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime\\venv\\Scripts\\cn-stock-mcp.exe",
+      "args": [
+        "--stdio"
+      ],
       "env": {
-        "PYTHONPATH": "src"
+        "CN_STOCK_MCP_CONFIG": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\config.json",
+        "TOOL_PROFILE": "retail_v1_preview",
+        "PYTHONUTF8": "1"
       }
     }
   }
 }
 ```
 
-把 `/path/to/cn-stock-mcp` 替换成你的实际项目目录。
 
----
 
-## 3) 推荐先做的本地自检
+## 3. 使配置生效与查看工具
 
-在接入 Claude Desktop 前，建议先跑：
+保存文件后完全退出 Claude Desktop，包括系统托盘中的进程，再重新打开。在输入框的连接器/工具入口找到 `cn_stock_mcp`，查看可用工具；官方文档当前使用 `Connectors → Manage connectors`。
 
-```bash
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
-```
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
 
-如果 `--doctor-network` 失败，先不要急着怪 Claude Desktop，优先检查：
-- token 是否正确
-- 本地网络是否能访问上游
-- 当前 Python 环境是否就是你实际挂载的那个环境
+## 4. 常见问题
 
----
+- 修改后仍是旧配置：确认已完全退出并重开应用。
+- ENOENT：确认 command 是实际 `cn-stock-mcp.exe` 的绝对路径，JSON 内反斜杠已转义。
+- 服务器启动错误：在 `%APPDATA%\Claude\logs` 查看对应 MCP 日志的错误类别，分享前脱敏。
+- 打开的是远程连接器 URL 设置：本服务使用本地 Developer 配置中的 stdio。
 
-## 4) 接入后如果看不到 tools
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
 
-优先排查：
-1. Claude Desktop 是否已完全重启
-2. JSON 是否写错
-3. `command` / `cwd` / `env` 是否填错
-4. `cn-stock-mcp --doctor` 是否本地就已经报错
+## 5. 停用与恢复
 
-更多排查见：
-- `docs/FAQ.md`
-- `docs/HOST_CONFIG_TEMPLATES.md`
+从 `mcpServers` 中移除 `cn_stock_mcp`，保留其他服务器，完全退出并重开应用。需要回退时恢复该配置文件的本次备份。
+
+## 官方依据
+
+- [MCP 官方：Connect to local MCP servers（Claude Desktop 示例）](https://modelcontextprotocol.io/docs/2026-07-28/develop/connect-local-servers)

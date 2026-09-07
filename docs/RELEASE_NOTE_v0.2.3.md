@@ -2,6 +2,8 @@
 
 ## 交付与验收
 
+- 补全 13 款 Agent 的 Windows 配置指南，新增 OpenCode、Gemini CLI 和 Cherry Studio；统一路径、配置作用域、自查与恢复步骤，并归档官方来源。本轮按用户决定不执行真实测试。
+
 - 首发交付范围明确为 Windows 11 x64、普通 CPython 3.13、Codex 和 retail 10 工具，其他 Host 保留配置参考。
 - wheel 携带 stdio、运行时依赖和 retail 验收脚本；真实验收默认只展示计划，需明确启用后才调用上游。
 - 验收报告区分 PASS、PARTIAL、FAIL、BLOCKED，保存允许的来源、时间、耗时和错误类别，失败停止，不保存 Token 或原始行情。

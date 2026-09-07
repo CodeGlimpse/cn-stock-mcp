@@ -7,7 +7,7 @@
 将下面整个代码块复制给具备本机文件和 PowerShell 执行权限的 AI Agent。普通网页聊天机器人如果无法操作客户电脑，必须停止并说明，不能假装部署成功。
 
 ```text
-请在我的 Windows 电脑上部署 cn-stock-mcp==0.2.3，并接入我当前使用的 Codex 客户端，记录其类型和版本。
+请在我的 Windows 电脑上部署 cn-stock-mcp==0.2.3，并接入我指定的 Agent 软件：[填写软件名称]。开始前确认实际客户端与版本，从 HOST_CONFIG_TEMPLATES.md 的 13 款 Windows 指南中选择对应专页。
 
 执行前先确认你具备本机 PowerShell、文件读写和 Host 配置权限。读取固定标签文档：
 https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/AI_DEPLOY_WINDOWS.md
@@ -20,8 +20,8 @@ https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/AI_DEPLOY
    https://zhituapi.com/gettoken.html
    https://www.zhituapi.com/access.html
    https://zhituapi.com/termsofservice.html
-5. 我确认已保存 Token 后，重启或重载 MCP Host，再运行脱敏状态检查。不要读取配置文件内容，先运行 --doctor、--list-tools；按 RETAIL_ACCEPTANCE.md 输出真实查询计划，经我确认后再运行 --run-live。
-6. 验收版本必须为 0.2.3；默认 retail_v1_preview 必须正好显示 10 个工具；验证 MCP initialize、tools/list，经授权完成限定 retail 样本报告，并在实际 Codex 客户端用 trading_calendar 和 stock_quote 完成问答；报告不能替代 Host 验收。
+5. 我确认已保存 Token 后，按所选客户端专页完成配置与必要的重载。不要读取配置文件内容；本地检查使用 --doctor、--list-tools。若我只需要配置方法或不需要真实测试，保留“未执行”状态并完成交付，不反复要求 Token 或行情授权。
+6. 软件版本为 0.2.3，服务端使用 retail_v1_preview 10 工具；按当前客户端的实际配置结构合并。需要实际连接或行情验收时，先说明范围并取得授权；真实样本计划见 RETAIL_ACCEPTANCE.md。不能把配置保存成功写成实际调用通过。
 7. 首次问答必须说明 symbol、数据来源、数据时间或 unknown、交易时段、fallback/partial failure 和 data_quality；不得给出投资参考、投资建议、风险建议、买卖指令或收益承诺。
 8. 最终只报告安装位置、版本、Host 配置备份位置、配置文件路径、10 个工具名称、doctor/协议验收结果和仍需我处理的问题；报告中不得包含 Token、Token 尾号、完整带凭据 URL、配置文件内容或个人目录以外的无关信息。
 9. 任一步骤缺少权限、固定 Release/校验文件不存在、哈希不匹配、上游失败或 Host 类型无法确认时，停止并准确说明，不要绕过安全检查。

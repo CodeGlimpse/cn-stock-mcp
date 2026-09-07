@@ -28,7 +28,7 @@
 - [数据权限登记](docs/DATA_RIGHTS_REGISTER.md)：已知来源与待补授权证据
 - `docs/START_HERE.md`：最友好的仓库入口
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
-- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- [13 款 Windows Agent 配置](docs/HOST_CONFIG_TEMPLATES.md)：配置入口、模板、自查与恢复
 - `docs/AI_ONBOARDING.md`：给 AI 集成人员 / agent 作者的使用说明
 - `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 用什么、有没有 skill、skill 在哪里
 - `docs/FAQ.md`：常见错误与排查
@@ -37,7 +37,7 @@
 - `docs/CUSTOMER_DEPLOYMENT.md`：客户部署与排障
 - `docs/AI_DEPLOY_PROMPT.md`：复制给本地 AI Agent 的部署提示词
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
-- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- [13 款 Windows Agent 配置](docs/HOST_CONFIG_TEMPLATES.md)：配置入口、模板、自查与恢复
 - `docs/OPENCLAW_HOST_TEMPLATE.md`：OpenClaw 单独最终配置块
 - `docs/CLAUDE_DESKTOP_TEMPLATE.md`：Claude Desktop 单独模板
 - `docs/CLAUDE_CODE_TEMPLATE.md`：Claude Code 单独模板
@@ -48,6 +48,7 @@
 - `docs/WINDSURF_TEMPLATE.md`：Windsurf 单独模板
 - `docs/HERMES_TEMPLATE.md`：Hermes 单独模板
 - `docs/CODEX_TEMPLATE.md`：Codex 单独模板
+- [OpenCode](docs/OPENCODE_TEMPLATE.md)、[Gemini CLI](docs/GEMINI_CLI_TEMPLATE.md)、[Cherry Studio](docs/CHERRY_STUDIO_TEMPLATE.md)：Windows 新增指南
 - `docs/FAQ.md`：常见错误与排查
 
 ### AI agent / AI 集成人员
@@ -59,7 +60,7 @@
 ### 集成 / 联调 / 维护
 - `docs/INTEGRATION.md`：完整挂载、自检与联调清单
 - `docs/COMPATIBILITY.md`：MCP-only / rules-based / skill-based host 兼容说明
-- `docs/HOST_CONFIG_TEMPLATES.md`：已核实宿主模板总入口
+- [Windows 共同准备](docs/WINDOWS_AGENT_SETUP.md) 与 [官方来源](docs/HOST_CONFIGURATION_SOURCES.md)：本轮只做文档和离线核对
 - `docs/IMPLEMENTATION_STATUS.md`：当前实现状态与限制
 - `docs/OPENCLAW_INTEGRATION.md`：OpenClaw 专属适配说明
 
@@ -127,7 +128,7 @@ cn-stock-mcp --doctor-network
 - `docs/AGENT_AND_SKILL_MAP.md`：各 agent / host 的使用方式与 skill 对照
 - `docs/README_DOCS.md`：文档总览与阅读顺序
 - `docs/HANDOFF_MINIMAL.md`：给最终用户 / 本地 AI agent 的一页接入说明
-- `docs/HOST_CONFIG_TEMPLATES.md`：不同 host 的模板入口
+- [13 款 Windows Agent 配置](docs/HOST_CONFIG_TEMPLATES.md)：配置入口、模板、自查与恢复
 - `docs/OPENCLAW_HOST_TEMPLATE.md`：OpenClaw 单独最终配置块
 - `docs/CLAUDE_DESKTOP_TEMPLATE.md`：Claude Desktop 单独模板
 - `docs/CLAUDE_CODE_TEMPLATE.md`：Claude Code 单独模板
@@ -138,6 +139,7 @@ cn-stock-mcp --doctor-network
 - `docs/WINDSURF_TEMPLATE.md`：Windsurf 单独模板
 - `docs/HERMES_TEMPLATE.md`：Hermes 单独模板
 - `docs/CODEX_TEMPLATE.md`：Codex 单独模板
+- [OpenCode](docs/OPENCODE_TEMPLATE.md)、[Gemini CLI](docs/GEMINI_CLI_TEMPLATE.md)、[Cherry Studio](docs/CHERRY_STUDIO_TEMPLATE.md)：Windows 新增指南
 - `docs/FAQ.md`：常见错误与排查
 - `SECURITY.md`、`SUPPORT.md`：漏洞报告与支持边界
 - `docs/AI_DEPLOY_WINDOWS.md`：交给 Windows AI agent 的自部署与验收流程

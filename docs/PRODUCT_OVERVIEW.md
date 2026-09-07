@@ -84,12 +84,15 @@ AI 负责选择工具、组合数据和解释结果；用户不需要记忆几�
 
 ### 6. 为 AI Host 设计的统一接口
 
-首发通过标准 MCP stdio 接入并验收 Codex，记录实际客户端与版本。以下 Host 有配置参考，除 Codex 外不纳入首发兼容承诺：
+已整理 [13 款 Windows Agent 配置指南](HOST_CONFIG_TEMPLATES.md)，包括配置入口、模板、重载与自查。官方来源已核对，本轮未执行客户端实测。首发合同的 Host 范围仍以交付约定为准。以下为部分入口：
 
 - Codex
 - Claude Code
 - OpenClaw
 - Hermes Agent
+- [OpenCode](OPENCODE_TEMPLATE.md)
+- [Gemini CLI](GEMINI_CLI_TEMPLATE.md)
+- [Cherry Studio](CHERRY_STUDIO_TEMPLATE.md)
 - 其他支持本地 stdio MCP 的 Host
 
 默认 `retail_v1_preview` 工具档只暴露 10 个高层工具，降低 AI 选错工具和重复调用的概率；需要完整能力时可显式切换到 `full` 档，当前完整注册目录为 53 个工具。

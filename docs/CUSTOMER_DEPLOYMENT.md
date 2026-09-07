@@ -114,7 +114,9 @@ notepad "$env:LOCALAPPDATA\cn-stock-mcp\config.json"
 
 `--doctor` 在没有 token 或跳过网络检查时显示 `WARN` 可能是正常现象，但退出码应为 `0`。默认 `retail_v1_preview` 应返回 10 个工具。
 
-### 填写 token 后的网络检查
+### 客户按需进行的网络检查
+
+本轮文档整理不执行此检查。客户自行需要确认上游时再运行；它不是复制配置片段的必要步骤。
 
 ```powershell
 & $mcpExe --doctor-network --json
@@ -130,24 +132,13 @@ notepad "$env:LOCALAPPDATA\cn-stock-mcp\config.json"
 
 验收应能看到代码、来源、`freshness/as_of`、交易时段或 `session_context`、`data_quality`，且没有 token、下单指令、收益承诺或荐股结论。
 
-## 5. 首发接入 Codex
+## 5. 接入 Windows Agent
 
-首发只验收 Codex 的约定客户端类型与版本。按 [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) 配置，按 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) 留存真实问答与 10 工具样本结果。使用本地 stdio：
+先按 [Windows 共同准备](WINDOWS_AGENT_SETUP.md) 取得本机路径并备份配置，再从 [13 款软件配置总表](HOST_CONFIG_TEMPLATES.md) 选择客户端。每页给出本软件的配置结构、作用范围、重载、自查和恢复步骤。
 
-```text
-command = cn-stock-mcp.exe 的绝对路径
-args = ["--stdio"]
-```
+指南覆盖 Codex、Claude Code、Claude Desktop、Cursor、VS Code/GitHub Copilot、Cline、Windsurf、Continue、OpenClaw、Hermes、OpenCode、Gemini CLI、Cherry Studio。首发合同的 Host 范围仍以 [交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md) 为准。
 
-配置前先备份原文件，并保留原有字段和其他 MCP server。不要添加 `ZHITU_TOKEN` 环境变量。
-
-- [Codex](CODEX_TEMPLATE.md)
-其他 Host 仅保留集成参考，不纳入首发验收承诺：
-
-- [Claude Code](CLAUDE_CODE_TEMPLATE.md)
-- [OpenClaw](OPENCLAW_HOST_TEMPLATE.md)
-- [Hermes Agent](HERMES_TEMPLATE.md)
-- [其他 Host 总入口](HOST_CONFIG_TEMPLATES.md)
+本轮只进行官方资料和离线核对，没有实际连接 Host 或调用行情。客户需要进一步验证时，按 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) 先查看计划再决定执行，并如实保留未执行或部分失败状态。
 
 默认使用 `retail_v1_preview`。它包含 10 个高层工具；只有在用户明确需要时才切换 `full` 工具档。
 

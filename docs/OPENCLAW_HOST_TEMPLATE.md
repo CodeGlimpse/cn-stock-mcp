@@ -1,44 +1,53 @@
-# OpenClaw Host Template (`cn-stock-mcp`)
+# OpenClaw：Windows 配置指南
 
-这页只提供 **OpenClaw 最终可复制配置块**。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-如果你只是普通最终用户，优先看：
-- `docs/HANDOFF_MINIMAL.md`
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-如果你已经确定宿主就是 OpenClaw，直接从下面复制。
 
----
 
-## 安全前置条件
+## 1. 配置入口与作用范围
 
-先运行 `cn-stock-mcp --init-config`，由用户只在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 的 `zhitu.tokens` 中填写 token。不要把 token 放进 OpenClaw `env`、命令行参数、`openclaw.json`、skill 文件、聊天记录或诊断输出；Windows 专用 venv 未加入 PATH 时，把 `command` 替换为绝对 `cn-stock-mcp.exe` 路径。
+- 默认配置文件：`%USERPROFILE%\.openclaw\openclaw.json`，支持 JSON5。
+- Control UI：`Settings → MCP → Configured servers → Add server`，选择 Stdio。
+- 设置了 `OPENCLAW_CONFIG_PATH` 或 Profile 时，使用实际 Gateway 的活动配置文件。
 
-## 1) 仅接入 `cn-stock-mcp` MCP server
+本页适用于在 Windows 原生进程中运行的 OpenClaw Gateway。可以在 Control UI 添加基本字段，再用配置编辑器合并下方条目。
 
-适用：
-- 你只想把 `cn-stock-mcp` 挂到 OpenClaw
-- 不需要仓库内附带的 OpenClaw skill adapter
+## 2. 可复制配置
 
-优先使用 OpenClaw CLI 添加并实时探测：
-
-```bash
-openclaw mcp add cn-stock-mcp --command cn-stock-mcp --arg --stdio
-openclaw mcp doctor cn-stock-mcp --probe
-```
-
-也可以将下面内容合并到 OpenClaw 配置：
-
-```json5
+```json
 {
-  mcp: {
-    servers: {
-      "cn-stock-mcp": {
-        command: "cn-stock-mcp",
-        args: ["--stdio"],
-        transport: "stdio",
-        enabled: true,
-        toolFilter: {
-          include: ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
+  "mcp": {
+    "servers": {
+      "cn_stock_mcp": {
+        "command": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime\\venv\\Scripts\\cn-stock-mcp.exe",
+        "args": [
+          "--stdio"
+        ],
+        "env": {
+          "CN_STOCK_MCP_CONFIG": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\config.json",
+          "TOOL_PROFILE": "retail_v1_preview",
+          "PYTHONUTF8": "1"
+        },
+        "transport": "stdio",
+        "cwd": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime",
+        "enabled": true,
+        "connectionTimeoutMs": 30000,
+        "requestTimeoutMs": 60000,
+        "toolFilter": {
+          "include": [
+            "stock_search",
+            "market_brief",
+            "stock_snapshot",
+            "stock_quote",
+            "stock_history",
+            "stock_review",
+            "watchlist_review",
+            "trading_calendar",
+            "sector_review",
+            "hot_theme_tracker"
+          ]
         }
       }
     }
@@ -46,131 +55,39 @@ openclaw mcp doctor cn-stock-mcp --probe
 }
 ```
 
-说明：
-- 这是最适合“已安装包”的 OpenClaw 配置。
-- 你也可以先运行：
+可选 CLI 添加基础定义，`--no-probe` 使这一步只保存配置；后续通过上方配置补充超时与工具过滤：
 
-```bash
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
+```powershell
+$mcpExe = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\runtime\venv\Scripts\cn-stock-mcp.exe'
+$configPath = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\config.json'
+$runtimeRoot = Join-Path $env:LOCALAPPDATA 'cn-stock-mcp\runtime'
+openclaw mcp add cn_stock_mcp --command $mcpExe --arg=--stdio --cwd $runtimeRoot --env "CN_STOCK_MCP_CONFIG=$configPath" --env TOOL_PROFILE=retail_v1_preview --env PYTHONUTF8=1 --no-probe
 ```
 
-确认安装与 token 正常。
+可选 Skill 的用途与 Windows 路径见 [OpenClaw 适配说明](OPENCLAW_INTEGRATION.md)。
 
----
+## 3. 使配置生效与查看工具
 
-## 2) OpenClaw + 仓库内 skill adapter
+保存后 Gateway 的配置热重载会更新定义，下一轮发现工具使用新配置。可先执行 `openclaw mcp status --verbose` 和 `openclaw mcp doctor cn_stock_mcp` 做配置检查。客户需要检查真实连接时再运行 `openclaw mcp doctor cn_stock_mcp --probe`；它会启动 MCP 并枚举工具。
 
-适用：
-- 你除了挂 MCP server
-- 还想启用仓库内的 `skills/newsbot-stock-routing/`
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
 
-将下面内容合并到：
-- `~/.openclaw/openclaw.json`
+## 4. 常见问题
 
-```json5
-{
-  mcp: {
-    servers: {
-      "cn-stock-mcp": {
-        command: "cn-stock-mcp",
-        args: ["--stdio"],
-        transport: "stdio",
-        enabled: true,
-        toolFilter: {
-          include: ["stock_search", "market_brief", "stock_snapshot", "stock_quote", "stock_history", "stock_review", "watchlist_review", "trading_calendar", "sector_review", "hot_theme_tracker"]
-        }
-      }
-    }
-  },
-  skills: {
-    load: {
-      extraDirs: [
-        "/path/to/cn-stock-mcp/skills"
-      ]
-    },
-    entries: {
-      "newsbot-stock-routing": {
-        enabled: true
-      }
-    }
-  }
-}
-```
+- Windows Hub 窗口位于本机，不代表 Gateway 位于本机：官方 Hub 默认安装路径可能创建 WSL Gateway；本页的 Windows `.exe` 路径要求 Windows 原生 Gateway。
+- 工具不可见：检查 `toolFilter`、会话工具策略；官方说明 `minimal` 工具档或 `bundle-mcp` deny 会隐藏 MCP 工具。
+- CLI reload 未影响现有 Gateway：`openclaw mcp reload` 只刷新当前 CLI 进程拥有的运行时，正在别处运行的 Gateway 需要自己的重载或重启。
+- 使用 `mcp.servers` 保存第三方服务器；`openclaw mcp serve` 是相反方向的 OpenClaw 服务端功能。
 
-把：
-- `/path/to/cn-stock-mcp/skills`
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
 
-替换成你的实际仓库路径，例如：
+## 5. 停用与恢复
 
-```json5
-"/path/to/cn-stock-mcp/skills"
-```
+将本服务器 `enabled` 设为 `false` 暂停；移除使用 `openclaw mcp unset cn_stock_mcp`，或只删除 `mcp.servers.cn_stock_mcp`。必要时恢复本次配置备份并让 Gateway 重载。
 
----
+## 官方依据
 
-## 3) 如果你是源码目录运行而不是包安装
-
-当 `cn-stock-mcp` 命令还没有直接进入 PATH 时，可改成：
-
-```json5
-{
-  mcp: {
-    servers: {
-      "cn-stock-mcp": {
-        command: "/path/to/cn-stock-mcp/.venv/bin/python",
-        args: ["-m", "cn_stock_mcp.main", "--stdio"],
-        cwd: "/path/to/cn-stock-mcp",
-        transport: "stdio",
-        env: {
-          PYTHONPATH: "src"
-        }
-      }
-    }
-  }
-}
-```
-
-说明：
-- 这是 OpenClaw 里的“源码 / 虚拟环境挂载法”。
-- 更适合开发阶段，不如包安装方式简洁。
-
----
-
-## 4) OpenClaw 验证命令
-
-```bash
-openclaw mcp doctor cn-stock-mcp --probe
-openclaw mcp status --verbose
-openclaw mcp reload
-```
-
-如果启用了仓库内 skill adapter，再运行：
-
-```bash
-openclaw skills list --eligible
-openclaw skills info newsbot-stock-routing
-```
-
-如果只是验证 MCP server 本体，先运行：
-
-```bash
-cn-stock-mcp --list-tools
-cn-stock-mcp --tool provider_health --payload '{}'
-```
-
----
-
-## 5) 什么时候该用哪种 OpenClaw 模式？
-
-### 只要工具能力
-用：
-- **仅接入 MCP server**
-
-### 还想让 OpenClaw 内置路由规则更懂中国股市任务
-用：
-- **OpenClaw + 仓库内 skill adapter**
-
-### 正在开发 / 调试源码
-用：
-- **源码目录运行方式**
+- [OpenClaw：Connect MCP servers](https://docs.openclaw.ai/tools/mcp)
+- [OpenClaw：MCP CLI](https://docs.openclaw.ai/cli/mcp)
+- [OpenClaw：Windows](https://docs.openclaw.ai/platforms/windows)
+- [OpenClaw：Configuration](https://docs.openclaw.ai/gateway/configuration)

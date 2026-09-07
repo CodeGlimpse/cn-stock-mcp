@@ -1,92 +1,29 @@
-# Agent and Skill Map (`cn-stock-mcp`)
+# Agent 与 Skill 对照
 
-这页专门回答一个常见问题：
+13 款 Windows Agent 的接入方法统一从 [配置总表](HOST_CONFIG_TEMPLATES.md) 进入。它们通过 MCP 取得本项目的工具；配置结构和作用域由各客户端决定。
 
-> 这个仓库给各个 AI agent / host 用的 skill 在哪里？
+## 客户端入口
 
-## 先说结论
+| 软件 | 配置指南 | 本仓库是否提供专属 Skill |
+| --- | --- | --- |
+| Codex | [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) | 无需专属 Skill |
+| Claude Code | [CLAUDE_CODE_TEMPLATE.md](CLAUDE_CODE_TEMPLATE.md) | 无需专属 Skill |
+| Claude Desktop | [CLAUDE_DESKTOP_TEMPLATE.md](CLAUDE_DESKTOP_TEMPLATE.md) | 无需专属 Skill |
+| Cursor | [CURSOR_TEMPLATE.md](CURSOR_TEMPLATE.md) | 无需专属 Skill |
+| VS Code / GitHub Copilot | [VSCODE_TEMPLATE.md](VSCODE_TEMPLATE.md) | 无需专属 Skill |
+| Cline | [CLINE_TEMPLATE.md](CLINE_TEMPLATE.md) | 无需专属 Skill |
+| Windsurf / Cascade | [WINDSURF_TEMPLATE.md](WINDSURF_TEMPLATE.md) | 无需专属 Skill |
+| Continue | [CONTINUE_TEMPLATE.md](CONTINUE_TEMPLATE.md) | 无需专属 Skill |
+| OpenClaw | [OPENCLAW_HOST_TEMPLATE.md](OPENCLAW_HOST_TEMPLATE.md) | [可选 OpenClaw 适配](OPENCLAW_INTEGRATION.md) |
+| Hermes Agent | [HERMES_TEMPLATE.md](HERMES_TEMPLATE.md) | 无需专属 Skill |
+| OpenCode | [OPENCODE_TEMPLATE.md](OPENCODE_TEMPLATE.md) | 无需专属 Skill |
+| Gemini CLI | [GEMINI_CLI_TEMPLATE.md](GEMINI_CLI_TEMPLATE.md) | 无需专属 Skill |
+| Cherry Studio | [CHERRY_STUDIO_TEMPLATE.md](CHERRY_STUDIO_TEMPLATE.md) | 无需专属 Skill |
 
-### 大多数 agent / host
-**没有仓库内专属 skill 文件。**
+## OpenClaw 的可选 Skill
 
-它们使用这个项目的方式是：
-- 直接把 `cn-stock-mcp` 当作 **MCP server** 接进去
-- 按各自宿主支持的配置格式写 `command / args / env`
+仓库的 `skills/newsbot-stock-routing/` 提供新闻/复盘类任务的工具路由提示，wheel 也携带这份 Skill。它不安装 MCP server，也不保存 Token。先完成 MCP 配置，再按 [OpenClaw 适配说明](OPENCLAW_INTEGRATION.md) 决定是否加载。
 
-也就是说，下面这些通常是 **MCP 配置接入**，不是“装 skill”：
+## 给集成人员
 
-- Claude Desktop
-- Claude Code
-- Continue
-- VS Code
-- Cursor
-- Cline
-- Windsurf
-- Hermes
-- Codex
-
----
-
-## 仓库内真正附带的 skill 在哪里？
-
-### OpenClaw
-这个仓库里目前真正附带、可直接称为“skill”的主要是：
-
-- `skills/newsbot-stock-routing/SKILL.md`
-
-相关说明：
-- `skills/MIGRATION_NEWSBOT_SKILL.md`
-- `docs/OPENCLAW_INTEGRATION.md`
-- `docs/OPENCLAW_HOST_TEMPLATE.md`
-
-### 这个 skill 是干什么的？
-它是给 **OpenClaw / news agent** 用的路由适配层，作用是：
-- 把中国市场简报 / 复盘类请求
-- 路由到 `cn-stock-mcp` 的对应 tools
-
-它不是“所有 agent 通用的 skill 标准”。
-
----
-
-## 各个 agent / host 到底该看哪里？
-
-| Agent / Host | 使用方式 | 需要仓库内 skill 吗？ | 该看哪里 | skill 在哪里 |
-|---|---|---:|---|---|
-| OpenClaw | MCP + 可选 OpenClaw skill adapter | 可选，需要时用 | `docs/OPENCLAW_HOST_TEMPLATE.md` / `docs/OPENCLAW_INTEGRATION.md` | `skills/newsbot-stock-routing/SKILL.md` |
-| Claude Desktop | MCP 配置 | 否 | `docs/CLAUDE_DESKTOP_TEMPLATE.md` | 无 |
-| Claude Code | MCP 配置 | 否 | `docs/CLAUDE_CODE_TEMPLATE.md` | 无 |
-| Continue | MCP 配置 | 否 | `docs/CONTINUE_TEMPLATE.md` | 无 |
-| VS Code | MCP 配置 | 否 | `docs/VSCODE_TEMPLATE.md` | 无 |
-| Cursor | MCP 配置 | 否 | `docs/CURSOR_TEMPLATE.md` | 无 |
-| Cline | MCP 配置 | 否 | `docs/CLINE_TEMPLATE.md` | 无 |
-| Windsurf | MCP 配置 | 否 | `docs/WINDSURF_TEMPLATE.md` | 无 |
-| Hermes | MCP 配置 | 否 | `docs/HERMES_TEMPLATE.md` | 无 |
-| Codex | MCP 配置 | 否 | `docs/CODEX_TEMPLATE.md` | 无 |
-
----
-
-## 如果你是 AI agent 作者
-除了宿主模板之外，再看：
-
-- `docs/AGENT_MINIMAL.md`
-- `docs/EXAMPLES_MINIMAL.md`
-- `docs/INTERFACE_SCHEMA.md`
-
-这些文档告诉 agent：
-- 默认先调用哪些 tool
-- 怎么少浪费 token
-- 哪些参数最容易踩坑
-- `sector_lookup` / `provider_health` 这些应该怎么用
-
----
-
-## 最后再强调一次
-
-### 这个仓库最重要的交付物是：
-- **MCP server**
-
-### 不是：
-- 给每个 AI agent 都单独做了一份 skill
-
-目前仓库内真正成型的 skill 适配层，主要就是：
-- `skills/newsbot-stock-routing/SKILL.md`（OpenClaw）
+接口与输入契约参见 [工具目录](TOOL_CATALOG.md)、[最小使用规则](AGENT_MINIMAL.md)、[最小示例](EXAMPLES_MINIMAL.md) 和 [接口说明](INTERFACE_SCHEMA.md)。默认 retail 只公开 10 个高层工具；full 档的底层工具不自动进入零售配置。

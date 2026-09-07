@@ -10,7 +10,7 @@
 - 运行方式：本机 stdio MCP server
 - 默认配置文件：`%LOCALAPPDATA%\cn-stock-mcp\config.json`
 - 首选工具档：`retail_v1_preview`
-- 首发只验收 Codex，记录实际客户端类型与版本；其他 Host 模板仅作集成参考。
+- Windows 配置指南覆盖 [13 款软件](HOST_CONFIG_TEMPLATES.md)；按实际客户端选择专页，首发合同的 Host 范围仍以交付约定为准。
 - 该项目只查询公开市场数据，不连接券商、不保存交易账户、不下单。
 
 不要把 token 写入 MCP Host 配置、Git 仓库、命令行参数、聊天记录或诊断包。
@@ -103,14 +103,15 @@ $mcpExe = Join-Path $env:LOCALAPPDATA "cn-stock-mcp\runtime\venv\Scripts\cn-stoc
 
 ### 5. 配置 Host
 
-首发使用 [Codex 模板](CODEX_TEMPLATE.md)，把其中的 `cn-stock-mcp` 命令替换为步骤 2 解析出的 `cn-stock-mcp.exe` 绝对路径；只写 `command`、`args`、必要的工作目录和工具白名单，不要加入 `ZHITU_TOKEN`。修改前备份原配置，保留原有字段和其他 MCP server。
+先看 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，再从 [13 款配置总表](HOST_CONFIG_TEMPLATES.md) 选择实际软件。按该客户端专页的格式填写程序绝对路径与 `--stdio`；OpenCode 的命令数组、VS Code 的 `servers` 等结构不能与其他模板混用。
 
-- Codex：`docs/CODEX_TEMPLATE.md`
-其他 Host 文档仍在仓库保留，不列入首发验收。
+修改前备份并合并配置，保留其他字段。环境变量只放配置路径、工具档及编码选项；Token 仍由客户本人保管在 MCP 配置文件中。
 
-### 6. 重载并首次问答
+### 6. 客户按需重载与首次问答
 
-重载实际使用的 Codex 客户端，记录客户端类型与版本，确认 server 已连接并看到 `retail_v1_preview` 的 10 个工具。服务器工具档与 Codex 白名单应一致；脚本握手成功不能代替本项。使用以下固定问题：
+本轮配置指南整理按用户要求不执行真实测试。以下是客户需要实际验证时使用的步骤。
+
+按所选软件专页重载，记录实际客户端类型与版本，查看本服务器的 `retail_v1_preview` 10 工具。需要行情查询时再使用以下问题，并分别记录连接与查询结果：
 
 > 查询平安银行最新行情，给出数据来源、数据时间、交易时段和数据质量；不要提供投资建议。
 

@@ -1,111 +1,63 @@
-# VS Code Template (`cn-stock-mcp`)
+# VS Code / GitHub Copilot：Windows 配置指南
 
-这页提供 **VS Code** 的单独接入模板。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。官方资料核对日期：2026-09-07。本页提供配置方法，本轮未进行 Host 连接或行情实测。
 
-适用：
-- 你使用支持 MCP 的 VS Code
-- 你希望通过 `mcp.json` 接入 `cn-stock-mcp`
+先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，取得实际程序和配置路径。将示例中的 `YOUR_NAME` 及路径替换为本机值；按共同准备说明备份、合并配置。MCP 使用独立的普通 CPython 3.13 环境。
 
-根据 VS Code 文档，MCP server 配置通常写在：
-- 工作区：`.vscode/mcp.json`
-- 用户配置：通过 `MCP: Open User Configuration` 打开的 `mcp.json`
 
-注意：VS Code 使用的顶层字段是：
-- `servers`
 
-而不是：
-- `mcpServers`
+## 1. 配置入口与作用范围
 
----
+- 用户级：`Ctrl+Shift+P → MCP: Open User Configuration`，编辑当前用户配置文件。
+- 工作区级：项目根目录的 `.vscode\mcp.json`。
+- 可用 `MCP: Add Server` 向导选择 stdio 与作用域。本页覆盖 VS Code 内的 Copilot Chat / Agent。
 
-## 1) 工作区级配置（最常用）
+个人 Windows 本地使用推荐通过命令面板打开用户配置。VS Code 的顶层字段是 `servers`；把下面对象合并进去。
 
-创建：
-
-```text
-.vscode/mcp.json
-```
-
-写入：
+## 2. 可复制配置
 
 ```json
 {
   "servers": {
-    "cnStockMcp": {
-      "type": "stdio",
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
-说明：
-- VS Code 文档建议 server name 使用 camelCase，因此这里用 `cnStockMcp`。
-- 修改配置后，VS Code 可能需要重新启动 server 才会重新发现 tools。
-
----
-
-## 2) 用户级配置
-
-如果你想在所有工作区复用，运行：
-
-```text
-MCP: Open User Configuration
-```
-
-然后把同样的 `servers` 块写进去。
-
----
-
-## 3) 源码目录 / 虚拟环境方式
-
-如果你还没把包装进 PATH：
-
-```json
-{
-  "servers": {
-    "cnStockMcp": {
-      "type": "stdio",
-      "command": "/path/to/cn-stock-mcp/.venv/bin/python",
-      "args": ["-m", "cn_stock_mcp.main", "--stdio"],
+    "cn_stock_mcp": {
+      "command": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime\\venv\\Scripts\\cn-stock-mcp.exe",
+      "args": [
+        "--stdio"
+      ],
       "env": {
-        "PYTHONPATH": "src"
-      }
+        "CN_STOCK_MCP_CONFIG": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\config.json",
+        "TOOL_PROFILE": "retail_v1_preview",
+        "PYTHONUTF8": "1"
+      },
+      "type": "stdio",
+      "cwd": "C:\\Users\\YOUR_NAME\\AppData\\Local\\cn-stock-mcp\\runtime"
     }
   }
 }
 ```
 
-Token 不放入 VS Code 配置；由用户在固定本机配置文件中填写。
 
----
 
-## 4) Token 配置
+## 3. 使配置生效与查看工具
 
-不要用 Host 的 input 或 env 保存 token。运行 `cn-stock-mcp --init-config`，由用户在 `%LOCALAPPDATA%\\cn-stock-mcp\\config.json` 手动填写，服务会自动读取。
+用 `MCP: List Servers` 或配置文件内的 Start / Restart 操作启动服务器，按提示确认信任。在 Copilot Chat 的工具选择器中启用本服务器，使用支持工具的 Agent 会话。
 
----
+查看本服务器的工具列表，默认应包含 [共同准备中列出的 10 个工具](WINDOWS_AGENT_SETUP.md#4-查看工具与客户自查)。连接、发现工具与取得真实行情分别记录；本页没有预先认定任何客户端已实测通过。
 
-## 5) 推荐先做的本地自检
+## 4. 常见问题
 
-```bash
-cn-stock-mcp --version
-cn-stock-mcp --doctor
-cn-stock-mcp --doctor-network
-```
+- 文件被忽略：VS Code 自身的 `mcp.json` 使用 `servers` 顶层键。
+- 使用多个 VS Code Profile：各 Profile 的用户 MCP 配置可能不同。
+- SSH、容器或远程工作区：确认服务实际运行在 Windows 本机；该页路径属于本机用户环境。
+- Agent Host 会话：官方说明 VS Code 会转发其 MCP 配置；本模板没有交互式 input 依赖。独立 Copilot CLI 的配置文件另有格式。
 
----
+通用的路径、JSON 转义、Token 文件和多环境问题见 [Windows 共同准备](WINDOWS_AGENT_SETUP.md#5-常见问题)。
 
-## 6) VS Code 接入后看不到 tools
+## 5. 停用与恢复
 
-优先排查：
-1. `mcp.json` 是否放在对的位置
-2. 顶层字段是否写成了 `servers`（不是 `mcpServers`）
-3. server name 是否规范
-4. `command` / `args` / `env` 是否写错
-5. 是否需要在 VS Code 里重启 MCP server / 查看输出日志
+用服务器管理入口停止；持久移除时删除所选用户/工作区文件中的 `servers.cn_stock_mcp` 条目。保留其他服务器，重载并按需恢复备份。
 
-更多排查见：
-- `docs/FAQ.md`
-- `docs/HOST_CONFIG_TEMPLATES.md`
+## 官方依据
+
+- [VS Code：Add and manage MCP servers](https://code.visualstudio.com/docs/agent-customization/mcp-servers)
+- [VS Code：MCP configuration reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration)

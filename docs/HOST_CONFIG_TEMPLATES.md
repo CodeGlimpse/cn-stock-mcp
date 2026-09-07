@@ -1,186 +1,48 @@
-# Host Config Templates (`cn-stock-mcp`)
+# Windows Agent 配置总表
 
-首发销售只验收 Codex（Windows 11 x64、普通 CPython 3.13、具体客户端版本）。其他模板是接入参考，不等于已验证兼容。见 [CODEX_TEMPLATE.md](CODEX_TEMPLATE.md) 与 [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md)。
+目标版本：`cn-stock-mcp==0.2.3`（发布准备）。更新日期：2026-09-07。
 
-这页提供可直接复制的 **host-specific / host-oriented 配置模板**。模板描述的是配置形状，不等同于每个 Host 的真人安装认证。
+这套指南覆盖以下 13 款软件的 Windows 本地 stdio 配置。先完成 [Windows 共同准备](WINDOWS_AGENT_SETUP.md)，再打开所用软件的专页。每页提供配置入口、作用范围、可复制配置、重载、自查、停用与恢复方法。
 
-如果你只想先装起来，优先看：
-- `docs/HANDOFF_MINIMAL.md`
+本轮按用户决定只核对官方资料并做离线检查，不执行真实 Host 连接或行情测试。官方来源与地址变化见 [来源记录](HOST_CONFIGURATION_SOURCES.md)。配置文档覆盖范围不等于客户端实测结果；原有首发售后条款仍以 [交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md) 为准。
 
-如果你已经知道自己用的是哪类宿主，直接从下面复制。
+## 按软件选择
 
----
+| 软件 | 配置形式 | 入口 / 默认位置 |
+| --- | --- | --- |
+| [Codex](CODEX_TEMPLATE.md) | TOML | 用户 `.codex\config.toml`；受信任项目 `.codex\config.toml` |
+| [Claude Code](CLAUDE_CODE_TEMPLATE.md) | JSON / CLI | `claude mcp add --scope user`；项目 `.mcp.json` |
+| [Claude Desktop](CLAUDE_DESKTOP_TEMPLATE.md) | JSON | `%APPDATA%\Claude\claude_desktop_config.json` |
+| [Cursor](CURSOR_TEMPLATE.md) | JSON | 用户 `.cursor\mcp.json` 或项目 `.cursor\mcp.json` |
+| [VS Code / GitHub Copilot](VSCODE_TEMPLATE.md) | JSON / JSONC | `MCP: Open User Configuration`；项目 `.vscode\mcp.json` |
+| [Cline](CLINE_TEMPLATE.md) | JSON / UI | IDE 的 Configure MCP Servers；CLI 的 `.cline\mcp.json` |
+| [Windsurf / Cascade](WINDSURF_TEMPLATE.md) | JSON | `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
+| [Continue](CONTINUE_TEMPLATE.md) | YAML / JSON | 项目 `.continue\mcpServers\cn-stock-mcp.yaml` |
+| [OpenClaw](OPENCLAW_HOST_TEMPLATE.md) | JSON5 / CLI / UI | Windows 原生 Gateway 的 `.openclaw\openclaw.json` |
+| [Hermes Agent](HERMES_TEMPLATE.md) | YAML | 用户 `.hermes\config.yaml` 或活动 Profile |
+| [OpenCode](OPENCODE_TEMPLATE.md) | JSON / JSONC | 用户 `.config\opencode\opencode.json` 或项目 `opencode.json` |
+| [Gemini CLI](GEMINI_CLI_TEMPLATE.md) | JSON / CLI | 用户或项目 `.gemini\settings.json` |
+| [Cherry Studio](CHERRY_STUDIO_TEMPLATE.md) | UI 字段 | `设置 → MCP → MCP 服务器`，再绑定目标 Agent |
 
-## 1) 已提供模板的宿主
+表中的用户目录以 `%USERPROFILE%` 为起点；自定义 Profile 或配置目录以实际生效文件为准。文件路径、命令和参数应替换成客户本机值。
 
-### OpenClaw
-- `docs/OPENCLAW_HOST_TEMPLATE.md`
+## 推荐使用顺序
 
-### Claude Desktop
-- `docs/CLAUDE_DESKTOP_TEMPLATE.md`
+1. [固定版本 Windows 安装](AI_DEPLOY_WINDOWS.md)：核验 wheel、运行时约束和 SHA256。
+2. [共同准备](WINDOWS_AGENT_SETUP.md)：客户保管 Token，取得实际路径，备份配置。
+3. 从上表选择专页，使用该软件自己的配置结构进行合并。
+4. 按专页使配置生效；客户需要连接检查时查看本服务器的工具目录。
+5. 客户需要真实数据验证时再采用 [retail 样本计划](RETAIL_ACCEPTANCE.md)；本轮未执行。
 
-### Claude Code
-- `docs/CLAUDE_CODE_TEMPLATE.md`
+## 几个关键差异
 
-### Continue
-- `docs/CONTINUE_TEMPLATE.md`
+- Codex 使用 TOML 的 `mcp_servers` 表。
+- VS Code 自身的 `mcp.json` 使用 `servers`。
+- OpenClaw 使用 `mcp.servers`；配置所属 Gateway 必须能启动该 Windows 程序。
+- Hermes 使用 YAML 的 `mcp_servers`。
+- OpenCode 使用 `mcp`，其 `command` 是包含参数的数组，环境字段名是 `environment`。
+- Continue 的独立 YAML 需要 `name`、`version`、`schema`；也支持放在指定目录中的 JSON。
+- Cherry Studio 添加服务器后还需要给目标 Agent 绑定。
+- 其余 JSON 格式也应按专页填写，不能仅凭相似字段推定其他客户端兼容。
 
-### VS Code
-- `docs/VSCODE_TEMPLATE.md`
-
-### Cursor
-- `docs/CURSOR_TEMPLATE.md`
-
-### Cline
-- `docs/CLINE_TEMPLATE.md`
-
-### Windsurf
-- `docs/WINDSURF_TEMPLATE.md`
-
-### Hermes
-- `docs/HERMES_TEMPLATE.md`
-
-### Codex
-- `docs/CODEX_TEMPLATE.md`
-
-### 通用 `mcpServers` JSON 宿主
-如果你的宿主明确支持下面这种标准结构：
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
-那就可以直接复用：
-- `.mcp.sample.json`
-
----
-
-## 2) 通用 MCP host：已安装包（最推荐）
-
-适用：
-- 你的宿主支持 MCP
-- 你已经执行过 `python -m pip install cn-stock-mcp==0.2.2`
-- 你已经运行 `cn-stock-mcp --init-config`，并由用户手动填写 token
-- 宿主配置里可以填写 `command / args / env`
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "cn-stock-mcp",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
-说明：
-- 这是最适合最终用户的配置形态；Windows 专用 venv 未加入 PATH 时，必须把 `command` 替换为部署步骤解析出的绝对 `cn-stock-mcp.exe` 路径。
-- 不要在 `env`、命令行参数或 Host 配置中放置 Zhitu token。
-- 根目录也提供了同内容示例：`.mcp.sample.json`
-
----
-
-## 3) 通用 MCP host：源码目录 / 虚拟环境方式
-
-适用：
-- 你拿到的是源码仓库
-- 你想直接用项目虚拟环境运行
-- 宿主支持 `cwd`
-
-```json
-{
-  "mcpServers": {
-    "cn-stock-mcp": {
-      "command": "/path/to/cn-stock-mcp/.venv/bin/python",
-      "args": ["-m", "cn_stock_mcp.main", "--stdio"],
-      "cwd": "/path/to/cn-stock-mcp",
-      "env": {
-        "PYTHONPATH": "src"
-      }
-    }
-  }
-}
-```
-
-说明：
-- `/path/to/cn-stock-mcp` 改成你的实际项目目录。
-- 如果你的宿主会自动注入代理变量，而你又不希望上游请求走代理，可以显式补：
-
-```json
-{
-  "HTTP_PROXY": "",
-  "HTTPS_PROXY": "",
-  "ALL_PROXY": "",
-  "http_proxy": "",
-  "https_proxy": "",
-  "all_proxy": ""
-}
-```
-
----
-
-## 4) MCP + custom instructions / rules host
-
-适用：
-- 宿主不仅支持 MCP
-- 还支持 system prompt / rules / agent instructions
-
-这类宿主建议：
-1. 先使用上面的 MCP 配置模板
-2. 再补最小规则
-
-可直接参考仓库里的：
-- `.agent-hints.json`
-- `docs/AGENT_MINIMAL.md`
-
-建议规则最小集：
-- 名称/代码不确定时，先 `stock_search`
-- 默认小参数：`limit=5`、`top_n=3`
-- 不要默认先跑 `provider_health`
-- `sector_lookup(mode=children|members)` 时必须显式传 `sector_type=primary|concept`
-
----
-
-## 5) 其他常见 MCP host：如何安全套用
-
-有些常见宿主也支持 MCP，但它们的文档页面、配置文件路径、或外围字段命名会变化很快。
-
-为了避免把“看起来像对、实际不能贴”的模板写死，这里给你的安全策略是：
-
-1. 先确认该宿主是否支持 **标准 `mcpServers` 结构** 或它自己的已核实 MCP 配置结构
-2. 如果支持标准 `mcpServers`，优先直接套用：
-   - `.mcp.sample.json`
-   - 或本页的“已安装包方式”模板
-3. 如果宿主使用自定义顶层字段（例如 VS Code 的 `servers`，Hermes 的 `mcp_servers`，Codex 的 `config.toml` 表结构），优先参考对应单独模板页
-4. 如果宿主还要求额外外层字段、特定配置文件路径、或 UI 导入方式，再把标准块嵌进去
-
-如果你不确定，优先回到：
-- `docs/HANDOFF_MINIMAL.md`
-- `docs/FAQ.md`
-
----
-
-## 6) 不确定该用哪种模板时
-
-按这个顺序选：
-1. **是 OpenClaw** → 用 `docs/OPENCLAW_HOST_TEMPLATE.md`
-2. **是 Claude Desktop** → 用 `docs/CLAUDE_DESKTOP_TEMPLATE.md`
-3. **是 Claude Code** → 用 `docs/CLAUDE_CODE_TEMPLATE.md`
-4. **是 Continue** → 用 `docs/CONTINUE_TEMPLATE.md`
-5. **是 VS Code** → 用 `docs/VSCODE_TEMPLATE.md`
-6. **是 Cursor** → 用 `docs/CURSOR_TEMPLATE.md`
-7. **是 Cline** → 用 `docs/CLINE_TEMPLATE.md`
-8. **是 Windsurf** → 用 `docs/WINDSURF_TEMPLATE.md`
-9. **是 Hermes** → 用 `docs/HERMES_TEMPLATE.md`
-10. **是 Codex** → 用 `docs/CODEX_TEMPLATE.md`
-11. **能直接安装包且支持标准 `mcpServers`** → 用“已安装包”模板
-12. **只能跑源码目录** → 用“源码目录 / 虚拟环境”模板
-13. **宿主还支持 rules / instructions** → 在前面模板基础上再加 `.agent-hints.json` 的规则
+仓库还包含可选 [OpenClaw Skill 适配说明](OPENCLAW_INTEGRATION.md)。安装 MCP 与加载 Skill 是两项独立配置。

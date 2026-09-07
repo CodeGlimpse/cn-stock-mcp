@@ -34,7 +34,7 @@
 ### 对外介绍与客户部署
 
 - `PRODUCT_OVERVIEW.md`：产品定位、AI 分析亮点和典型使用场景
-- `CUSTOMER_DEPLOYMENT.md`：固定版本安装、智兔 token 获取、Codex 接入与排障
+- `CUSTOMER_DEPLOYMENT.md`：固定版本安装、智兔 token 获取、Windows Agent 接入与排障
 - [首发验收](RETAIL_ACCEPTANCE.md)：限定样本与实际 Codex 记录
 - [首发状态](SALE_READINESS.md)：发布、数据权限与交付完成条件
 
@@ -62,6 +62,11 @@
 - Windsurf → `WINDSURF_TEMPLATE.md`
 - Hermes → `HERMES_TEMPLATE.md`
 - Codex → `CODEX_TEMPLATE.md`
+- OpenCode → [OPENCODE_TEMPLATE.md](OPENCODE_TEMPLATE.md)
+- Gemini CLI → [GEMINI_CLI_TEMPLATE.md](GEMINI_CLI_TEMPLATE.md)
+- Cherry Studio → [CHERRY_STUDIO_TEMPLATE.md](CHERRY_STUDIO_TEMPLATE.md)
+
+以上 13 款均提供 Windows 指南。先看 [共同准备](WINDOWS_AGENT_SETUP.md)，依据与验证范围见 [官方来源](HOST_CONFIGURATION_SOURCES.md)。本轮按用户决定不执行真实测试。
 
 ---
 
