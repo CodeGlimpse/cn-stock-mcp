@@ -1,6 +1,6 @@
 # Windows Agent 接入：共同准备
 
-适用范围：Windows 11 x64、普通 CPython 3.13、本机 stdio、retail 10 工具。目标版本为 `0.2.3`，目前是发布准备版；安装公开版本前先确认同版本 Release 和校验文件已存在。
+适用范围：Windows 11 x64、普通 CPython 3.13、本机 stdio、retail 10 工具。固定版本为 `0.2.3`；安装前确认同版本 Release 和校验文件已存在。
 
 本轮交付为 13 款软件的配置指南及离线检查，按用户决定不执行真实 Host 连接或行情测试。下文的客户端操作和自查步骤供客户在自己的环境中使用。各客户端官方来源见 [来源记录](HOST_CONFIGURATION_SOURCES.md)，软件入口见 [配置总表](HOST_CONFIG_TEMPLATES.md)。
 

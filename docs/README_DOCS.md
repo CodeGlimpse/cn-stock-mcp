@@ -1,6 +1,6 @@
 # 文档导航
 
-更新日期：2026-09-07。当前目标 `0.2.3` 仍处于发布准备，历史记录保留其原始版本与日期。wheel 安装后使用 `cn-stock-mcp --docs-path` 定位已安装文档。
+更新日期：2026-09-07。适用版本 `0.2.3`，实际公开状态以发行平台为准；历史记录保留原始版本与日期。wheel 安装后使用 `cn-stock-mcp --docs-path` 定位已安装文档。
 
 ## 安装与接入
 
@@ -25,7 +25,7 @@
 
 - [产品介绍](PRODUCT_OVERVIEW.md)、[交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md)、[销售准备状态](SALE_READINESS.md)。
 - [retail 验收方法](RETAIL_ACCEPTANCE.md)：供客户需要实际验证时使用。
-- [数据权限登记](DATA_RIGHTS_REGISTER.md)、[数据来源](DATA_SOURCES.md)、[隐私](PRIVACY.md)、[安全](SECURITY.md)、[支持](SUPPORT.md)。
+- [第三方许可证及原文](THIRD_PARTY_LICENSES.md)、[数据使用边界](DATA_RIGHTS_REGISTER.md)、[数据来源](DATA_SOURCES.md)、[隐私](PRIVACY.md)、[安全](SECURITY.md)、[支持](SUPPORT.md)。
 - [发布指南](RELEASE_GUIDE.md)、[0.2.3 发布说明](RELEASE_NOTE_v0.2.3.md)。
 
 ## 历史记录

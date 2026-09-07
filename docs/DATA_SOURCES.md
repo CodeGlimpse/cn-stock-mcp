@@ -1,18 +1,18 @@
-# Data Sources and Licensing Review
+# 数据来源与软件服务边界
 
-当前代码通过 AKShare、Zhitu 及其下游公开接口取得市场数据。代码依赖和数据内容是两个不同的许可问题：AKShare 的代码许可证不自动授予所有下游数据的商用、缓存或再分发权。
+GitHub 代码免费开源，收费仅针对部署和代码运行售后。程序通过 AKShare、智兔及适配器对应的下游来源取得数据，不打包或代售市场数据集，不提供共享 Token 或托管供数服务。代码许可与数据权利分别适用。
 
-## 0.2.x distribution conclusion
+## 软件分发
 
-The PyPI and GitHub artifacts distribute source code, documentation, and package metadata only. They do not bundle or redistribute a third-party market dataset. AKShare's code license does not automatically grant rights in the data returned by its adapters, and this project has not recorded evidence that Zhitu or every downstream source grants commercial display, caching, or redistribution rights.
+PyPI 与 GitHub 制品包含本项目代码、文档、软件元数据及许可证附件，不包含市场数据集或第三方依赖实现。核心代码按 MIT 免费提供；固定 Windows 运行依赖的通知和原文见 [第三方许可证说明](THIRD_PARTY_LICENSES.md)。
 
-Therefore, publishing `cn-stock-mcp` does not represent or grant any data license. Before operating a hosted service, retaining market data, redistributing results, or making commercial use, the operator must obtain and record the applicable terms or permission for each actual provider and downstream source.
+公开数据条款核对见 [数据使用边界](DATA_RIGHTS_REGISTER.md)。经营者自行管理相关书面授权，私人协议不收录在项目中，本次未代审具体合同范围。客户按有效许可使用、缓存、展示、导出或交给 AI 处理；部署收费不授予额外数据权利。
 
-The following review remains required before making any broader data-rights claim:
+## 数据与服务条件
 
-1. AKShare 项目许可证、调用限制和各数据适配器的实际来源。
-2. Zhitu API 服务条款、token 使用限制、缓存/展示/再分发和商业使用条件。
-3. EastMoney、Sina、交易所或其他下游接口的授权、速率、署名和数据保留要求。
-4. 面向中国用户提供市场数据工具的金融信息服务、投资咨询和消费者告知边界。
+1. 客户自行准备 Token、数据额度、模型服务和相应使用条件。
+2. AKShare 的 MIT 代码许可不替代实际数据来源的使用许可；智兔按申请账号、应用场景和相应协议提供服务。
+3. 显示、缓存、对话历史、模型处理及结果分发按有效条款处理，不把公开可访问视为任意使用许可。
+4. 研发阶段非 live 检查与交付后客户验收分别记录。本轮不做真实行情和实际 AI Host 验收，客户检查按 [服务条款](COMMERCIAL_DELIVERY_TEMPLATE.md) 进行。
 
-在上述证据完成前，README 和 Release 不得声称数据可自由商用或可自由再分发。响应会在实现能够识别时显示 provider、source/as_of 和 fallback；无法识别时必须明确标记 unknown，不得伪造来源或时间。`data_quality` 是启发式可用性提示，不是投资置信度。
+项目不声明数据可以自由商用或任意再分发。响应在可识别时提供 provider、source/as_of 和 fallback，未知时保留 unknown。`data_quality` 表示数据可用性，不是投资置信度；程序不连接券商、不执行交易。

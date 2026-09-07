@@ -38,6 +38,7 @@ jobs:
         run: |
           test "$TAG_VERSION" = "v$(python -c 'import importlib.metadata; print(importlib.metadata.version("cn-stock-mcp"))')"
           python scripts/verify_runtime_constraints.py
+          python scripts/verify_license_bundle.py
           python -m pytest -q -m "not live"
 
       - name: Audit dependencies
@@ -56,10 +57,10 @@ jobs:
           sha256sum sbom.json >> sha256sums.txt
           python scripts/verify_release_artifacts.py --version "$(python -c 'import os; print(os.environ["TAG_VERSION"][1:])')" --local-only
 
-      - name: Preserve the exact release files
+      - name: Preserve the build files for Windows verification
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ github.sha }}
+          name: release-build-${{ github.sha }}
           path: |
             dist/*
             constraints-windows-py313.txt
@@ -82,7 +83,7 @@ jobs:
           python-version: "3.13"
       - uses: actions/download-artifact@v4
         with:
-          name: release-${{ github.sha }}
+          name: release-build-${{ github.sha }}
 
       - name: Verify and audit the Windows runtime
         shell: pwsh
@@ -91,7 +92,9 @@ jobs:
         run: |
           python scripts/verify_release_artifacts.py --version ($env:TAG_VERSION.Substring(1)) --local-only
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -m pip install pip-audit
+          python scripts/verify_license_bundle.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pip-audit cyclonedx-bom
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip_audit --strict -r constraints-windows-py313.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -127,10 +130,49 @@ jobs:
           if ($version -ne $expectedVersion -or $doctor.exit_code -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $docsPath "CUSTOMER_DEPLOYMENT.md")) -or @($actualTools).Count -ne 10 -or (@($actualTools | Where-Object { $_ -notin $expectedTools }).Count -ne 0) -or (@($expectedTools | Where-Object { $_ -notin $actualTools }).Count -ne 0)) { exit 1 }
           & "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_runtime_constraints.py") (Join-Path $installedRoot "constraints-windows-py313.txt") --installed
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_license_bundle.py") --root $installedRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $plan = (& "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_retail_acceptance.py") --command "$venv\Scripts\cn-stock-mcp.exe" --config $config --expected-version $expectedVersion) -join [Environment]::NewLine | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0 -or $plan.mode -ne "plan_only" -or @($plan.plan).Count -ne 10) { exit 1 }
           & "$venv\Scripts\python.exe" (Join-Path $installedTools "verify_mcp_stdio.py") --command "$venv\Scripts\cn-stock-mcp.exe" --expected-tools 10 --expected-version $expectedVersion
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Finalize the Windows runtime SBOM and release checksums
+        shell: pwsh
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          $releaseRuntime = Join-Path $env:RUNNER_TEMP "cn-stock-mcp-release"
+          $releasePackages = @(Get-ChildItem -LiteralPath dist -File)
+          $releaseProtected = @($releasePackages.FullName) + @((Join-Path $PWD "constraints-windows-py313.txt"))
+          $releaseBefore = @{}
+          foreach ($releaseFile in $releaseProtected) {
+            $releaseBefore[$releaseFile] = (Get-FileHash -LiteralPath $releaseFile -Algorithm SHA256).Hash
+          }
+          python -m cyclonedx_py environment "$releaseRuntime\Scripts\python.exe" --pyproject pyproject.toml --output-reproducible --output-format JSON --output-file sbom.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($releaseFile in $releaseProtected) {
+            if ((Get-FileHash -LiteralPath $releaseFile -Algorithm SHA256).Hash -ne $releaseBefore[$releaseFile]) { throw "A tested release file changed while finalizing the SBOM" }
+          }
+          $releaseFiles = $releaseProtected + @((Join-Path $PWD "sbom.json"))
+          [string[]]$releaseLines = foreach ($releaseFile in $releaseFiles) {
+            (Get-FileHash -LiteralPath $releaseFile -Algorithm SHA256).Hash.ToLowerInvariant() + "  " + [IO.Path]::GetFileName($releaseFile)
+          }
+          [IO.File]::WriteAllLines((Join-Path $PWD "sha256sums.txt"), $releaseLines, [Text.Encoding]::ASCII)
+          python scripts/verify_release_artifacts.py --version ($env:TAG_VERSION.Substring(1)) --local-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Preserve the final verified release files
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            dist/*
+            constraints-windows-py313.txt
+            sha256sums.txt
+            sbom.json
+          if-no-files-found: error
+          retention-days: 90
 
   publish:
     needs: [build-and-audit, windows-wheel-smoke]
@@ -162,10 +204,30 @@ jobs:
         with:
           subject-path: "dist/*"
 
+      - name: Stage the verified packages in a separate PyPI upload directory
+        run: |
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          import shutil
+
+          version = os.environ["TAG_VERSION"][1:]
+          destination = Path("pypi-upload")
+          destination.mkdir()
+          for name in (f"cn_stock_mcp-{version}-py3-none-any.whl", f"cn_stock_mcp-{version}.tar.gz"):
+              source = Path("dist") / name
+              target = destination / name
+              shutil.copyfile(source, target)
+              if hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(target.read_bytes()).digest():
+                  raise SystemExit("PyPI staging changed a verified package")
+          PY
+
       - name: Publish to PyPI with Trusted Publishing
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # The preceding hash check permits only identical existing files.
+          packages-dir: pypi-upload/
           skip-existing: true
 
       - name: Create the release or add only missing matching assets

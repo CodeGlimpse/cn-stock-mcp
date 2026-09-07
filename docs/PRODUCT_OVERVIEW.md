@@ -1,8 +1,10 @@
 # cn-stock-mcp 产品介绍
 
-> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+> 适用版本：cn-stock-mcp 0.2.3。安装前核对同版本 PyPI、GitHub Release 与校验文件；缺失时停止，不改装 main。实际公开状态以发布平台为准。
 
 ## 一句话说明
+
+GitHub 代码免费开源，收费仅针对部署和代码运行售后。服务范围、客户验收及支持期限见 [服务约定](COMMERCIAL_DELIVERY_TEMPLATE.md)。
 
 `cn-stock-mcp` 是一个面向 AI Agent 的中国证券市场数据与分析 MCP 工具。它让 Codex、Claude Code、OpenClaw、Hermes Agent 等 AI Host 能够通过自然语言调用行情、历史、财务、板块、资金流、事件和复盘能力。
 
@@ -151,7 +153,7 @@ hot_theme_tracker
 
 ## 发行与部署
 
-当前发布准备目标为 `0.2.3`，以下版本链接在发布成功后才可用于交付：
+固定版本为 `0.2.3`，使用以下入口前核对实际公开文件与校验信息：
 
 - [PyPI 安装包](https://pypi.org/project/cn-stock-mcp/0.2.3/)
 - [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.3)

@@ -1,6 +1,6 @@
 # Windows 最短接入流程
 
-目标为 `cn-stock-mcp==0.2.3`（发布准备），本机 stdio、普通 CPython 3.13、retail 10 工具。公开发布和校验文件就绪后才能按发布地址安装。
+适用 `cn-stock-mcp==0.2.3`，本机 stdio、普通 CPython 3.13、retail 10 工具。核对公开发布和校验文件后再按发布地址安装。
 
 ## 1. 安装与本地配置
 

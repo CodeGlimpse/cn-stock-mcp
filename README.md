@@ -1,8 +1,10 @@
 # cn-stock-mcp
 
-> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+> 适用版本：cn-stock-mcp 0.2.3。安装前核对同版本 PyPI、GitHub Release 与校验文件；缺失时停止，不改装 main。实际公开状态以发布平台为准。
 
 中国证券市场行情 MCP 服务。核心交付物是 **通用 MCP server**；OpenClaw skill 只是仓库内附带的平台适配层。
+
+**GitHub 代码免费开源，收费仅针对部署和代码运行售后。** 核心采用 MIT，客户的开源许可权利不因购买服务而受限制。见 [服务约定](docs/COMMERCIAL_DELIVERY_TEMPLATE.md)、[数据使用边界](docs/DATA_RIGHTS_REGISTER.md) 和 [第三方许可证](docs/THIRD_PARTY_LICENSES.md)。
 
 > 本工具不提供任何投资参考、投资建议或风险建议，不连接券商，不保存交易账户，也不执行买卖或自动交易。第三方市场数据可能延迟、缺失或错误，用户必须独立核验。
 
@@ -25,7 +27,7 @@
 - `docs/COMMERCIAL_DELIVERY_TEMPLATE.md`：一次性销售范围、验收、支持和开源边界模板
 - `docs/SALE_READINESS.md`：一次性销售前的必须完成清单
 - [retail 与 Codex 验收](docs/RETAIL_ACCEPTANCE.md)：限定查询计划、脱敏报告与实际客户端记录
-- [数据权限登记](docs/DATA_RIGHTS_REGISTER.md)：已知来源与待补授权证据
+- [数据使用边界](docs/DATA_RIGHTS_REGISTER.md)：公开条款、已知来源与使用范围
 - `docs/START_HERE.md`：最友好的仓库入口
 - `docs/HANDOFF_MINIMAL.md`：一页安装与接入
 - [13 款 Windows Agent 配置](docs/HOST_CONFIG_TEMPLATES.md)：配置入口、模板、自查与恢复

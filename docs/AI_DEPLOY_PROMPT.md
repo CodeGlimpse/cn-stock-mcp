@@ -1,6 +1,6 @@
 # 客户复制给本地 AI Agent 的部署提示词
 
-> 0.2.3 发布准备：当前文档描述待发布版本。执行安装前必须确认同版本 PyPI、GitHub Release 与校验文件已公开；缺失时停止，不改装 main。
+> 适用版本：cn-stock-mcp 0.2.3。安装前核对同版本 PyPI、GitHub Release 与校验文件；缺失时停止，不改装 main。实际公开状态以发布平台为准。
 
 适用版本：`cn-stock-mcp==0.2.3`
 

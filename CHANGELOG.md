@@ -2,15 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.2.3] - 2026-09-08
 
-### 0.2.3 release preparation
+### Changed
+- Added original notices for 69 pinned Windows runtime dependencies and a license-bundle integrity gate, preserving upstream notice bytes.
+- Clarified free MIT source code and separately charged deployment/runtime support, with customer acceptance distinct from non-live development checks.
+- Changed the release workflow to generate its final SBOM from the verified Windows runtime and isolate the PyPI upload directory from the canonical release files.
 - Completed Windows-only configuration guides for 13 agent clients, adding OpenCode, Gemini CLI and Cherry Studio; synchronized native config formats, scopes, reload/recovery steps and official sources without running live acceptance.
 - Added bounded retail stdio acceptance with plan-only default, allowlisted evidence, explicit non-pass states, and stop-on-failure behavior; packaged the acceptance tools with the wheel.
 - Added a successful real-stdio fixture test alongside the invalid-request protocol test, with isolated working directories.
 - Completed installed-runtime dependency graph verification, added the missing cffi constraint, and declared packaging so the installed checker works in a clean environment.
 - Changed releases to build once, test the exact artifact on Windows, and verify published hashes before/after uploading without replacing existing assets.
-- Scoped initial commercial acceptance to Codex and documented 7-day support, acceptance/remediation terms, and outstanding data-rights evidence.
+- Scoped initial deployment services to Codex and documented 7-day runtime support, customer acceptance/remediation terms, and data-use boundaries with private agreements retained by their owners.
 - Fixed the Windows deployment example's PowerShell syntax when matching the runtime-constraints checksum.
 
 ## [0.2.2] - 2026-09-05

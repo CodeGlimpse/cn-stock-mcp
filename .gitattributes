@@ -9,3 +9,7 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+
+# Keep upstream notice bytes identical to the recorded SHA256 on every OS.
+third_party_licenses/*.txt -text -whitespace
+third_party_licenses/pyjwt-2.13.0-01-AUTHORS.rst.txt conflict-marker-size=8

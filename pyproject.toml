@@ -57,7 +57,8 @@ build-backend = "setuptools.build_meta"
 "share/cn-stock-mcp/skills/newsbot-stock-routing" = ["skills/newsbot-stock-routing/*.md"]
 "share/cn-stock-mcp/skills/newsbot-stock-routing/references" = ["skills/newsbot-stock-routing/references/*.md"]
 "share/cn-stock-mcp" = ["constraints-windows-py313.txt", "pyproject.toml"]
-"share/cn-stock-mcp/tools" = ["scripts/verify_mcp_stdio.py", "scripts/verify_runtime_constraints.py", "scripts/verify_retail_acceptance.py"]
+"share/cn-stock-mcp/tools" = ["scripts/verify_mcp_stdio.py", "scripts/verify_runtime_constraints.py", "scripts/verify_license_bundle.py", "scripts/verify_retail_acceptance.py"]
+"share/cn-stock-mcp/third_party_licenses" = ["third_party_licenses/*.txt", "third_party_licenses/manifest.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
