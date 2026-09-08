@@ -1,8 +1,8 @@
 # 免费代码发行与部署服务准备状态
 
-检查日期：2026-09-07。适用版本：`0.2.3`。GitHub 代码免费开源，收费仅针对部署和代码运行售后；首发约定环境为 **Windows 11 x64 / 普通 CPython 3.13 / Codex / retail 10 工具**。
+检查日期：2026-09-08。适用版本：`0.2.3`。GitHub 代码免费开源，收费仅针对部署和代码运行售后；首发约定环境为 **Windows 11 x64 / 普通 CPython 3.13 / Codex / retail 10 工具**。
 
-本页区分软件发行准备、研发验证和客户服务验收。公开发行的实际完成结果以对应 tag 工作流、PyPI/GitHub 文件哈希和仓库 verification 记录为准；本地候选包不等于已经公开发布。
+本页区分软件发行验证、研发验证和客户服务验收。`0.2.3` 已在 [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.3) 和 [PyPI](https://pypi.org/project/cn-stock-mcp/0.2.3/) 正式发行；公开制品与发行前本地候选包分别留证。
 
 ## 已确定的范围
 
@@ -18,12 +18,12 @@
 | 项目 | 当前状态 | 完成依据 |
 | --- | --- | --- |
 | 运行时依赖闭包 | 已补充 cffi pin、packaging 依赖声明和已安装依赖图检查 | 固定 wheel 安装后 `pip check` 与 `verify_runtime_constraints.py --installed` |
-| 发布文件一致性 | 一次构建、Windows 安装验证、最终运行时 SBOM、独立上传目录及远端哈希检查 | 实际结果以对应 tag 工作流和发布验证记录为准 |
+| 发布文件一致性 | 已通过一次构建、Windows 安装验证、最终运行时 SBOM、两平台 SHA256 及构建来源证明检查 | [正式发行工作流](https://github.com/CodeGlimpse/cn-stock-mcp/actions/runs/34147728233)；公开 wheel/sdist 与 CI 最终制品一致 |
 | Windows Agent 配置指南 | 已补全 13 款及共同准备、来源记录；本轮仅文档和离线核对 | [配置总表](HOST_CONFIG_TEMPLATES.md) |
 | retail 验收工具 | 已实现计划、限量样本、失败停止、脱敏报告；离线测试通过 | [RETAIL_ACCEPTANCE.md](RETAIL_ACCEPTANCE.md) |
 | 真实上游验收 | 本轮按用户决定不执行；前次预检因配置路径阻塞，0 次工具调用 | 研发阶段记为未执行；客户验收另按订单记录实际范围、结果及未执行项 |
 | 真实 Codex 验收 | 本轮按用户决定不执行，未形成实际客户端结果 | 版本、标准用户环境、10 工具、实际问答、恢复步骤记录 |
-| 0.2.3 制品与公开安装 | 未发布；最终 CI 与公开安装尚未验收 | 本地候选包结果不能代替最终 SHA256、SBOM、构建证明和公开安装记录 |
+| 0.2.3 制品与公开安装 | 已发布；最终 CI 与 Windows 公开包新建虚拟环境安装检查通过 | `pip check`、69 项依赖闭包、10 工具目录及离线 stdio 通过；未包含真实行情或实际 Host 测试 |
 | 售后与退款规则 | 已按用户决定同步 | [COMMERCIAL_DELIVERY_TEMPLATE.md](COMMERCIAL_DELIVERY_TEMPLATE.md) |
 | 软件与依赖许可 | 核心 MIT、69 项运行依赖的 109 份原文及完整性验证已整理 | [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) |
 | 数据使用边界 | 已核对公开资料；经营者自行保管其授权文件，项目不收录私人协议 | [DATA_RIGHTS_REGISTER.md](DATA_RIGHTS_REGISTER.md)，不将本次工作表述为代审私人授权范围 |
