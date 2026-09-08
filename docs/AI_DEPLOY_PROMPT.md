@@ -1,14 +1,20 @@
-# 客户复制给本地 Agent 的安装部署提示词
+# 客户复制给任意本地 Agent 的通用安装部署提示词
 
 更新日期：2026-09-08。适用已发布版本：`cn-stock-mcp==0.2.3`。以下 SHA256 来自正式发行文件；安装时仍须核对 [GitHub Release](https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.3) 与 [PyPI](https://pypi.org/project/cn-stock-mcp/0.2.3/)。
 
-客户把下面整个代码块复制给具备本机文件和 PowerShell 执行能力的 Agent 即可，无需预先填写占位符。默认接入 Codex；执行安装的 Agent 与接入 MCP 的客户端可以是不同软件。首发服务范围和验收期限按[交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md)执行，其他客户端指南仅作配置参考。
+客户把下面整个代码块复制给具备本机文件和 PowerShell 执行能力的 Agent 即可，无需预先填写占位符，也不限定执行安装的软件品牌。Agent 会先确认客户想在哪个客户端使用 MCP，再选择该软件的配置指南；例如让 Codex 配置 OpenClaw，或让 OpenClaw 配置 Codex，都按实际目标处理。首发服务范围和验收期限按[交付约定](COMMERCIAL_DELIVERY_TEMPLATE.md)执行，通用提示词和其他客户端指南不自动扩大售后或实测承诺。
 
 ```text
-请在我这台 Windows 电脑上实际安装并配置 cn-stock-mcp==0.2.3，默认接入 Codex。请执行部署，不要只给我操作建议。你是执行安装的本地 Agent，接入 MCP 的目标客户端不一定是你自身；如果我明确指定其他客户端，先确认交付范围，再使用对应指南。
+请在我这台 Windows 电脑上实际安装并配置 cn-stock-mcp==0.2.3，并接入我选择的 MCP 客户端。请执行部署，不要只给我操作建议。本提示词不限定执行安装的 Agent 软件；你可以是 Codex、OpenClaw 或其他具备本机操作能力的 Agent。
+
+请始终区分两个角色：“执行部署的 Agent”是你；“使用股票 MCP 的目标客户端”由我指定，两者可以相同也可以不同。不要因为当前对话发生在 Codex、OpenClaw 或某个编辑器，就自动把它当成接入目标。
 
 一、先确认环境与授权
-先确认你能在我的电脑上执行 PowerShell、操作本地文件，以及目标客户端的名称、类型和版本。Codex 桌面、CLI、IDE 扩展要区分记录；无法确认时询问我，不把你的运行环境自动当成目标客户端。没有本机执行能力时明确说明，不能宣称已安装。
+先确认你能在我的 Windows 电脑上执行 PowerShell、操作目标本地文件。没有本机执行能力时明确说明，不能宣称已安装。
+
+再确认实际接入的软件、客户端类型和版本；我尚未指定目标时，先问我想在哪款软件里使用这个 MCP，不擅自选择或安装 Host。已提供的信息不用重复询问。Codex 要区分桌面、CLI、IDE 扩展；OpenClaw 要确认实际 Gateway 和活动 Profile，不能只识别浏览器里的 Control UI。
+
+确认负责启动 MCP 的后端位于哪台机器、以哪个 Windows 用户运行。本提示词只覆盖 Windows 原生本地 stdio：OpenClaw 界面在 Windows 上，不代表 Gateway 也在 Windows 原生进程中；若目标后端在 WSL、Linux、容器、SSH 或远程服务器，先说明范围不符并暂停，不把 Windows 的 exe 或配置路径直接写入远程环境，也不擅自改成远程 HTTP 服务。
 
 本次范围是 Windows 11 x64、普通 CPython 3.13（非 free-threaded）、独立 venv、本机 stdio、retail_v1_preview 10 工具。先只读检查环境；安装、联网下载或处理 Host 配置前，一次列清准确路径、拟执行命令、网络来源、备份及影响，取得我的确认后连续完成已授权步骤。遇到新的权限边界再申请，不关闭权限审批、沙箱或安全设置。缺少 Python 时另行说明官方用户级安装方案；不修改系统 PATH、全局 Python 包或全局执行策略。
 
@@ -16,10 +22,13 @@
 发行页：https://github.com/CodeGlimpse/cn-stock-mcp/releases/tag/v0.2.3
 PyPI：https://pypi.org/project/cn-stock-mcp/0.2.3/
 Windows 部署说明：https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/AI_DEPLOY_WINDOWS.md
-Codex 配置指南：https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/CODEX_TEMPLATE.md
-其他客户端索引：https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/HOST_CONFIG_TEMPLATES.md
+13 款客户端配置总表：https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/HOST_CONFIG_TEMPLATES.md
+目标是 Codex 时使用：https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/CODEX_TEMPLATE.md
+目标是 OpenClaw 时使用：https://raw.githubusercontent.com/CodeGlimpse/cn-stock-mcp/v0.2.3/docs/OPENCLAW_HOST_TEMPLATE.md
 
-先阅读上述部署说明及实际客户端专页，按该版本执行。只安装 PyPI 的固定 wheel，不克隆源码、不安装 main、其他版本或来源不明的镜像。使用公共 PyPI 时让 pip 忽略用户的私有源配置，例如使用 --isolated 并显式指定 --index-url https://pypi.org/simple。先仅下载目标 wheel（--no-deps、--only-binary=:all:），再按约束安装依赖。
+先阅读上述部署说明，再按已确认的目标读取对应专页。总表还包含 Claude Code、Claude Desktop、Cursor、VS Code/GitHub Copilot、Cline、Windsurf、Continue、Hermes、OpenCode、Gemini CLI、Cherry Studio；这些客户端的配置结构和重载方式各自独立。相对文档链接仍从同一 v0.2.3 标签读取。目标不在总表中时，先核对其官方文档是否支持本地 stdio MCP，再与我确认适配范围，不猜配置格式。
+
+只安装 PyPI 的固定 wheel，不克隆源码、不安装 main、其他版本或来源不明的镜像。使用公共 PyPI 时让 pip 忽略用户的私有源配置，例如使用 --isolated 并显式指定 --index-url https://pypi.org/simple。先仅下载目标 wheel（--no-deps、--only-binary=:all:），再按约束安装依赖。
 
 正式文件的 SHA256：
 cn_stock_mcp-0.2.3-py3-none-any.whl
@@ -53,6 +62,8 @@ https://zhituapi.com/termsofservice.html
 需要验证 stdio 时，使用包内 verify_mcp_stdio.py，指定实际 --command、--expected-version 0.2.3、--expected-tools 10 和独立 --cwd；保留默认离线握手、目录及无效参数检查，不增加有效行情调用。
 
 在已经获准的目标 Host 配置路径旁创建带时间戳的本地备份，备份不上传。使用本地解析/编辑工具合并本服务器条目，保留其他 MCP server、模型设置和未知字段，避免重复键或重复服务器；不要将整份现有配置输出到聊天。客户端格式不同，不能套用别的软件模板；遇到实际版本与指南不符时核对该客户端官方文档。
+
+例如 Codex 按实际作用域合并 TOML 的 mcp_servers；OpenClaw 按实际 Gateway 配置合并 mcp.servers，并检查工具过滤及会话绑定。不要把所有客户端都写成通用 mcpServers JSON；也不要仅安装 OpenClaw Skill 就宣称完成 MCP 接入，或把 openclaw mcp serve 当作添加第三方 MCP 的命令。
 
 Host 启动命令使用已安装 cn-stock-mcp.exe 的绝对路径，参数包含 --stdio；支持工作目录字段时指向本项目 runtime，否则遵循该客户端的启动机制，不凭空添加配置字段。环境设置仅包含路径和运行选项，例如 CN_STOCK_MCP_CONFIG、TOOL_PROFILE=retail_v1_preview、PYTHONUTF8=1；其中 CN_STOCK_MCP_CONFIG 是文件路径，绝不是 Token。按所选客户端指南设置并重载。若要重启正在执行部署的客户端，先交付当前进度与恢复步骤，由我执行重启，不能丢失尚未完成的工作。
 
